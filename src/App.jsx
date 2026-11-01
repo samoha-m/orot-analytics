@@ -21,6 +21,9 @@ export default function App() {
   const [activePreview, setActivePreview] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedBook, setSelectedBook] = useState('Genesis');
+  const [showChapters, setShowChapters] = useState(false);
+  const [selectedChapters, setSelectedChapters] = useState([]); // Empty array means all chapters
 
   const workerRef = useRef(null);
 
@@ -45,21 +48,22 @@ export default function App() {
     };
   }, []);
 
-  const handleRunAnalysis = () => {
-    setIsProcessing(true);
-    workerRef.current?.postMessage({
-      type: 'ANALYZE',
-      payload: {
-        terms: searchInputs.filter(t => t.trim() !== ''),
-        searchMode,
-        viewMode
-      }
-    });
-    // Close mobile panel automatically on run
-    if (window.innerWidth <= 768) {
-        setShowMobilePanel(false);
+const handleRunAnalysis = () => {
+  setIsProcessing(true);
+  workerRef.current?.postMessage({
+    type: 'ANALYZE',
+    payload: {
+      terms: searchInputs.filter(t => t.trim() !== ''),
+      searchMode,
+      viewMode,
+      book: selectedBook,
+      chapters: selectedChapters
     }
-  };
+  });
+  if (window.innerWidth <= 768) {
+      setShowMobilePanel(false);
+  }
+};
 
   const updateSearchInput = (index, value) => {
     const newInputs = [...searchInputs];
@@ -89,6 +93,60 @@ export default function App() {
         </div>
 
         <div className="sidebar-content">
+          {/* Search Range Selection */}
+<div className="input-group">
+  <label>Search Range:</label>
+  <div className="range-card">
+    <div className="range-header">
+      <select
+        className="range-select"
+        value={selectedBook}
+        onChange={(e) => {
+          setSelectedBook(e.target.value);
+          setSelectedChapters([]); // Reset chapters when changing books
+        }}
+      >
+        <option value="All">Entire Tanach</option>
+        <option value="Genesis">Genesis (בראשית)</option>
+        <option value="Exodus">Exodus (שמות)</option>
+        <option value="Leviticus">Leviticus (ויקרא)</option>
+        <option value="Numbers">Numbers (במדבר)</option>
+        <option value="Deuteronomy">Deuteronomy (דברים)</option>
+        {/* Add remaining books as needed */}
+      </select>
+
+      {selectedBook !== 'All' && (
+        <button
+          className="btn btn-edit-chapters"
+          onClick={() => setShowChapters(!showChapters)}
+        >
+          {showChapters ? 'Hide Chapters' : 'Specific Chapters'}
+        </button>
+      )}
+    </div>
+
+    {showChapters && selectedBook !== 'All' && (
+      <div className="chapter-grid">
+        {/* Example: Renders 50 chapters. Adjust the length to match the selected book dynamically if needed. */}
+        {Array.from({ length: 50 }, (_, i) => i + 1).map(ch => (
+          <button
+            key={ch}
+            className={`chapter-btn ${selectedChapters.includes(ch) ? 'selected' : ''}`}
+            onClick={() => {
+              if (selectedChapters.includes(ch)) {
+                setSelectedChapters(selectedChapters.filter(c => c !== ch));
+              } else {
+                setSelectedChapters([...selectedChapters, ch]);
+              }
+            }}
+          >
+            {ch}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
           {/* Search Logic Mode (2x2 Grid with Tooltips) */}
           <div className="input-group">
             <label>Search Logic Mode:</label>
