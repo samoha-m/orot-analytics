@@ -82,9 +82,21 @@ function App() {
     }));
   };
 
-  const handleSearch = () => {
+ const handleSearch = () => {
     if (!searchTerm) return;
-    const terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+
+    // Split and clean the terms
+    let terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+
+    // Auto-convert to Gematria if the mode is selected
+    if (searchMode === 'gematria') {
+      terms = terms.map(term => {
+        // If it is strictly numbers, keep it as is. Otherwise, convert text to its gematria value.
+        if (/^\d+$/.test(term)) return term;
+        return calculateGematria(term).toString();
+      });
+    }
+
     if (terms.length === 0) return;
     if (ranges.some(r => r.selectedChapters.length === 0)) return alert("Please select at least one chapter for all ranges.");
 
@@ -94,7 +106,6 @@ function App() {
     setShowMobilePanel(false); // Close mobile panel automatically when searching
     workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
   };
-
   const handleExportCSV = () => {
     if (!rawChartData || rawChartData.length === 0) return;
     const BOM = '\uFEFF';
@@ -215,8 +226,10 @@ function App() {
   <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
 </div>
 
-        <div className="sidebar-content">
-          <div className="input-group">
+<div className="sidebar-content">
+
+          {/* STICKY SEARCH INPUT */}
+          <div className="input-group" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#ffffff', paddingBottom: '15px', paddingTop: '5px', borderBottom: '1px solid #dee2e6' }}>
             <label>Compare Terms (comma separated):</label>
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="e.g. ויאמר אלהים" dir="rtl" className="search-input" />
           </div>
