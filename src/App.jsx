@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList } from 'recharts';
 import './App.css';
 
 import exactIcon from './assets/Exact_Phrase.jpg';
 import rootIcon from './assets/Shoresh.jpg';
 import letterIcon from './assets/Substring.jpg';
 import gematriaIcon from './assets/Reverse_Gematria.jpg';
+
 
 const booksList = [
   { id: '01', name: 'Genesis', he: 'בראשית', maxCh: 50 }, { id: '02', name: 'Exodus', he: 'שמות', maxCh: 40 },
@@ -38,7 +39,7 @@ const COLORS = ['#0056b3', '#dc3545', '#28a745', '#ffc107', '#6f42c1'];
 function App() {
   const workerRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [showMobilePanel, setShowMobilePanel] = useState(false); // Mobile UI State
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('אור');
@@ -90,7 +91,7 @@ function App() {
     setLoading(true);
     setActiveTerms(terms);
     setActivePreview(null);
-    setShowMobilePanel(false);
+    setShowMobilePanel(false); // Close mobile panel automatically when searching
     workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
   };
 
@@ -160,34 +161,16 @@ function App() {
             </div>
 
             <div className="chart-container">
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={renderChartData} margin={{ top: 30, right: 30, left: 0, bottom: 25 }}>
+                <BarChart width={Math.max(700, renderChartData.length * 100)} height={350} data={renderChartData} margin={{ top: 10, right: 30, left: 0, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" stroke="#6c757d" angle={-15} textAnchor="end" height={60} tick={{fontSize: 12}} />
                   <YAxis stroke="#6c757d" allowDecimals={viewMode !== 'absolute'} tick={{fontSize: 12}} />
                   <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} formatter={(value) => viewMode === 'relative' ? `${value}%` : value} />
                   <Legend verticalAlign="top" height={36}/>
-                  {activeTerms.map((term, index) => (
-                    <Bar
-                      key={term}
-                      dataKey={term}
-                      fill={COLORS[index % COLORS.length]}
-                      radius={[4, 4, 0, 0]}
-                      onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
-                      cursor="pointer"
-                      maxBarSize={45}
-                    >
-                      <LabelList
-                        dataKey={term}
-                        position="top"
-                        formatter={(value) => viewMode === 'relative' ? `${value}%` : value}
-                        style={{ fill: '#495057', fontSize: '12px', fontWeight: 600 }}
-                        offset={8}
-                      />
-                    </Bar>
-                  ))}
+{activeTerms.map((term, index) => (
+  <Bar key={term} dataKey={term} fill={COLORS[index % COLORS.length]} radius={[4, 4, 0, 0]} onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })} cursor="pointer" />
+))}
                 </BarChart>
-              </ResponsiveContainer>
             </div>
           </>
         )}
@@ -224,13 +207,13 @@ function App() {
 
       {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div>
-            <h1 className="app-title">Orot <span style={{fontSize: '16px', fontWeight: 'normal', color: '#6c757d'}}></span></h1>
-            <p className="app-subtitle">Hebrew Bible Text Analytics Engine</p>
-          </div>
-          <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
-        </div>
+<div className="sidebar-header">
+  <div>
+    <h1 className="app-title">Orot <span style={{fontSize: '16px', fontWeight: 'normal', color: '#6c757d'}}></span></h1>
+    <p className="app-subtitle">Hebrew Bible Text Analytics Engine</p>
+  </div>
+  <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
+</div>
 
         <div className="sidebar-content">
           <div className="input-group">
@@ -238,30 +221,30 @@ function App() {
             <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="e.g. ויאמר אלהים" dir="rtl" className="search-input" />
           </div>
 
-          <div className="input-group">
-            <label>Search Logic Mode:</label>
-            <div className="segmented-control">
-              {[
-                { val: 'exact', lbl: 'Exact', img: exactIcon, desc: 'Matches the exact word or multi-word phrase precisely as typed.' },
-                { val: 'root', lbl: 'Root', img: rootIcon, desc: 'Finds all occurrences derived from the same linguistic base root.' },
-                { val: 'letter', lbl: 'Letter', img: letterIcon, desc: 'Counts every occurrence of specific characters or partial strings.' },
-                { val: 'gematria', lbl: 'Gematria', img: gematriaIcon, desc: 'Finds words whose numerical value matches your input number.' }
-              ].map(m => (
-                <label key={m.val} className={`segment-btn ${searchMode === m.val ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="searchMode"
-                    value={m.val}
-                    checked={searchMode === m.val}
-                    onChange={(e) => setSearchMode(e.target.value)}
-                  />
-                  <img src={m.img} alt={`${m.lbl} icon`} className="mode-icon" />
-                  <span>{m.lbl}</span>
-                  <div className="mode-tooltip">{m.desc}</div>
-                </label>
-              ))}
-            </div>
-          </div>
+<div className="input-group">
+                <label>Search Logic Mode:</label>
+                <div className="segmented-control">
+                  {[
+  { val: 'exact', lbl: 'Exact', img: exactIcon, desc: 'Matches the exact word or multi-word phrase precisely as typed.' },
+  { val: 'root', lbl: 'Root', img: rootIcon, desc: 'Finds all occurrences derived from the same linguistic base root.' },
+  { val: 'letter', lbl: 'Letter', img: letterIcon, desc: 'Counts every occurrence of specific characters or partial strings.' },
+  { val: 'gematria', lbl: 'Gematria', img: gematriaIcon, desc: 'Finds words whose numerical value matches your input number.' }
+].map(m => (
+  <label key={m.val} className={`segment-btn ${searchMode === m.val ? 'active' : ''}`}>
+    <input
+      type="radio"
+      name="searchMode"
+      value={m.val}
+      checked={searchMode === m.val}
+      onChange={(e) => setSearchMode(e.target.value)}
+    />
+    <img src={m.img} alt={`${m.lbl} icon`} className="mode-icon" />
+    <span>{m.lbl}</span>
+    <div className="mode-tooltip">{m.desc}</div>
+  </label>
+))}
+                </div>
+              </div>
 
           <div className="input-group">
             <label>Comparison Scopes:</label>
