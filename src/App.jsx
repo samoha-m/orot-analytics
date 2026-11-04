@@ -63,17 +63,21 @@ function App() {
 
   const addRange = () => setRanges([...ranges, { id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const removeRange = (id) => { if (ranges.length > 1) setRanges(ranges.filter(r => r.id !== id)); };
+
   const updateBook = (id, newBookId) => {
     const newBook = booksList.find(b => b.id === newBookId);
     setRanges(ranges.map(r => r.id === id ? { ...r, bookId: newBookId, selectedChapters: Array.from({length: newBook.maxCh}, (_, i) => i + 1), isExpanded: false } : r));
   };
-const toggleAccordion = (id) => {
+
+  // This ensures opening one closes the rest
+  const toggleAccordion = (id) => {
     setRanges(ranges.map(r =>
       r.id === id
         ? { ...r, isExpanded: !r.isExpanded }
         : { ...r, isExpanded: false }
     ));
   };
+
   const handleChapterSelection = (id, maxCh, action, singleCh = null) => {
     setRanges(ranges.map(r => {
       if (r.id !== id) return r;
@@ -236,14 +240,13 @@ const toggleAccordion = (id) => {
       {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
-<div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', textAlign: 'left' }}>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', textAlign: 'left' }}>
           <img
             src={logoIcon}
             alt="Orot Logo"
             style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
           />
 
-          {/* We removed the CSS classes here so App.css cannot force it to the center */}
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
               Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}></span>
