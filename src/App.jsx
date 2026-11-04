@@ -67,8 +67,13 @@ function App() {
     const newBook = booksList.find(b => b.id === newBookId);
     setRanges(ranges.map(r => r.id === id ? { ...r, bookId: newBookId, selectedChapters: Array.from({length: newBook.maxCh}, (_, i) => i + 1), isExpanded: false } : r));
   };
-  const toggleAccordion = (id) => setRanges(ranges.map(r => r.id === id ? { ...r, isExpanded: !r.isExpanded } : r));
-
+const toggleAccordion = (id) => {
+    setRanges(ranges.map(r =>
+      r.id === id
+        ? { ...r, isExpanded: !r.isExpanded }
+        : { ...r, isExpanded: false }
+    ));
+  };
   const handleChapterSelection = (id, maxCh, action, singleCh = null) => {
     setRanges(ranges.map(r => {
       if (r.id !== id) return r;
