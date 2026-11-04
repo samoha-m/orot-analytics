@@ -231,24 +231,24 @@ function App() {
       {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
-        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <img
-              src={logoIcon}
-              alt="Orot Logo"
-              style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-            />
-            {/* Forced Left-Aligned Column */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
-              <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', textAlign: 'left' }}>
-                Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
-              </h1>
-              <p className="app-subtitle" style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#adb5bd', textAlign: 'left' }}>
-                Hebrew Bible Text Analytics Engine
-              </p>
-            </div>
+<div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', textAlign: 'left' }}>
+          <img
+            src={logoIcon}
+            alt="Orot Logo"
+            style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
+          />
+
+          {/* We removed the CSS classes here so App.css cannot force it to the center */}
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
+              Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+            </h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#adb5bd' }}>
+              Hebrew Bible Text Analytics Engine
+            </p>
           </div>
-          <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
+
+          <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
         </div>
 
         <div className="sidebar-content">
