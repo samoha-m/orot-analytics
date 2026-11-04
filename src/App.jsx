@@ -231,14 +231,19 @@ function App() {
       {/* RIGHT: CONTROL SIDEBAR */}
 <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-          {/* Logo and Text grouped together on the left */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'left' }}>
-            <img src={logoIcon} alt="Orot Logo" style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-            <div>
-              <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1.2' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <img
+              src={logoIcon}
+              alt="Orot Logo"
+              style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+            />
+
+            {/* Forced Left-Aligned Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+              <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', textAlign: 'left' }}>
                 Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
               </h1>
-              <p className="app-subtitle" style={{ margin: 0, fontSize: '11px', color: '#adb5bd' }}>
+              <p className="app-subtitle" style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#adb5bd', textAlign: 'left' }}>
                 Hebrew Bible Text Analytics Engine
               </p>
             </div>
