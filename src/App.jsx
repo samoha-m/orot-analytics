@@ -234,7 +234,7 @@ function App() {
           <img src={logoIcon} alt="Orot Logo" style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
           <div>
             <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-              Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+              Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}></span>
             </h1>
             <p className="app-subtitle" style={{ margin: 0, fontSize: '11px', color: '#adb5bd' }}>
               Hebrew Bible Text Analytics Engine
