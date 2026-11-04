@@ -229,15 +229,15 @@ function App() {
       {showMobilePanel && <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>}
 
       {/* RIGHT: CONTROL SIDEBAR */}
-<div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <img
               src={logoIcon}
               alt="Orot Logo"
               style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
             />
-
             {/* Forced Left-Aligned Column */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
               <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', textAlign: 'left' }}>
@@ -248,12 +248,10 @@ function App() {
               </p>
             </div>
           </div>
-
           <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
         </div>
 
         <div className="sidebar-content">
-
           {/* STICKY SEARCH INPUT */}
           <div className="input-group" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#ffffff', paddingBottom: '15px', paddingTop: '5px', borderBottom: '1px solid #dee2e6' }}>
             <label>Compare Terms (comma separated):</label>
