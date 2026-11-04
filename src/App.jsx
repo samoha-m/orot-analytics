@@ -69,7 +69,6 @@ function App() {
     setRanges(ranges.map(r => r.id === id ? { ...r, bookId: newBookId, selectedChapters: Array.from({length: newBook.maxCh}, (_, i) => i + 1), isExpanded: false } : r));
   };
 
-  // This ensures opening one closes the rest
   const toggleAccordion = (id) => {
     setRanges(ranges.map(r =>
       r.id === id
@@ -113,7 +112,6 @@ function App() {
     workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
   };
 
-// Helper to compress selected chapters into readable ranges (e.g., "1-5, 8, 10-14")
   const formatChapterRanges = (chapters, maxCh) => {
     if (!chapters || chapters.length === 0) return "None";
     if (maxCh && chapters.length === maxCh) return `1-${maxCh} (All)`;
@@ -140,11 +138,9 @@ function App() {
     if (!rawChartData || rawChartData.length === 0) return;
 
     const BOM = '\uFEFF';
-    // Added "Chapters" right after "Scope"
     let csvString = ["Scope", "Chapters", "Total Words", ...activeTerms].join(",") + "\n";
 
     rawChartData.forEach((row, index) => {
-      // Find matching range and book info
       const rangeObj = ranges[index];
       const bookObj = rangeObj ? booksList.find(b => b.id === rangeObj.bookId) : null;
       const chaptersFormatted = rangeObj ? formatChapterRanges(rangeObj.selectedChapters, bookObj?.maxCh) : "";
@@ -279,7 +275,6 @@ function App() {
       {showMobilePanel && <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>}
 
       {/* RIGHT: CONTROL SIDEBAR */}
-{/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
         {/* --- UNIFIED STICKY CONTROL DECK --- */}
@@ -302,7 +297,7 @@ function App() {
             />
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}></span>
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
                 Hebrew Bible Text Analytics Engine
@@ -361,11 +356,8 @@ function App() {
 
         {/* Scrollable Content Area */}
         <div className="sidebar-content" style={{ padding: '20px', paddingTop: '10px' }}>
-          {/* STICKY SEARCH INPUT */}
-          <div className="input-group" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#ffffff', paddingBottom: '15px', paddingTop: '5px', borderBottom: '1px solid #dee2e6' }}>
-            <label>Compare Terms (comma separated):</label>
-            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="e.g. ויאמר אלהים" dir="rtl" className="search-input" />
-          </div>
+
+          {/* THE REDUNDANT SEARCH BAR WAS REMOVED FROM HERE */}
 
           <div className="input-group">
             <label>Search Logic Mode:</label>
