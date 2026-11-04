@@ -113,15 +113,56 @@ function App() {
     workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
   };
 
+// Helper to compress selected chapters into readable ranges (e.g., "1-5, 8, 10-14")
+  const formatChapterRanges = (chapters, maxCh) => {
+    if (!chapters || chapters.length === 0) return "None";
+    if (maxCh && chapters.length === maxCh) return `1-${maxCh} (All)`;
+
+    const sorted = [...chapters].sort((a, b) => a - b);
+    const rangesArr = [];
+    let start = sorted[0];
+    let prev = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === prev + 1) {
+        prev = sorted[i];
+      } else {
+        rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`);
+        start = sorted[i];
+        prev = sorted[i];
+      }
+    }
+    rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`);
+    return rangesArr.join(', ');
+  };
+
   const handleExportCSV = () => {
     if (!rawChartData || rawChartData.length === 0) return;
+
     const BOM = '\uFEFF';
-    let csvString = ["Scope", "Total Words", ...activeTerms].join(",") + "\n";
-    rawChartData.forEach(row => { csvString += [`"${row.name}"`, row.rangeTotalWords, ...activeTerms.map(t => row[t] || 0)].join(",") + "\n"; });
+    // Added "Chapters" right after "Scope"
+    let csvString = ["Scope", "Chapters", "Total Words", ...activeTerms].join(",") + "\n";
+
+    rawChartData.forEach((row, index) => {
+      // Find matching range and book info
+      const rangeObj = ranges[index];
+      const bookObj = rangeObj ? booksList.find(b => b.id === rangeObj.bookId) : null;
+      const chaptersFormatted = rangeObj ? formatChapterRanges(rangeObj.selectedChapters, bookObj?.maxCh) : "";
+
+      csvString += [
+        `"${row.name}"`,
+        `"${chaptersFormatted}"`,
+        row.rangeTotalWords,
+        ...activeTerms.map(t => row[t] || 0)
+      ].join(",") + "\n";
+    });
+
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([BOM + csvString], { type: 'text/csv;charset=utf-8;' }));
     link.download = "hebrew_stats.csv";
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const renderChartData = rawChartData.map(data => {
