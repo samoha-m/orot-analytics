@@ -3,11 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList,
 import logoIcon from './assets/OROT_ICON.jpg';
 import './App.css';
 
-import exactIcon from './assets/Exact_Phrase.jpg';
-import rootIcon from './assets/Shoresh.jpg';
-import letterIcon from './assets/Substring.jpg';
-import gematriaIcon from './assets/Reverse_Gematria.jpg';
-
 const booksList = [
   { id: '01', name: 'Genesis', he: 'בראשית', maxCh: 50 }, { id: '02', name: 'Exodus', he: 'שמות', maxCh: 40 },
   { id: '03', name: 'Leviticus', he: 'ויקרא', maxCh: 27 }, { id: '04', name: 'Numeri', he: 'במדבר', maxCh: 36 },
@@ -177,6 +172,17 @@ function App() {
 
   const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
+  // Micro-Typography styling object for section labels
+  const sectionLabelStyle = {
+    display: 'block',
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: '#6c757d',
+    fontWeight: 'bold',
+    marginBottom: '8px'
+  };
+
   return (
     <div className="app-layout">
 
@@ -285,10 +291,10 @@ function App() {
           backgroundColor: '#ffffff',
           padding: '20px',
           borderBottom: '1px solid #e9ecef',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)' // Subtle elevation shadow
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
         }}>
 
-          {/* Logo Header */}
+          {/* 1. Logo Header */}
           <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left', marginBottom: '20px' }}>
             <img
               src={logoIcon}
@@ -297,7 +303,7 @@ function App() {
             />
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}></span>
+                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
                 Hebrew Bible Text Analytics Engine
@@ -306,25 +312,14 @@ function App() {
             <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
           </div>
 
-          {/* Search Input Bar */}
+          {/* 2. Search Input Bar */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={{
-              fontSize: '10px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              color: '#6c757d',
-              fontWeight: 'bold',
-              marginBottom: '8px'
-            }}>
-              Compare Terms (comma separated)
-            </label>
+            <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              {/* SVG Magnifying Glass Icon embedded inside the input */}
               <svg style={{ position: 'absolute', left: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
-
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -333,7 +328,7 @@ function App() {
                 className="search-input"
                 style={{
                   width: '100%',
-                  padding: '10px 12px 10px 35px', /* Extra padding on left for the icon */
+                  padding: '10px 12px 10px 35px',
                   borderRadius: '6px',
                   border: '1px solid #ced4da',
                   fontSize: '14px',
@@ -351,41 +346,61 @@ function App() {
               />
             </div>
           </div>
-        </div>
-        {/* --- END STICKY DECK --- */}
 
-        {/* Scrollable Content Area */}
-        <div className="sidebar-content" style={{ padding: '20px', paddingTop: '10px' }}>
+          {/* Faint Divider */}
+          <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
-          {/* THE REDUNDANT SEARCH BAR WAS REMOVED FROM HERE */}
+          {/* 3. Search Logic Mode (Sleek Text-Only Buttons) */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={sectionLabelStyle}>Search Logic Mode</label>
 
-          <div className="input-group">
-            <label>Search Logic Mode:</label>
-            <div className="segmented-control">
+            <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
               {[
-                { val: 'exact', lbl: 'Exact', img: exactIcon, desc: 'Matches the exact word or multi-word phrase precisely as typed.' },
-                { val: 'root', lbl: 'Root', img: rootIcon, desc: 'Finds all occurrences derived from the same linguistic base root.' },
-                { val: 'letter', lbl: 'Letter', img: letterIcon, desc: 'Counts every occurrence of specific characters or partial strings.' },
-                { val: 'gematria', lbl: 'Gematria', img: gematriaIcon, desc: 'Finds words whose numerical value matches your input number.' }
-              ].map(m => (
-                <label key={m.val} className={`segment-btn ${searchMode === m.val ? 'active' : ''}`}>
+                { val: 'exact', lbl: 'Exact', desc: 'Matches the exact phrase.' },
+                { val: 'root', lbl: 'Root', desc: 'Finds base linguistic root.' },
+                { val: 'letter', lbl: 'Letter', desc: 'Counts specific characters.' },
+                { val: 'gematria', lbl: 'Gematria', desc: 'Matches numerical value.' }
+              ].map((m, index) => (
+                <label
+                  key={m.val}
+                  style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    padding: '8px 4px',
+                    margin: 0,
+                    cursor: 'pointer',
+                    fontSize: '11.5px',
+                    borderRight: index !== 3 ? '1px solid #ced4da' : 'none',
+                    backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent',
+                    color: searchMode === m.val ? '#ffffff' : '#495057',
+                    fontWeight: searchMode === m.val ? 'bold' : 'normal',
+                    transition: 'background-color 0.2s, color 0.2s'
+                  }}
+                  title={m.desc} // Native browser tooltip replaces custom CSS tooltip for clean UX
+                >
                   <input
                     type="radio"
                     name="searchMode"
                     value={m.val}
                     checked={searchMode === m.val}
                     onChange={(e) => setSearchMode(e.target.value)}
+                    style={{ display: 'none' }}
                   />
-                  <img src={m.img} alt={`${m.lbl} icon`} className="mode-icon" />
                   <span>{m.lbl}</span>
-                  <div className="mode-tooltip">{m.desc}</div>
                 </label>
               ))}
             </div>
           </div>
 
+        </div>
+        {/* --- END STICKY DECK --- */}
+
+        {/* --- SCROLLABLE CONTENT AREA --- */}
+        <div className="sidebar-content" style={{ padding: '20px', paddingTop: '15px' }}>
+
           <div className="input-group">
-            <label>Comparison Scopes:</label>
+            <label style={sectionLabelStyle}>Comparison Scopes</label>
+
             {ranges.map((range, index) => {
               const book = booksList.find(b => b.id === range.bookId);
               return (
