@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList, ResponsiveContainer } from 'recharts';
-import logoIcon from './assets/logo-icon.png';
+import logoIcon from './assets/OROT_ICON.jpg';
 import './App.css';
 
 import exactIcon from './assets/Exact_Phrase.jpg';
