@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, LabelList, ResponsiveContainer } from 'recharts';
+import logoIcon from './assets/logo-icon.png';
 import './App.css';
 
 import exactIcon from './assets/Exact_Phrase.jpg';
@@ -229,10 +230,15 @@ function App() {
 
       {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
-        <div className="sidebar-header">
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src={logoIcon} alt="Orot Logo" style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
           <div>
-            <h1 className="app-title">Orot</h1>
-            <p className="app-subtitle">Hebrew Bible Text Analytics Engine</p>
+            <h1 className="app-title" style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
+              Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+            </h1>
+            <p className="app-subtitle" style={{ margin: 0, fontSize: '11px', color: '#adb5bd' }}>
+              Hebrew Bible Text Analytics Engine
+            </p>
           </div>
           <button className="mobile-close" onClick={() => setShowMobilePanel(false)}>✖</button>
         </div>
@@ -325,4 +331,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
