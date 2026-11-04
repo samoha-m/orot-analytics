@@ -63,7 +63,7 @@ function ControlSidebar({
             />
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}></span>
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
                 Hebrew Bible Text Analytics Engine
