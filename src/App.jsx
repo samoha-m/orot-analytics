@@ -279,28 +279,88 @@ function App() {
       {showMobilePanel && <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>}
 
       {/* RIGHT: CONTROL SIDEBAR */}
+{/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
-        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', textAlign: 'left' }}>
-          <img
-            src={logoIcon}
-            alt="Orot Logo"
-            style={{ width: '48px', height: '48px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
-          />
+        {/* --- UNIFIED STICKY CONTROL DECK --- */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
+          backgroundColor: '#ffffff',
+          padding: '20px',
+          borderBottom: '1px solid #e9ecef',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)' // Subtle elevation shadow
+        }}>
 
-          <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-              Orot <span style={{fontSize: '14px', fontWeight: 'normal', color: '#6c757d'}}></span>
-            </h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: '11.5px', color: '#adb5bd' }}>
-              Hebrew Bible Text Analytics Engine
-            </p>
+          {/* Logo Header */}
+          <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left', marginBottom: '20px' }}>
+            <img
+              src={logoIcon}
+              alt="Orot Logo"
+              style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
+            />
+            <div>
+              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
+                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
+              </h1>
+              <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
+                Hebrew Bible Text Analytics Engine
+              </p>
+            </div>
+            <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
           </div>
 
-          <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
-        </div>
+          {/* Search Input Bar */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={{
+              fontSize: '10px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: '#6c757d',
+              fontWeight: 'bold',
+              marginBottom: '8px'
+            }}>
+              Compare Terms (comma separated)
+            </label>
 
-        <div className="sidebar-content">
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              {/* SVG Magnifying Glass Icon embedded inside the input */}
+              <svg style={{ position: 'absolute', left: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="e.g. ויאמר אלהים"
+                dir="rtl"
+                className="search-input"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 35px', /* Extra padding on left for the icon */
+                  borderRadius: '6px',
+                  border: '1px solid #ced4da',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#0056b3';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(0, 86, 179, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#ced4da';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        {/* --- END STICKY DECK --- */}
+
+        {/* Scrollable Content Area */}
+        <div className="sidebar-content" style={{ padding: '20px', paddingTop: '10px' }}>
           {/* STICKY SEARCH INPUT */}
           <div className="input-group" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#ffffff', paddingBottom: '15px', paddingTop: '5px', borderBottom: '1px solid #dee2e6' }}>
             <label>Compare Terms (comma separated):</label>
