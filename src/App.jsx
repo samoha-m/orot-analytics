@@ -131,6 +131,8 @@ function App() {
     return { __html: text.replace(pattern, '<mark class="highlight-match">$1</mark>') };
   };
 
+  const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
+
   return (
     <div className="app-layout">
 
@@ -171,17 +173,29 @@ function App() {
               </div>
             </div>
 
-            <div className="chart-container">
-                <BarChart width={Math.max(700, renderChartData.length * 100)} height={350} data={renderChartData} margin={{ top: 10, right: 30, left: 0, bottom: 25 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#6c757d" angle={-15} textAnchor="end" height={60} tick={{fontSize: 12}} />
-                  <YAxis stroke="#6c757d" allowDecimals={viewMode !== 'absolute'} tick={{fontSize: 12}} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} formatter={(value) => viewMode === 'relative' ? `${value}%` : value} />
-                  <Legend verticalAlign="top" height={36}/>
-{activeTerms.map((term, index) => (
-  <Bar key={term} dataKey={term} fill={COLORS[index % COLORS.length]} radius={[4, 4, 0, 0]} onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })} cursor="pointer" />
-))}
-                </BarChart>
+<div className="chart-container" style={{ width: '100%', overflowX: 'auto', overflowY: 'hidden' }}>
+              <div style={{ minWidth: `${minComfortableWidth}px`, width: '100%', height: '350px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={renderChartData} margin={{ top: 10, right: 30, left: 0, bottom: 25 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" stroke="#6c757d" angle={-15} textAnchor="end" height={60} tick={{fontSize: 12}} />
+                    <YAxis stroke="#6c757d" allowDecimals={viewMode !== 'absolute'} tick={{fontSize: 12}} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} formatter={(value) => viewMode === 'relative' ? `${value}%` : value} />
+                    <Legend verticalAlign="top" height={36}/>
+                    {activeTerms.map((term, index) => (
+                      <Bar
+                        key={term}
+                        dataKey={term}
+                        fill={COLORS[index % COLORS.length]}
+                        radius={[4, 4, 0, 0]}
+                        onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
+                        cursor="pointer"
+                        maxBarSize={45}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </>
         )}
