@@ -145,10 +145,11 @@ function App() {
   return (
     <div className="app-container">
       {/* GLOBAL TOP NAVIGATION BAR */}
+{/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
-          <div>
+          <div style={{ textAlign: 'left' }}>
             <h1 className="top-navbar-title">Orot</h1>
             <p className="top-navbar-subtitle">Hebrew Bible Text Analytics Engine</p>
           </div>
