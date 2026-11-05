@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import logoIcon from './assets/OROT_ICON.png';
 import './App.css';
 
 import { booksList, calculateGematria, COLORS } from './data/constants';
 import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
+import MatrixGrid from './components/MatrixGrid';
 
 function App() {
   const workerRef = useRef(null);
@@ -14,18 +16,32 @@ function App() {
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('אור');
   const [searchMode, setSearchMode] = useState('exact');
+
   const [viewMode, setViewMode] = useState('absolute');
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
   const [activeTerms, setActiveTerms] = useState([]);
   const [activePreview, setActivePreview] = useState(null);
 
+  const [isElsMode, setIsElsMode] = useState(false);
+  const [elsData, setElsData] = useState(null);
+
   useEffect(() => {
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
     workerRef.current.onmessage = (e) => {
-      const { status, chartData, totals, error } = e.data;
-      if (status === 'success') { setRawChartData(chartData); setResultTotals(totals); }
-      else { console.error("Worker failed:", error); }
+      const { status, isEls, chartData, totals, elsData: resEls, error } = e.data;
+      if (status === 'success') {
+        if (isEls) {
+          setIsElsMode(true);
+          setElsData(resEls);
+        } else {
+          setIsElsMode(false);
+          setRawChartData(chartData);
+          setResultTotals(totals);
+        }
+      } else {
+        console.error("Worker failed:", error);
+      }
       setLoading(false);
     };
     return () => workerRef.current.terminate();
@@ -60,6 +76,7 @@ function App() {
 
   const handleSearch = () => {
     if (!searchTerm) return;
+
     let terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
 
     if (searchMode === 'gematria') {
@@ -76,7 +93,13 @@ function App() {
     setActiveTerms(terms);
     setActivePreview(null);
     setShowMobilePanel(false);
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
+
+    workerRef.current.postMessage({
+      ranges,
+      terms,
+      searchMode,
+      booksList
+    });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -139,45 +162,66 @@ function App() {
   const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
   return (
-    <div className="app-layout">
-      <main className="main-canvas">
-        <ChartDisplay
-          resultTotals={resultTotals}
-          loading={loading}
-          activeTerms={activeTerms}
+    <div className="app-container">
+      {/* GLOBAL TOP NAVIGATION BAR */}
+      <header className="top-navbar">
+        <div className="top-navbar-brand">
+          <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
+          <div>
+            <h1 className="top-navbar-title">Orot</h1>
+            <p className="top-navbar-subtitle">Hebrew Bible Text Analytics Engine</p>
+          </div>
+        </div>
+      </header>
+
+      {/* APP LAYOUT */}
+      <div className="app-layout">
+        {/* LEFT: MAIN CANVAS */}
+        <main className="main-canvas">
+          {searchMode === 'els' || isElsMode ? (
+            <MatrixGrid elsData={elsData} loading={loading} />
+          ) : (
+            <>
+              <ChartDisplay
+                resultTotals={resultTotals}
+                loading={loading}
+                activeTerms={activeTerms}
+                searchMode={searchMode}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                handleExportCSV={handleExportCSV}
+                minComfortableWidth={minComfortableWidth}
+                renderChartData={renderChartData}
+                setActivePreview={setActivePreview}
+              />
+              <VersePreview
+                activePreview={activePreview}
+                setActivePreview={setActivePreview}
+                activeTerms={activeTerms}
+                COLORS={COLORS}
+              />
+            </>
+          )}
+        </main>
+
+        {/* RIGHT: CONTROL SIDEBAR */}
+        <ControlSidebar
+          showMobilePanel={showMobilePanel}
+          setShowMobilePanel={setShowMobilePanel}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
           searchMode={searchMode}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          handleExportCSV={handleExportCSV}
-          minComfortableWidth={minComfortableWidth}
-          renderChartData={renderChartData}
-          setActivePreview={setActivePreview}
+          setSearchMode={setSearchMode}
+          ranges={ranges}
+          loading={loading}
+          updateBook={updateBook}
+          removeRange={removeRange}
+          toggleAccordion={toggleAccordion}
+          handleChapterSelection={handleChapterSelection}
+          addRange={addRange}
+          handleSearch={handleSearch}
         />
-
-        <VersePreview
-          activePreview={activePreview}
-          setActivePreview={setActivePreview}
-          activeTerms={activeTerms}
-          COLORS={COLORS}
-        />
-      </main>
-
-      <ControlSidebar
-        showMobilePanel={showMobilePanel}
-        setShowMobilePanel={setShowMobilePanel}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchMode={searchMode}
-        setSearchMode={setSearchMode}
-        ranges={ranges}
-        loading={loading}
-        updateBook={updateBook}
-        removeRange={removeRange}
-        toggleAccordion={toggleAccordion}
-        handleChapterSelection={handleChapterSelection}
-        addRange={addRange}
-        handleSearch={handleSearch}
-      />
+      </div>
     </div>
   );
 }

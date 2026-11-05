@@ -1,50 +1,54 @@
-/* Layout & Container */
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f8f9fa;
+/* GLOBAL TOP NAVBAR */
+.top-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  height: 60px;
+  box-sizing: border-box;
 }
 
-.app-layout {
+.top-navbar-brand {
   display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-navbar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.top-navbar-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+  color: #0056b3;
+}
+
+.top-navbar-subtitle {
+  margin: 3px 0 0 0;
+  font-size: 11px;
+  color: #8c98a4;
+}
+
+/* APP CONTAINER WRAPPER */
+.app-container {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
-  width: 100vw;
   overflow: hidden;
 }
 
-.main-canvas {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
+/* Adjust app-layout height to accommodate top navbar */
+.app-layout {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.control-sidebar {
-  width: 360px;
-  min-width: 360px;
-  background-color: #ffffff;
-  border-left: 1px solid #e9ecef;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.03);
-}
-
-.sidebar-content {
   flex: 1;
-  overflow-y: auto;
-}
-
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #e9ecef;
-  background-color: #ffffff;
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
+  overflow: hidden;
 }
