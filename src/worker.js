@@ -27,10 +27,88 @@ self.onmessage = async (e) => {
       }
     }
 
+    // ==========================================
+    // ELS AUTO-DISCOVER LOGIC
+    // ==========================================
+    if (searchMode === 'els') {
+      const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
+      const termLetters = targetTerm.split('');
+      const termLen = termLetters.length;
+
+      let matches = [];
+      const MAX_SKIP = 500;
+      const MAX_TOTAL_MATCHES = 20;
+
+      for (const range of ranges) {
+        const bookInfo = booksList.find(b => b.id === range.bookId);
+        const bookData = bookCache[range.bookId] || [];
+        const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
+
+        let letterSequence = [];
+        for (let i = 0; i < filteredData.length; i++) {
+          const item = filteredData[i];
+          for (let j = 0; j < item.w.length; j++) {
+            const char = item.w[j];
+            if (/[\u0590-\u05FF]/.test(char)) {
+              letterSequence.push({
+                char,
+                ref: `${bookInfo.he} ${item.c}:${item.v}`,
+                letterIdx: letterSequence.length
+              });
+            }
+          }
+        }
+
+        for (let skip = 2; skip <= MAX_SKIP; skip++) {
+          for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
+            let matched = true;
+            let matchIndices = [];
+
+            for (let k = 0; k < termLen; k++) {
+              const idx = start + k * skip;
+              if (letterSequence[idx].char !== termLetters[k]) {
+                matched = false;
+                break;
+              }
+              matchIndices.push(idx);
+            }
+
+            if (matched) {
+              const padding = 12;
+              const gridStart = Math.max(0, start - padding);
+              const gridEnd = Math.min(letterSequence.length, start + (termLen - 1) * skip + padding + 1);
+              const gridLetters = letterSequence.slice(gridStart, gridEnd).map((item, idx) => ({
+                ...item,
+                isMatch: matchIndices.includes(gridStart + idx)
+              }));
+
+              matches.push({
+                term: targetTerm,
+                skip,
+                bookName: bookInfo.name,
+                startRef: letterSequence[start].ref,
+                width: skip,
+                gridLetters
+              });
+
+              if (matches.length >= MAX_TOTAL_MATCHES) break;
+            }
+          }
+          if (matches.length >= MAX_TOTAL_MATCHES) break;
+        }
+        if (matches.length >= MAX_TOTAL_MATCHES) break;
+      }
+
+      self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
+      return;
+    }
+
+    // ==========================================
+    // STANDARD SEARCH LOGIC (Stable Baseline)
+    // ==========================================
     const totals = {};
     terms.forEach(term => totals[term] = 0);
 
-    // Pre-process terms for multi-word phrase arrays and number validation
     const parsedTerms = terms.map(t => ({
         original: t,
         words: t.split(' ').filter(w => w),
@@ -70,7 +148,6 @@ self.onmessage = async (e) => {
           let isMatch = false;
 
           if (searchMode === 'exact') {
-            // Phrase match lookahead
             isMatch = true;
             for(let j = 0; j < pt.words.length; j++) {
                 if (!filteredData[i + j] || filteredData[i + j].w !== pt.words[j]) {
@@ -83,7 +160,7 @@ self.onmessage = async (e) => {
           else if (searchMode === 'root') {
             if (item.r && item.r.includes(pt.original)) {
                 isMatch = true;
-                matchedStrings.push(item.w); // Return the actual word for highlighting
+                matchedStrings.push(item.w);
             }
           }
           else if (searchMode === 'letter') {
@@ -96,12 +173,11 @@ self.onmessage = async (e) => {
           else if (searchMode === 'gematria') {
             if (pt.isNumber && calculateGematria(item.w) === Number(pt.original)) {
                 isMatch = true;
-                matchedStrings.push(item.w); // Highlight whichever word matched the math
+                matchedStrings.push(item.w);
             }
           }
 
           if (isMatch) {
-            // Ensure letters appearing multiple times in one word are counted accurately
             const hitCount = (searchMode === 'letter') ? (item.w.split(pt.original).length - 1) : 1;
             rangeHits[pt.original] += hitCount;
             totals[pt.original] += hitCount;
@@ -121,7 +197,7 @@ self.onmessage = async (e) => {
                matchedVerses[term].push({
                  ref: `${bookInfo.he} ${vKey.replace(':', ' ')}`,
                  text: verseText,
-                 highlights: Array.from(verseObj.highlights) // Pass the precise matches to the UI
+                 highlights: Array.from(verseObj.highlights)
                });
             }
           });
@@ -137,7 +213,7 @@ self.onmessage = async (e) => {
       };
     });
 
-    self.postMessage({ status: 'success', chartData: formattedChartData, totals });
+    self.postMessage({ status: 'success', isEls: false, chartData: formattedChartData, totals });
 
   } catch (error) {
     self.postMessage({ status: 'error', error: error.message });

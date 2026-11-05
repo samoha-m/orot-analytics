@@ -1,5 +1,4 @@
 import React from 'react';
-import logoIcon from '../assets/OROT_ICON.png';
 import { booksList, numberToHebrew } from '../data/constants';
 
 function ControlSidebar({
@@ -18,8 +17,6 @@ function ControlSidebar({
   addRange,
   handleSearch
 }) {
-
-  // Micro-Typography styling object for section labels
   const sectionLabelStyle = {
     display: 'block',
     fontSize: '11px',
@@ -32,7 +29,6 @@ function ControlSidebar({
 
   return (
     <>
-      {/* MOBILE TOGGLE & OVERLAY */}
       <button className="mobile-trigger" onClick={() => setShowMobilePanel(true)}>
         🔍 Edit Search & Scopes
       </button>
@@ -40,10 +36,9 @@ function ControlSidebar({
         <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>
       )}
 
-      {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
 
-        {/* --- UNIFIED STICKY CONTROL DECK --- */}
+        {/* --- UNIFIED STICKY CONTROL DECK (Logo Removed) --- */}
         <div style={{
           position: 'sticky',
           top: 0,
@@ -51,30 +46,20 @@ function ControlSidebar({
           backgroundColor: '#ffffff',
           padding: '20px',
           borderBottom: '1px solid #e9ecef',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
         }}>
 
-          {/* 1. Logo Header */}
-          <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left', marginBottom: '20px' }}>
-            <img
-              src={logoIcon}
-              alt="Orot Logo"
-              style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
-            />
-            <div>
-              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}></span>
-              </h1>
-              <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
-                Hebrew Bible Text Analytics Engine
-              </p>
-            </div>
-            <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
-          </div>
-
-          {/* 2. Search Input Bar */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
+              <button
+                className="mobile-close"
+                onClick={() => setShowMobilePanel(false)}
+                style={{ display: showMobilePanel ? 'block' : 'none' }}
+              >
+                ✖
+              </button>
+            </div>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <svg style={{ position: 'absolute', left: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -95,48 +80,38 @@ function ControlSidebar({
                   outline: 'none',
                   transition: 'border-color 0.2s, box-shadow 0.2s'
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#0056b3';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(0, 86, 179, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#ced4da';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Faint Divider */}
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
-          {/* 3. Search Logic Mode */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <label style={sectionLabelStyle}>Search Logic Mode</label>
 
             <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
               {[
-                { val: 'exact', lbl: 'Exact', desc: 'Matches the exact phrase.' },
-                { val: 'root', lbl: 'Root', desc: 'Finds base linguistic root.' },
-                { val: 'letter', lbl: 'Letter', desc: 'Counts specific characters.' },
-                { val: 'gematria', lbl: 'Gematria', desc: 'Matches numerical value.' }
+                { val: 'exact', lbl: 'Exact' },
+                { val: 'root', lbl: 'Root' },
+                { val: 'letter', lbl: 'Letter' },
+                { val: 'gematria', lbl: 'Gematria' },
+                { val: 'els', lbl: 'Skip (ELS)' }
               ].map((m, index) => (
                 <label
                   key={m.val}
                   style={{
                     flex: 1,
                     textAlign: 'center',
-                    padding: '8px 4px',
+                    padding: '8px 2px',
                     margin: 0,
                     cursor: 'pointer',
-                    fontSize: '11.5px',
-                    borderRight: index !== 3 ? '1px solid #ced4da' : 'none',
+                    fontSize: '10.5px',
+                    borderRight: index !== 4 ? '1px solid #ced4da' : 'none',
                     backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent',
                     color: searchMode === m.val ? '#ffffff' : '#495057',
                     fontWeight: searchMode === m.val ? 'bold' : 'normal',
                     transition: 'background-color 0.2s, color 0.2s'
                   }}
-                  title={m.desc}
                 >
                   <input
                     type="radio"
@@ -153,11 +128,9 @@ function ControlSidebar({
           </div>
 
         </div>
-        {/* --- END STICKY DECK --- */}
 
-        {/* --- SCROLLABLE CONTENT AREA --- */}
-        <div className="sidebar-content" style={{ padding: '20px', paddingTop: '15px' }}>
-
+        {/* --- SCROLLABLE COMPARISON SCOPES --- */}
+        <div className="sidebar-content">
           <div className="input-group">
             <label style={sectionLabelStyle}>Comparison Scopes</label>
 

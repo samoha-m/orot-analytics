@@ -1,3 +1,19 @@
+/* =========================================
+   CSS RESET & GLOBAL CONSTRAINTS
+   ========================================= */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevents global scrollbars */
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 :root {
   --primary: #0056b3;
   --bg-canvas: #ffffff;
@@ -8,16 +24,64 @@
 }
 
 body {
-  margin: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--bg-canvas);
   color: var(--text-main);
 }
 
-/* Layout Skeleton */
+/* =========================================
+   STRUCTURAL LAYOUT
+   ========================================= */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.top-navbar {
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  z-index: 30;
+}
+
+.top-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-navbar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.top-navbar-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.top-navbar-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: #adb5bd;
+}
+
 .app-layout {
   display: flex;
-  height: 100vh;
+  flex: 1;
+  height: calc(100vh - 60px);
   overflow: hidden;
 }
 
@@ -29,18 +93,14 @@ body {
 }
 
 .control-sidebar {
-  width: 380px;
+  width: 360px;
+  flex-shrink: 0; /* Prevents sidebar from squishing */
   background-color: var(--bg-panel);
   border-left: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   box-shadow: -2px 0 10px rgba(0,0,0,0.02);
   z-index: 10;
-}
-
-.sidebar-header {
-  padding: 20px 20px 10px;
-  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-content {
@@ -55,25 +115,13 @@ body {
   background-color: var(--bg-panel);
 }
 
-.app-title { margin: 0 0 5px 0; font-size: 22px; color: var(--primary); }
-.app-subtitle { margin: 0; font-size: 14px; color: var(--text-muted); }
-
-/* Form Controls */
+/* =========================================
+   COMPONENTS
+   ========================================= */
 .input-group { margin-bottom: 20px; }
 .input-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
 
-.search-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  font-size: 16px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-.search-input:focus { border-color: var(--primary); outline: none; }
-
-/* Search Logic 2x2 Grid Container */
+/* View Mode Segmented Control (used in ChartDisplay) */
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -83,15 +131,11 @@ body {
   padding: 10px;
 }
 
-/* Individual Mode Buttons */
 .segment-btn {
-  position: relative; /* <-- ADD THIS LINE */
-  display: flex !important;
-  flex-direction: column !important; /* Stacks image on top, text on bottom */
-  align-items: center !important;    /* Centers them horizontally */
-  justify-content: center !important;
-  gap: 6px;                          /* Small gap between icon and text */
-  padding: 12px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
   background: transparent;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -99,90 +143,15 @@ body {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-muted);
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s;
 }
 
-/* Custom Tooltip Styling */
-.mode-tooltip {
-  position: absolute;
-  bottom: 105%; /* Pops up just above the button */
-  left: 50%;
-  transform: translateX(-50%) translateY(5px);
-  background-color: #212529; /* Dark premium background */
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: normal;
-  text-align: center;
-  padding: 8px 12px;
-  border-radius: 6px;
-  width: 140px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  z-index: 100;
-  pointer-events: none; /* Prevents the tooltip from blocking clicks */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  line-height: 1.4;
-}
-
-/* Tooltip pointing arrow */
-.mode-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #212529 transparent transparent transparent;
-}
-
-/* Show tooltip on hover */
-.segment-btn:hover .mode-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-.segment-btn input {
-  display: none;
-}
-
+.segment-btn input { display: none; }
 .segment-btn.active {
   background: #ffffff;
   color: var(--primary);
   border-color: var(--primary);
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-.segment-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Icon Sizing and Styling */
-.mode-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin: 0; /* Strips out any hidden margins */
-  transition: transform 0.2s ease;
-}
-
-.segment-btn:hover .mode-icon {
-  transform: scale(1.08);
-}
-
-/* Icon Sizing and Styling */
-.mode-icon {
-  width: 34px;
-  height: 34px;
-  object-fit: cover;
-  border-radius: 6px;
-  transition: transform 0.2s ease;
-}
-
-.segment-btn:hover .mode-icon {
-  transform: scale(1.08);
 }
 
 /* Ranges & Buttons */
@@ -288,7 +257,6 @@ body {
     font-weight: bold;
     box-shadow: 0 4px 12px rgba(0,86,179,0.3);
     z-index: 90;
-    font-size: 16px;
   }
 
   .mobile-overlay {
@@ -306,9 +274,8 @@ body {
     height: 85vh;
     border-radius: 20px 20px 0 0;
     transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    transition: transform 0.3s ease;
     z-index: 100;
-    border-left: none;
   }
 
   .control-sidebar.open {
@@ -323,7 +290,4 @@ body {
     color: var(--text-muted);
     cursor: pointer;
   }
-
-  .sidebar-header { display: flex; justify-content: space-between; align-items: center; }
 }
-
