@@ -1,6 +1,5 @@
 import React from 'react';
-import logoIcon from '../assets/OROT_ICON.jpg';
-import { booksList, numberToHebrew, ELS_SKIP_LOGICS } from '../data/constants';
+import { booksList, numberToHebrew } from '../data/constants';
 
 function ControlSidebar({
   showMobilePanel,
@@ -9,14 +8,6 @@ function ControlSidebar({
   setSearchTerm,
   searchMode,
   setSearchMode,
-  skipLogic,
-  setSkipLogic,
-  skipValue,
-  setSkipValue,
-  minSkip,
-  setMinSkip,
-  maxSkip,
-  setMaxSkip,
   ranges,
   loading,
   updateBook,
@@ -46,36 +37,30 @@ function ControlSidebar({
       )}
 
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
+
+        {/* --- UNIFIED STICKY CONTROL DECK --- */}
         <div style={{
           position: 'sticky',
           top: 0,
           zIndex: 20,
           backgroundColor: '#ffffff',
-          padding: '20px',
+          padding: '16px 20px',
           borderBottom: '1px solid #e9ecef',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
         }}>
-          {/* Logo Header */}
-          <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left', marginBottom: '20px' }}>
-            <img
-              src={logoIcon}
-              alt="Orot Logo"
-              style={{ width: '45px', height: '45px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginRight: '15px' }}
-            />
-            <div>
-              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
-              </h1>
-              <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
-                Hebrew Bible Text Analytics Engine
-              </p>
-            </div>
-            <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
-          </div>
 
-          {/* Search Terms Input */}
+          {/* 1. Search Terms Input */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
+              <button
+                className="mobile-close"
+                onClick={() => setShowMobilePanel(false)}
+                style={{ display: showMobilePanel ? 'block' : 'none' }}
+              >
+                ✖
+              </button>
+            </div>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <svg style={{ position: 'absolute', left: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -89,7 +74,7 @@ function ControlSidebar({
                 className="search-input"
                 style={{
                   width: '100%',
-                  padding: '10px 12px 10px 35px',
+                  padding: '9px 12px 9px 35px',
                   borderRadius: '6px',
                   border: '1px solid #ced4da',
                   fontSize: '14px',
@@ -100,9 +85,10 @@ function ControlSidebar({
             </div>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
+          {/* Faint Divider */}
+          <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '14px 0' }} />
 
-          {/* Search Logic Mode Selector */}
+          {/* 2. Search Logic Mode Selector */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <label style={sectionLabelStyle}>Search Logic Mode</label>
 
@@ -122,7 +108,7 @@ function ControlSidebar({
                     padding: '8px 2px',
                     margin: 0,
                     cursor: 'pointer',
-                    fontSize: '10.5px',
+                    fontSize: '11px',
                     borderRight: index !== 4 ? '1px solid #ced4da' : 'none',
                     backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent',
                     color: searchMode === m.val ? '#ffffff' : '#495057',
@@ -144,66 +130,10 @@ function ControlSidebar({
             </div>
           </div>
 
-          {/* ELS Configuration Board */}
-          {searchMode === 'els' && (
-            <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
-              <label style={{ ...sectionLabelStyle, marginBottom: '6px', color: '#0056b3' }}>ELS Configuration</label>
-
-              <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Skip Logic Rule</span>
-                <select
-                  value={skipLogic}
-                  onChange={(e) => setSkipLogic(e.target.value)}
-                  style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
-                >
-                  {ELS_SKIP_LOGICS.map(opt => (
-                    <option key={opt.val} value={opt.val}>{opt.lbl}</option>
-                  ))}
-                </select>
-              </div>
-
-              {skipLogic === 'fixed' && (
-                <div>
-                  <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Jump Size (Letters)</span>
-                  <input
-                    type="number"
-                    value={skipValue}
-                    onChange={(e) => setSkipValue(Number(e.target.value))}
-                    min="1"
-                    style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
-                  />
-                </div>
-              )}
-
-              {skipLogic === 'range' && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Min Skip</span>
-                    <input
-                      type="number"
-                      value={minSkip}
-                      onChange={(e) => setMinSkip(Number(e.target.value))}
-                      min="1"
-                      style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Max Skip</span>
-                    <input
-                      type="number"
-                      value={maxSkip}
-                      onChange={(e) => setMaxSkip(Number(e.target.value))}
-                      min="2"
-                      style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
+        {/* --- END STICKY DECK --- */}
 
-        {/* Scrollable Comparison Scopes */}
+        {/* --- SCROLLABLE COMPARISON SCOPES --- */}
         <div className="sidebar-content" style={{ padding: '20px', paddingTop: '15px' }}>
           <div className="input-group">
             <label style={sectionLabelStyle}>Comparison Scopes</label>

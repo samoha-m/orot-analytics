@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import logoIcon from './assets/OROT_ICON.png';
 import './App.css';
 
 import { booksList, calculateGematria, COLORS } from './data/constants';
@@ -15,10 +16,6 @@ function App() {
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('אור');
   const [searchMode, setSearchMode] = useState('exact');
-  const [skipLogic, setSkipLogic] = useState('fixed');
-  const [skipValue, setSkipValue] = useState(10);
-  const [minSkip, setMinSkip] = useState(2);
-  const [maxSkip, setMaxSkip] = useState(50);
 
   const [viewMode, setViewMode] = useState('absolute');
   const [resultTotals, setResultTotals] = useState(null);
@@ -101,11 +98,7 @@ function App() {
       ranges,
       terms,
       searchMode,
-      booksList,
-      skipLogic,
-      skipValue,
-      minSkip,
-      maxSkip
+      booksList
     });
   };
 
@@ -169,60 +162,66 @@ function App() {
   const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
   return (
-    <div className="app-layout">
-      {/* LEFT: MAIN CANVAS */}
-      <main className="main-canvas">
-        {searchMode === 'els' || isElsMode ? (
-          <MatrixGrid elsData={elsData} loading={loading} />
-        ) : (
-          <>
-            <ChartDisplay
-              resultTotals={resultTotals}
-              loading={loading}
-              activeTerms={activeTerms}
-              searchMode={searchMode}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              handleExportCSV={handleExportCSV}
-              minComfortableWidth={minComfortableWidth}
-              renderChartData={renderChartData}
-              setActivePreview={setActivePreview}
-            />
-            <VersePreview
-              activePreview={activePreview}
-              setActivePreview={setActivePreview}
-              activeTerms={activeTerms}
-              COLORS={COLORS}
-            />
-          </>
-        )}
-      </main>
+    <div className="app-container">
+      {/* GLOBAL TOP NAVIGATION BAR */}
+      <header className="top-navbar">
+        <div className="top-navbar-brand">
+          <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
+          <div>
+            <h1 className="top-navbar-title">Orot</h1>
+            <p className="top-navbar-subtitle">Hebrew Bible Text Analytics Engine</p>
+          </div>
+        </div>
+      </header>
 
-      {/* RIGHT: CONTROL SIDEBAR */}
-      <ControlSidebar
-        showMobilePanel={showMobilePanel}
-        setShowMobilePanel={setShowMobilePanel}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchMode={searchMode}
-        setSearchMode={setSearchMode}
-        skipLogic={skipLogic}
-        setSkipLogic={setSkipLogic}
-        skipValue={skipValue}
-        setSkipValue={setSkipValue}
-        minSkip={minSkip}
-        setMinSkip={setMinSkip}
-        maxSkip={maxSkip}
-        setMaxSkip={setMaxSkip}
-        ranges={ranges}
-        loading={loading}
-        updateBook={updateBook}
-        removeRange={removeRange}
-        toggleAccordion={toggleAccordion}
-        handleChapterSelection={handleChapterSelection}
-        addRange={addRange}
-        handleSearch={handleSearch}
-      />
+      {/* APP LAYOUT */}
+      <div className="app-layout">
+        {/* LEFT: MAIN CANVAS */}
+        <main className="main-canvas">
+          {searchMode === 'els' || isElsMode ? (
+            <MatrixGrid elsData={elsData} loading={loading} />
+          ) : (
+            <>
+              <ChartDisplay
+                resultTotals={resultTotals}
+                loading={loading}
+                activeTerms={activeTerms}
+                searchMode={searchMode}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                handleExportCSV={handleExportCSV}
+                minComfortableWidth={minComfortableWidth}
+                renderChartData={renderChartData}
+                setActivePreview={setActivePreview}
+              />
+              <VersePreview
+                activePreview={activePreview}
+                setActivePreview={setActivePreview}
+                activeTerms={activeTerms}
+                COLORS={COLORS}
+              />
+            </>
+          )}
+        </main>
+
+        {/* RIGHT: CONTROL SIDEBAR */}
+        <ControlSidebar
+          showMobilePanel={showMobilePanel}
+          setShowMobilePanel={setShowMobilePanel}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchMode={searchMode}
+          setSearchMode={setSearchMode}
+          ranges={ranges}
+          loading={loading}
+          updateBook={updateBook}
+          removeRange={removeRange}
+          toggleAccordion={toggleAccordion}
+          handleChapterSelection={handleChapterSelection}
+          addRange={addRange}
+          handleSearch={handleSearch}
+        />
+      </div>
     </div>
   );
 }

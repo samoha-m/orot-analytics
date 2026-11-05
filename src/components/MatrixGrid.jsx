@@ -1,20 +1,37 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 function MatrixGrid({ elsData, loading }) {
   const matrixRef = useRef(null);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
-  if (loading) return <h3 style={{ color: '#0056b3' }}>Searching Equidistant Letter Sequences...</h3>;
+  if (loading) return <h3 style={{ color: '#0056b3' }}>Auto-discovering Equidistant Letter Sequences...</h3>;
+
   if (!elsData || !elsData.matches || elsData.matches.length === 0) {
     return (
       <div style={{ textAlign: 'center', marginTop: '60px', color: '#6c757d' }}>
-        <h3>No ELS matches found</h3>
-        <p>Try adjusting your search terms or skip logic settings.</p>
+        <h3>No ELS patterns discovered</h3>
+        <p>No letter skip occurrences found for this term in the selected scopes.</p>
       </div>
     );
   }
 
-  const selectedMatch = elsData.matches[0];
-  const { gridLetters, width, term, skip, bookName } = selectedMatch;
+  const matches = elsData.matches;
+  const totalMatches = matches.length;
+  const activeMatchIndex = Math.min(currentMatchIndex, totalMatches - 1);
+  const selectedMatch = matches[activeMatchIndex];
+  const { gridLetters, width, term, skip, bookName, startRef } = selectedMatch;
+
+  const handleNextMatch = () => {
+    if (activeMatchIndex < totalMatches - 1) {
+      setCurrentMatchIndex(activeMatchIndex + 1);
+    }
+  };
+
+  const handlePrevMatch = () => {
+    if (activeMatchIndex > 0) {
+      setCurrentMatchIndex(activeMatchIndex - 1);
+    }
+  };
 
   const handleExportPNG = () => {
     const gridEl = matrixRef.current;
@@ -70,15 +87,46 @@ function MatrixGrid({ elsData, loading }) {
 
   return (
     <div style={{ padding: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, color: '#0056b3' }}>
-          ELS Matrix Result: "{term}" <span style={{ fontSize: '13px', color: '#6c757d' }}>(Skip: {skip}, Scope: {bookName})</span>
-        </h3>
-        <button onClick={handleExportPNG} className="btn btn-export" style={{ backgroundColor: '#111827', color: '#fff' }}>
-          📥 Export Visual Grid (PNG)
-        </button>
+      {/* HEADER & CONTROLS */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+        <div>
+          <h3 style={{ margin: 0, color: '#0056b3' }}>
+            ELS Pattern Discovered: "{term}"
+          </h3>
+          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
+            Found in <strong>{bookName}</strong> ({startRef}) at <strong>Skip: {skip} letters</strong>
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Pattern Navigation */}
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px 10px', borderRadius: '6px', border: '1px solid #ced4da' }}>
+            <button
+              onClick={handlePrevMatch}
+              disabled={activeMatchIndex === 0}
+              style={{ border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer', opacity: activeMatchIndex === 0 ? 0.4 : 1, fontWeight: 'bold' }}
+            >
+              ◀
+            </button>
+            <span style={{ fontSize: '12px', margin: '0 10px', fontWeight: 'bold', color: '#495057' }}>
+              Pattern {activeMatchIndex + 1} of {totalMatches}
+            </span>
+            <button
+              onClick={handleNextMatch}
+              disabled={activeMatchIndex === totalMatches - 1}
+              style={{ border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer', opacity: activeMatchIndex === totalMatches - 1 ? 0.4 : 1, fontWeight: 'bold' }}
+            >
+              ▶
+            </button>
+          </div>
+
+          <button onClick={handleExportPNG} className="btn btn-export" style={{ backgroundColor: '#111827', color: '#fff' }}>
+            📥 Export Grid (PNG)
+          </button>
+        </div>
       </div>
 
+      {/* MATRIX GRID DISPLAY */}
       <div
         ref={matrixRef}
         style={{

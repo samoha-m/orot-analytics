@@ -1,15 +1,15 @@
-import { isPrime } from './data/constants.js';
-
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList, skipLogic, skipValue, minSkip, maxSkip } = e.data;
+  const { ranges, terms, searchMode, booksList } = e.data;
 
   try {
     if (searchMode === 'els') {
-      const targetTerm = terms[0] || 'אור';
-      const termLetters = targetTerm.replace(/\s+/g, '').split('');
+      const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
+      const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
 
       let matches = [];
+      const MAX_SKIP = 500; // Upper limit for skip jumps
+      const MAX_TOTAL_MATCHES = 20; // Cap total discovered patterns to keep engine fast
 
       for (const range of ranges) {
         const bookObj = booksList.find(b => b.id === range.bookId);
@@ -38,23 +38,9 @@ self.onmessage = async (e) => {
           }
         });
 
-        let validSkips = [];
-        if (skipLogic === 'fixed') {
-          validSkips = [Math.max(1, skipValue || 10)];
-        } else if (skipLogic === 'range') {
-          const min = Math.max(1, minSkip || 2);
-          const max = Math.max(min, maxSkip || 50);
-          for (let s = min; s <= max; s++) validSkips.push(s);
-        } else if (skipLogic === 'prime') {
-          for (let s = 2; s <= 50; s++) {
-            if (isPrime(s)) validSkips.push(s);
-          }
-        } else if (skipLogic === 'fibonacci') {
-          validSkips = [2, 3, 5, 8, 13, 21, 34, 55];
-        }
-
-        for (const skip of validSkips) {
-          for (let start = 0; start < letterSequence.length - (termLen - 1) * skip; start++) {
+        // Auto-discover scan across skip intervals (2 to MAX_SKIP)
+        for (let skip = 2; skip <= MAX_SKIP; skip++) {
+          for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
             let matchIndices = [];
 
@@ -68,7 +54,7 @@ self.onmessage = async (e) => {
             }
 
             if (matched) {
-              const padding = 15;
+              const padding = 12;
               const gridStart = Math.max(0, start - padding);
               const gridEnd = Math.min(letterSequence.length, start + (termLen - 1) * skip + padding + 1);
               const gridLetters = letterSequence.slice(gridStart, gridEnd).map((item, idx) => ({
@@ -80,15 +66,17 @@ self.onmessage = async (e) => {
                 term: targetTerm,
                 skip,
                 bookName: bookObj.name,
+                startRef: letterSequence[start].ref,
                 width: skip,
                 gridLetters
               });
 
-              if (matches.length >= 5) break;
+              if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
           }
-          if (matches.length >= 5) break;
+          if (matches.length >= MAX_TOTAL_MATCHES) break;
         }
+        if (matches.length >= MAX_TOTAL_MATCHES) break;
       }
 
       self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
@@ -128,15 +116,6 @@ self.onmessage = async (e) => {
               } else if (searchMode === 'letter') {
                 const matches = verseText.split('').filter(c => term.includes(c));
                 count = matches.length;
-              } else if (searchMode === 'gematria') {
-                const gemVal = parseInt(term, 10);
-                words.forEach(w => {
-                  let sum = 0;
-                  for (let i = 0; i < w.length; i++) {
-                    sum += (gematriaMap[w[i]] || 0);
-                  }
-                  if (sum === gemVal) count++;
-                });
               }
 
               if (count > 0) {
