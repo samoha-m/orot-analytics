@@ -1,5 +1,5 @@
 import React from 'react';
-import logoIcon from '../assets/OROT_ICON.jpg';
+import logoIcon from '../assets/OROT_ICON.png';
 import { booksList, numberToHebrew } from '../data/constants';
 
 function ControlSidebar({
