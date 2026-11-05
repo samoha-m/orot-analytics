@@ -1,6 +1,6 @@
 import React from 'react';
-import logoIcon from '../assets/OROT_ICON.png';
-import { booksList, numberToHebrew } from '../data/constants';
+import logoIcon from '../assets/OROT_ICON.jpg';
+import { booksList, numberToHebrew, ELS_SKIP_LOGICS } from '../data/constants';
 
 function ControlSidebar({
   showMobilePanel,
@@ -9,6 +9,14 @@ function ControlSidebar({
   setSearchTerm,
   searchMode,
   setSearchMode,
+  skipLogic,
+  setSkipLogic,
+  skipValue,
+  setSkipValue,
+  minSkip,
+  setMinSkip,
+  maxSkip,
+  setMaxSkip,
   ranges,
   loading,
   updateBook,
@@ -18,8 +26,6 @@ function ControlSidebar({
   addRange,
   handleSearch
 }) {
-
-  // Micro-Typography styling object for section labels
   const sectionLabelStyle = {
     display: 'block',
     fontSize: '11px',
@@ -32,7 +38,6 @@ function ControlSidebar({
 
   return (
     <>
-      {/* MOBILE TOGGLE & OVERLAY */}
       <button className="mobile-trigger" onClick={() => setShowMobilePanel(true)}>
         🔍 Edit Search & Scopes
       </button>
@@ -40,10 +45,7 @@ function ControlSidebar({
         <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>
       )}
 
-      {/* RIGHT: CONTROL SIDEBAR */}
       <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
-
-        {/* --- UNIFIED STICKY CONTROL DECK --- */}
         <div style={{
           position: 'sticky',
           top: 0,
@@ -53,8 +55,7 @@ function ControlSidebar({
           borderBottom: '1px solid #e9ecef',
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
         }}>
-
-          {/* 1. Logo Header */}
+          {/* Logo Header */}
           <div style={{ display: 'flex', alignItems: 'center', textAlign: 'left', marginBottom: '20px' }}>
             <img
               src={logoIcon}
@@ -63,7 +64,7 @@ function ControlSidebar({
             />
             <div>
               <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', lineHeight: '1', color: '#0056b3' }}>
-                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}></span>
+                Orot <span style={{fontSize: '13px', fontWeight: 'normal', color: '#6c757d'}}>(אורות)</span>
               </h1>
               <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#adb5bd' }}>
                 Hebrew Bible Text Analytics Engine
@@ -72,7 +73,7 @@ function ControlSidebar({
             <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ marginLeft: 'auto' }}>✖</button>
           </div>
 
-          {/* 2. Search Input Bar */}
+          {/* Search Terms Input */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
 
@@ -95,48 +96,39 @@ function ControlSidebar({
                   outline: 'none',
                   transition: 'border-color 0.2s, box-shadow 0.2s'
                 }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#0056b3';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(0, 86, 179, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#ced4da';
-                  e.target.style.boxShadow = 'none';
-                }}
               />
             </div>
           </div>
 
-          {/* Faint Divider */}
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
-          {/* 3. Search Logic Mode */}
+          {/* Search Logic Mode Selector */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <label style={sectionLabelStyle}>Search Logic Mode</label>
 
             <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
               {[
-                { val: 'exact', lbl: 'Exact', desc: 'Matches the exact phrase.' },
-                { val: 'root', lbl: 'Root', desc: 'Finds base linguistic root.' },
-                { val: 'letter', lbl: 'Letter', desc: 'Counts specific characters.' },
-                { val: 'gematria', lbl: 'Gematria', desc: 'Matches numerical value.' }
+                { val: 'exact', lbl: 'Exact' },
+                { val: 'root', lbl: 'Root' },
+                { val: 'letter', lbl: 'Letter' },
+                { val: 'gematria', lbl: 'Gematria' },
+                { val: 'els', lbl: 'Skip (ELS)' }
               ].map((m, index) => (
                 <label
                   key={m.val}
                   style={{
                     flex: 1,
                     textAlign: 'center',
-                    padding: '8px 4px',
+                    padding: '8px 2px',
                     margin: 0,
                     cursor: 'pointer',
-                    fontSize: '11.5px',
-                    borderRight: index !== 3 ? '1px solid #ced4da' : 'none',
+                    fontSize: '10.5px',
+                    borderRight: index !== 4 ? '1px solid #ced4da' : 'none',
                     backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent',
                     color: searchMode === m.val ? '#ffffff' : '#495057',
                     fontWeight: searchMode === m.val ? 'bold' : 'normal',
                     transition: 'background-color 0.2s, color 0.2s'
                   }}
-                  title={m.desc}
                 >
                   <input
                     type="radio"
@@ -152,12 +144,67 @@ function ControlSidebar({
             </div>
           </div>
 
+          {/* ELS Configuration Board */}
+          {searchMode === 'els' && (
+            <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+              <label style={{ ...sectionLabelStyle, marginBottom: '6px', color: '#0056b3' }}>ELS Configuration</label>
+
+              <div style={{ marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Skip Logic Rule</span>
+                <select
+                  value={skipLogic}
+                  onChange={(e) => setSkipLogic(e.target.value)}
+                  style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
+                >
+                  {ELS_SKIP_LOGICS.map(opt => (
+                    <option key={opt.val} value={opt.val}>{opt.lbl}</option>
+                  ))}
+                </select>
+              </div>
+
+              {skipLogic === 'fixed' && (
+                <div>
+                  <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Jump Size (Letters)</span>
+                  <input
+                    type="number"
+                    value={skipValue}
+                    onChange={(e) => setSkipValue(Number(e.target.value))}
+                    min="1"
+                    style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
+                  />
+                </div>
+              )}
+
+              {skipLogic === 'range' && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Min Skip</span>
+                    <input
+                      type="number"
+                      value={minSkip}
+                      onChange={(e) => setMinSkip(Number(e.target.value))}
+                      min="1"
+                      style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '11px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>Max Skip</span>
+                    <input
+                      type="number"
+                      value={maxSkip}
+                      onChange={(e) => setMaxSkip(Number(e.target.value))}
+                      min="2"
+                      style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        {/* --- END STICKY DECK --- */}
 
-        {/* --- SCROLLABLE CONTENT AREA --- */}
+        {/* Scrollable Comparison Scopes */}
         <div className="sidebar-content" style={{ padding: '20px', paddingTop: '15px' }}>
-
           <div className="input-group">
             <label style={sectionLabelStyle}>Comparison Scopes</label>
 

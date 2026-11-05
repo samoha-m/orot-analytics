@@ -5,6 +5,7 @@ import { booksList, calculateGematria, COLORS } from './data/constants';
 import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
+import MatrixGrid from './components/MatrixGrid';
 
 function App() {
   const workerRef = useRef(null);
@@ -14,18 +15,36 @@ function App() {
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('אור');
   const [searchMode, setSearchMode] = useState('exact');
+  const [skipLogic, setSkipLogic] = useState('fixed');
+  const [skipValue, setSkipValue] = useState(10);
+  const [minSkip, setMinSkip] = useState(2);
+  const [maxSkip, setMaxSkip] = useState(50);
+
   const [viewMode, setViewMode] = useState('absolute');
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
   const [activeTerms, setActiveTerms] = useState([]);
   const [activePreview, setActivePreview] = useState(null);
 
+  const [isElsMode, setIsElsMode] = useState(false);
+  const [elsData, setElsData] = useState(null);
+
   useEffect(() => {
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
     workerRef.current.onmessage = (e) => {
-      const { status, chartData, totals, error } = e.data;
-      if (status === 'success') { setRawChartData(chartData); setResultTotals(totals); }
-      else { console.error("Worker failed:", error); }
+      const { status, isEls, chartData, totals, elsData: resEls, error } = e.data;
+      if (status === 'success') {
+        if (isEls) {
+          setIsElsMode(true);
+          setElsData(resEls);
+        } else {
+          setIsElsMode(false);
+          setRawChartData(chartData);
+          setResultTotals(totals);
+        }
+      } else {
+        console.error("Worker failed:", error);
+      }
       setLoading(false);
     };
     return () => workerRef.current.terminate();
@@ -41,9 +60,7 @@ function App() {
 
   const toggleAccordion = (id) => {
     setRanges(ranges.map(r =>
-      r.id === id
-        ? { ...r, isExpanded: !r.isExpanded }
-        : { ...r, isExpanded: false }
+      r.id === id ? { ...r, isExpanded: !r.isExpanded } : { ...r, isExpanded: false }
     ));
   };
 
@@ -79,7 +96,17 @@ function App() {
     setActiveTerms(terms);
     setActivePreview(null);
     setShowMobilePanel(false);
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
+
+    workerRef.current.postMessage({
+      ranges,
+      terms,
+      searchMode,
+      booksList,
+      skipLogic,
+      skipValue,
+      minSkip,
+      maxSkip
+    });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -143,27 +170,32 @@ function App() {
 
   return (
     <div className="app-layout">
-      {/* LEFT: MAIN CANVAS (Chart & Results) */}
+      {/* LEFT: MAIN CANVAS */}
       <main className="main-canvas">
-        <ChartDisplay
-          resultTotals={resultTotals}
-          loading={loading}
-          activeTerms={activeTerms}
-          searchMode={searchMode}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          handleExportCSV={handleExportCSV}
-          minComfortableWidth={minComfortableWidth}
-          renderChartData={renderChartData}
-          setActivePreview={setActivePreview}
-        />
-
-        <VersePreview
-          activePreview={activePreview}
-          setActivePreview={setActivePreview}
-          activeTerms={activeTerms}
-          COLORS={COLORS}
-        />
+        {searchMode === 'els' || isElsMode ? (
+          <MatrixGrid elsData={elsData} loading={loading} />
+        ) : (
+          <>
+            <ChartDisplay
+              resultTotals={resultTotals}
+              loading={loading}
+              activeTerms={activeTerms}
+              searchMode={searchMode}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              handleExportCSV={handleExportCSV}
+              minComfortableWidth={minComfortableWidth}
+              renderChartData={renderChartData}
+              setActivePreview={setActivePreview}
+            />
+            <VersePreview
+              activePreview={activePreview}
+              setActivePreview={setActivePreview}
+              activeTerms={activeTerms}
+              COLORS={COLORS}
+            />
+          </>
+        )}
       </main>
 
       {/* RIGHT: CONTROL SIDEBAR */}
@@ -174,6 +206,14 @@ function App() {
         setSearchTerm={setSearchTerm}
         searchMode={searchMode}
         setSearchMode={setSearchMode}
+        skipLogic={skipLogic}
+        setSkipLogic={setSkipLogic}
+        skipValue={skipValue}
+        setSkipValue={setSkipValue}
+        minSkip={minSkip}
+        setMinSkip={setMinSkip}
+        maxSkip={maxSkip}
+        setMaxSkip={setMaxSkip}
         ranges={ranges}
         loading={loading}
         updateBook={updateBook}

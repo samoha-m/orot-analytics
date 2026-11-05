@@ -1,144 +1,164 @@
-const bookCache = {};
-
-const gematriaMap = {
-  'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
-  'י': 10, 'כ': 20, 'ך': 20, 'ל': 30, 'מ': 40, 'ם': 40, 'נ': 50, 'ן': 50,
-  'ס': 60, 'ע': 70, 'פ': 80, 'ף': 80, 'צ': 90, 'ץ': 90,
-  'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
-};
-
-const calculateGematria = (word) => {
-  let sum = 0;
-  for (let i = 0; i < word.length; i++) { sum += gematriaMap[word[i]] || 0; }
-  return sum;
-};
+import { isPrime } from './data/constants.js';
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList } = e.data;
+  const { ranges, terms, searchMode, booksList, skipLogic, skipValue, minSkip, maxSkip } = e.data;
 
   try {
-    const neededBookIds = [...new Set(ranges.map(r => r.bookId))];
-    for (const id of neededBookIds) {
-      if (!bookCache[id]) {
-        const bookInfo = booksList.find(b => b.id === id);
-        const fileName = `/data/${bookInfo.id}_${bookInfo.name.toLowerCase()}.json`;
-        const res = await fetch(fileName);
-        bookCache[id] = await res.json();
-      }
-    }
+    if (searchMode === 'els') {
+      const targetTerm = terms[0] || 'אור';
+      const termLetters = targetTerm.replace(/\s+/g, '').split('');
+      const termLen = termLetters.length;
 
-    const totals = {};
-    terms.forEach(term => totals[term] = 0);
+      let matches = [];
 
-    // Pre-process terms for multi-word phrase arrays and number validation
-    const parsedTerms = terms.map(t => ({
-        original: t,
-        words: t.split(' ').filter(w => w),
-        isNumber: !isNaN(Number(t)) && t.trim() !== ''
-    }));
+      for (const range of ranges) {
+        const bookObj = booksList.find(b => b.id === range.bookId);
+        if (!bookObj) continue;
 
-    const formattedChartData = ranges.map((range) => {
-      const bookData = bookCache[range.bookId] || [];
-      const bookInfo = booksList.find(b => b.id === range.bookId);
+        const response = await fetch(`/data/${bookObj.id}_${bookObj.name}.json`);
+        const bookData = await response.json();
 
-      const rangeHits = {};
-      const matchedVerses = {};
-      let rangeTotalWords = 0;
-      let rangeTotalChars = 0;
-
-      terms.forEach(term => {
-        rangeHits[term] = 0;
-        matchedVerses[term] = [];
-      });
-
-      const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
-      const verses = {};
-
-      for (let i = 0; i < filteredData.length; i++) {
-        const item = filteredData[i];
-        rangeTotalWords += 1;
-        rangeTotalChars += item.w.length;
-
-        const vKey = `${item.c}:${item.v}`;
-        if (!verses[vKey]) {
-          verses[vKey] = { text: [], matches: new Set(), highlights: new Set() };
-        }
-        verses[vKey].text.push(item.w);
-
-        parsedTerms.forEach(pt => {
-          let matchedStrings = [];
-          let isMatch = false;
-
-          if (searchMode === 'exact') {
-            // Phrase match lookahead
-            isMatch = true;
-            for(let j = 0; j < pt.words.length; j++) {
-                if (!filteredData[i + j] || filteredData[i + j].w !== pt.words[j]) {
-                    isMatch = false;
-                    break;
+        let letterSequence = [];
+        Object.keys(bookData).forEach(chNum => {
+          const chInt = parseInt(chNum, 10);
+          if (range.selectedChapters.includes(chInt)) {
+            Object.keys(bookData[chNum]).forEach(vNum => {
+              const verseText = bookData[chNum][vNum];
+              for (let i = 0; i < verseText.length; i++) {
+                const char = verseText[i];
+                if (/[\u0590-\u05FF]/.test(char)) {
+                  letterSequence.push({
+                    char,
+                    ref: `${bookObj.he} ${chNum}:${vNum}`,
+                    letterIdx: letterSequence.length
+                  });
                 }
-            }
-            if (isMatch) matchedStrings.push(pt.original);
-          }
-          else if (searchMode === 'root') {
-            if (item.r && item.r.includes(pt.original)) {
-                isMatch = true;
-                matchedStrings.push(item.w); // Return the actual word for highlighting
-            }
-          }
-          else if (searchMode === 'letter') {
-            const hitsInWord = item.w.split(pt.original).length - 1;
-            if (hitsInWord > 0) {
-                isMatch = true;
-                matchedStrings.push(pt.original);
-            }
-          }
-          else if (searchMode === 'gematria') {
-            if (pt.isNumber && calculateGematria(item.w) === Number(pt.original)) {
-                isMatch = true;
-                matchedStrings.push(item.w); // Highlight whichever word matched the math
-            }
-          }
-
-          if (isMatch) {
-            // Ensure letters appearing multiple times in one word are counted accurately
-            const hitCount = (searchMode === 'letter') ? (item.w.split(pt.original).length - 1) : 1;
-            rangeHits[pt.original] += hitCount;
-            totals[pt.original] += hitCount;
-
-            verses[vKey].matches.add(pt.original);
-            matchedStrings.forEach(str => verses[vKey].highlights.add(str));
+              }
+            });
           }
         });
+
+        let validSkips = [];
+        if (skipLogic === 'fixed') {
+          validSkips = [Math.max(1, skipValue || 10)];
+        } else if (skipLogic === 'range') {
+          const min = Math.max(1, minSkip || 2);
+          const max = Math.max(min, maxSkip || 50);
+          for (let s = min; s <= max; s++) validSkips.push(s);
+        } else if (skipLogic === 'prime') {
+          for (let s = 2; s <= 50; s++) {
+            if (isPrime(s)) validSkips.push(s);
+          }
+        } else if (skipLogic === 'fibonacci') {
+          validSkips = [2, 3, 5, 8, 13, 21, 34, 55];
+        }
+
+        for (const skip of validSkips) {
+          for (let start = 0; start < letterSequence.length - (termLen - 1) * skip; start++) {
+            let matched = true;
+            let matchIndices = [];
+
+            for (let k = 0; k < termLen; k++) {
+              const idx = start + k * skip;
+              if (letterSequence[idx].char !== termLetters[k]) {
+                matched = false;
+                break;
+              }
+              matchIndices.push(idx);
+            }
+
+            if (matched) {
+              const padding = 15;
+              const gridStart = Math.max(0, start - padding);
+              const gridEnd = Math.min(letterSequence.length, start + (termLen - 1) * skip + padding + 1);
+              const gridLetters = letterSequence.slice(gridStart, gridEnd).map((item, idx) => ({
+                ...item,
+                isMatch: matchIndices.includes(gridStart + idx)
+              }));
+
+              matches.push({
+                term: targetTerm,
+                skip,
+                bookName: bookObj.name,
+                width: skip,
+                gridLetters
+              });
+
+              if (matches.length >= 5) break;
+            }
+          }
+          if (matches.length >= 5) break;
+        }
       }
 
-      Object.keys(verses).forEach(vKey => {
-        const verseObj = verses[vKey];
-        if (verseObj.matches.size > 0) {
-          const verseText = verseObj.text.join(" ");
-          verseObj.matches.forEach(term => {
-            if (matchedVerses[term].length < 100) {
-               matchedVerses[term].push({
-                 ref: `${bookInfo.he} ${vKey.replace(':', ' ')}`,
-                 text: verseText,
-                 highlights: Array.from(verseObj.highlights) // Pass the precise matches to the UI
-               });
-            }
+      self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
+      return;
+    }
+
+    // Standard word/root/letter search logic
+    let chartData = [];
+    let totals = {};
+    terms.forEach(t => { totals[t] = 0; });
+
+    for (const range of ranges) {
+      const bookObj = booksList.find(b => b.id === range.bookId);
+      if (!bookObj) continue;
+
+      const response = await fetch(`/data/${bookObj.id}_${bookObj.name}.json`);
+      const bookData = await response.json();
+
+      let row = { name: bookObj.name, rangeTotalWords: 0, rangeTotalChars: 0, verses: {} };
+      terms.forEach(t => { row[t] = 0; row.verses[t] = []; });
+
+      Object.keys(bookData).forEach(chNum => {
+        const chInt = parseInt(chNum, 10);
+        if (range.selectedChapters.includes(chInt)) {
+          Object.keys(bookData[chNum]).forEach(vNum => {
+            const verseText = bookData[chNum][vNum];
+            const words = verseText.split(/\s+/).filter(w => w.length > 0);
+            row.rangeTotalWords += words.length;
+            row.rangeTotalChars += verseText.length;
+
+            terms.forEach(term => {
+              let count = 0;
+              if (searchMode === 'exact' || searchMode === 'root') {
+                const regex = new RegExp(term, 'g');
+                const matches = verseText.match(regex);
+                count = matches ? matches.length : 0;
+              } else if (searchMode === 'letter') {
+                const matches = verseText.split('').filter(c => term.includes(c));
+                count = matches.length;
+              } else if (searchMode === 'gematria') {
+                const gemVal = parseInt(term, 10);
+                words.forEach(w => {
+                  let sum = 0;
+                  for (let i = 0; i < w.length; i++) {
+                    sum += (gematriaMap[w[i]] || 0);
+                  }
+                  if (sum === gemVal) count++;
+                });
+              }
+
+              if (count > 0) {
+                row[term] += count;
+                totals[term] += count;
+                if (row.verses[term].length < 100) {
+                  row.verses[term].push({
+                    ref: `${bookObj.he} ${chNum}:${vNum}`,
+                    text: verseText,
+                    highlights: [term]
+                  });
+                }
+              }
+            });
           });
         }
       });
 
-      return {
-        name: `${bookInfo.he} (${range.selectedChapters.length} Chs)`,
-        verses: matchedVerses,
-        rangeTotalWords,
-        rangeTotalChars,
-        ...rangeHits
-      };
-    });
+      chartData.push(row);
+    }
 
-    self.postMessage({ status: 'success', chartData: formattedChartData, totals });
-
+    self.postMessage({ status: 'success', isEls: false, chartData, totals });
   } catch (error) {
     self.postMessage({ status: 'error', error: error.message });
   }

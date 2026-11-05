@@ -48,3 +48,20 @@ export const numberToHebrew = (num) => {
 };
 
 export const COLORS = ['#0056b3', '#dc3545', '#28a745', '#ffc107', '#6f42c1'];
+
+export const ELS_SKIP_LOGICS = [
+  { val: 'fixed', lbl: 'Fixed Interval' },
+  { val: 'range', lbl: 'Min/Max Range' },
+  { val: 'prime', lbl: 'Prime Numbers' },
+  { val: 'fibonacci', lbl: 'Fibonacci Sequence' }
+];
+
+export const isPrime = (n) => {
+  if (n <= 1) return false;
+  if (n <= 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+  }
+  return true;
+};
