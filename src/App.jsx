@@ -6,7 +6,7 @@ import { booksList, calculateGematria, COLORS } from './data/constants';
 import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
-import MatrixGrid from './components/MatrixGrid';
+import ELSLinearView from './components/ELSLinearView';
 
 function App() {
   const workerRef = useRef(null);
@@ -144,11 +144,11 @@ function App() {
 
   return (
     <div className="app-container">
-{/* GLOBAL TOP NAVIGATION BAR */}
+      {/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
-          <h1 className="top-navbar-title">Orot</h1>
+          <h1 className="top-navbar-title" style={{ textAlign: 'left' }}>Orot</h1>
         </div>
       </header>
 
@@ -156,7 +156,7 @@ function App() {
       <div className="app-layout">
         <main className="main-canvas">
           {searchMode === 'els' || isElsMode ? (
-            <MatrixGrid elsData={elsData} loading={loading} />
+            <ELSLinearView elsData={elsData} loading={loading} />
           ) : (
             <>
               <ChartDisplay
