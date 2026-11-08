@@ -160,46 +160,49 @@ function App() {
     <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* GLOBAL TOP NAVIGATION BAR */}
 {/* GLOBAL TOP NAVIGATION BAR */}
+      {/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
           <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
         </div>
 
-        {/* ICON-BASED LANGUAGE SELECTOR */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        {/* IMAGE FLAG LANGUAGE SELECTOR */}
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
           <button
             onClick={() => setLang('en')}
             title="English"
             style={{
-              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
-              opacity: lang === 'en' ? 1 : 0.3, transform: lang === 'en' ? 'scale(1.1)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'en' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              opacity: lang === 'en' ? 1 : 0.4, transform: lang === 'en' ? 'scale(1.15)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'en' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
             }}
           >
-            🇺🇸
+            <img src="https://flagcdn.com/us.svg" alt="English" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
+
           <button
             onClick={() => setLang('he')}
             title="עברית"
             style={{
-              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
-              opacity: lang === 'he' ? 1 : 0.3, transform: lang === 'he' ? 'scale(1.1)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'he' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              opacity: lang === 'he' ? 1 : 0.4, transform: lang === 'he' ? 'scale(1.15)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'he' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
             }}
           >
-            🇮🇱
+            <img src="https://flagcdn.com/il.svg" alt="Hebrew" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
+
           <button
             onClick={() => setLang('fa')}
             title="فارسی"
             style={{
-              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
-              opacity: lang === 'fa' ? 1 : 0.3, transform: lang === 'fa' ? 'scale(1.1)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'fa' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              opacity: lang === 'fa' ? 1 : 0.4, transform: lang === 'fa' ? 'scale(1.15)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'fa' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
             }}
           >
-            🇮🇷
+            <img src="https://flagcdn.com/ir.svg" alt="Farsi" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
         </div>
       </header>
