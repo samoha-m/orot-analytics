@@ -5,24 +5,12 @@ function ELSLinearView({ elsData, loading }) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [arcs, setArcs] = useState([]);
 
-  if (loading) return <h3 style={{ color: '#0056b3' }}>Auto-discovering Equidistant Letter Sequences...</h3>;
+  // Safely compute matches before any conditional returns
+  const totalMatches = elsData?.matches?.length || 0;
+  const activeMatchIndex = Math.min(currentMatchIndex, Math.max(0, totalMatches - 1));
+  const selectedMatch = totalMatches > 0 ? elsData.matches[activeMatchIndex] : null;
 
-  if (!elsData || !elsData.matches || elsData.matches.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '60px', color: '#6c757d' }}>
-        <h3>No ELS patterns discovered</h3>
-        <p>No letter skip occurrences found for this term in the selected scopes.</p>
-      </div>
-    );
-  }
-
-  const matches = elsData.matches;
-  const totalMatches = matches.length;
-  const activeMatchIndex = Math.min(currentMatchIndex, totalMatches - 1);
-  const selectedMatch = matches[activeMatchIndex];
-  const { gridLetters, term, skip, bookName, startRef } = selectedMatch;
-
-  // Track the resize and recalculate connection curves
+  // ALL HOOKS MUST BE AT THE TOP (Rule of Hooks)
   useEffect(() => {
     const calculateArcs = () => {
       if (!containerRef.current) return;
@@ -54,7 +42,7 @@ function ELSLinearView({ elsData, loading }) {
         const dy = y2 - y1;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Curve direction curves upwards or downwards
+        // Curve direction curves upwards
         const mx = (x1 + x2) / 2;
         const my = (y1 + y2) / 2 - Math.min(distance * 0.35, 80);
 
@@ -67,16 +55,32 @@ function ELSLinearView({ elsData, loading }) {
       setArcs(newArcs);
     };
 
-    // Calculate immediately and delay briefly to let DOM layout settle
-    calculateArcs();
-    const timeoutId = setTimeout(calculateArcs, 100);
+    if (totalMatches > 0) {
+      // Calculate immediately and delay briefly to let DOM layout settle
+      calculateArcs();
+      const timeoutId = setTimeout(calculateArcs, 100);
 
-    window.addEventListener('resize', calculateArcs);
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', calculateArcs);
-    };
-  }, [activeMatchIndex, elsData]);
+      window.addEventListener('resize', calculateArcs);
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', calculateArcs);
+      };
+    }
+  }, [activeMatchIndex, elsData, totalMatches]);
+
+  // NOW we can safely do our conditional early returns
+  if (loading) return <h3 style={{ color: '#0056b3' }}>Auto-discovering Equidistant Letter Sequences...</h3>;
+
+  if (totalMatches === 0) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '60px', color: '#6c757d' }}>
+        <h3>No ELS patterns discovered</h3>
+        <p>No letter skip occurrences found for this term in the selected scopes.</p>
+      </div>
+    );
+  }
+
+  const { gridLetters, term, skip, bookName, startRef } = selectedMatch;
 
   const handleNextMatch = () => {
     if (activeMatchIndex < totalMatches - 1) setCurrentMatchIndex(activeMatchIndex + 1);
@@ -90,7 +94,6 @@ function ELSLinearView({ elsData, loading }) {
     const container = containerRef.current;
     if (!container) return;
 
-    // Use HTML5 Canvas to snap the natural reading flow including SVG arcs
     const canvas = document.createElement('canvas');
     const rect = container.getBoundingClientRect();
     canvas.width = rect.width + 40;
@@ -100,7 +103,6 @@ function ELSLinearView({ elsData, loading }) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Render metadata
     ctx.fillStyle = '#0056b3';
     ctx.font = 'bold 20px sans-serif';
     ctx.fillText(`Orot ELS Arc Overlay: "${term}"`, 20, 40);
@@ -108,11 +110,9 @@ function ELSLinearView({ elsData, loading }) {
     ctx.font = '14px sans-serif';
     ctx.fillText(`In ${bookName} (${startRef}) | Skip: ${skip} letters`, 20, 65);
 
-    // Simple textual trace capture on export is safer
     ctx.font = '18px Times New Roman';
     ctx.fillStyle = '#343a40';
 
-    // Draw visual representation
     const textLines = container.innerText.split('\n');
     let yOffset = 110;
     textLines.forEach(line => {
@@ -160,7 +160,7 @@ function ELSLinearView({ elsData, loading }) {
             </button>
           </div>
 
-          <button onClick={handleExportPNG} className="btn btn-export">
+          <button onClick={handleExportPNG} className="btn btn-export" style={{ backgroundColor: '#28a745', color: 'white' }}>
             📸 Snapshot PNG
           </button>
         </div>
@@ -210,8 +210,7 @@ function ELSLinearView({ elsData, loading }) {
               strokeDasharray="4 3"
               markerEnd="url(#arrow)"
               style={{
-                filter: 'drop-shadow(0px 2px 4px rgba(0, 86, 179, 0.35))',
-                animation: 'dash 1.5s linear infinite'
+                filter: 'drop-shadow(0px 2px 4px rgba(0, 86, 179, 0.35))'
               }}
             />
           ))}
