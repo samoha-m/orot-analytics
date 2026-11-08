@@ -61,12 +61,30 @@ function ELSFeedView({ elsData, loading, t, lang }) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px 10px', borderRadius: '6px', border: '1px solid #ced4da', direction: 'ltr' }}>
-          <button onClick={handlePrevMatch} disabled={activeMatchIndex === 0} style={{ border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer', opacity: activeMatchIndex === 0 ? 0.4 : 1, fontWeight: 'bold' }}>◀</button>
-          <span style={{ fontSize: '12px', margin: '0 10px', fontWeight: 'bold', color: '#495057' }}>
+        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
+          <button
+            onClick={handlePrevMatch}
+            disabled={activeMatchIndex === 0}
+            style={{
+              border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer',
+              opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
+            }}
+          >
+            ◀
+          </button>
+          <span style={{ fontSize: '13px', margin: '0 5px', fontWeight: 'bold', color: '#495057' }}>
             {t('patternOf')(activeMatchIndex + 1, totalMatches)}
           </span>
-          <button onClick={handleNextMatch} disabled={activeMatchIndex === totalMatches - 1} style={{ border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer', opacity: activeMatchIndex === totalMatches - 1 ? 0.4 : 1, fontWeight: 'bold' }}>▶</button>
+          <button
+            onClick={handleNextMatch}
+            disabled={activeMatchIndex === totalMatches - 1}
+            style={{
+              border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer',
+              opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
+            }}
+          >
+            ▶
+          </button>
         </div>
       </div>
 
