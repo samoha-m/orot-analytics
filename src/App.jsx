@@ -97,7 +97,16 @@ function App() {
     setActiveTerms(terms);
     setActivePreview(null);
     setShowMobilePanel(false);
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList });
+
+    // Pass lang and translated chs string to the worker so it can build local labels
+    workerRef.current.postMessage({
+      ranges,
+      terms,
+      searchMode,
+      booksList,
+      lang,
+      chsStr: t('chsAbbr')
+    });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -156,24 +165,25 @@ function App() {
           <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
         </div>
 
-        {/* LANGUAGE SELECTOR */}
+        {/* EMOJI FLAG LANGUAGE SELECTOR */}
         <div>
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value)}
             style={{
-              padding: '6px 12px',
+              padding: '6px 10px',
               borderRadius: '6px',
               border: '1px solid #ced4da',
               backgroundColor: '#f8f9fa',
               cursor: 'pointer',
               fontWeight: 'bold',
-              outline: 'none'
+              outline: 'none',
+              fontSize: '14px'
             }}
           >
-            <option value="en">En (English)</option>
-            <option value="he">עב (עברית)</option>
-            <option value="fa">فا (فارسی)</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="he">🇮🇱 עברית</option>
+            <option value="fa">🇮🇷 فارسی</option>
           </select>
         </div>
       </header>

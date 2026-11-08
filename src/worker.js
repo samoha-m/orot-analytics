@@ -14,7 +14,14 @@ const calculateGematria = (word) => {
 };
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList } = e.data;
+  const { ranges, terms, searchMode, booksList, lang, chsStr } = e.data;
+
+  // Helper to dynamically get the localized book name
+  const getBookName = (bookInfo) => {
+    if (lang === 'he') return bookInfo.he;
+    if (lang === 'fa') return bookInfo.fa;
+    return bookInfo.name.replace('_', ' ');
+  };
 
   try {
     const neededBookIds = [...new Set(ranges.map(r => r.bookId))];
@@ -28,7 +35,7 @@ self.onmessage = async (e) => {
     }
 
     // ==========================================
-    // ELS AUTO-DISCOVER LOGIC (Feed View Upgrade)
+    // ELS AUTO-DISCOVER LOGIC
     // ==========================================
     if (searchMode === 'els') {
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
@@ -41,10 +48,10 @@ self.onmessage = async (e) => {
 
       for (const range of ranges) {
         const bookInfo = booksList.find(b => b.id === range.bookId);
+        const localBookName = getBookName(bookInfo);
         const bookData = bookCache[range.bookId] || [];
         const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
 
-        // Group data into full verse strings first
         const versesList = [];
         let currentVerseWords = [];
         let currentC = -1;
@@ -52,9 +59,7 @@ self.onmessage = async (e) => {
 
         filteredData.forEach(item => {
            if (item.c !== currentC || item.v !== currentV) {
-               if (currentC !== -1) {
-                   versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
-               }
+               if (currentC !== -1) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
                currentC = item.c;
                currentV = item.v;
                currentVerseWords = [];
@@ -63,27 +68,19 @@ self.onmessage = async (e) => {
         });
         if (currentVerseWords.length > 0) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
 
-        // Map every Hebrew letter to its absolute verse string index
         let letterSequence = [];
         versesList.forEach(vObj => {
-            const ref = `${bookInfo.he} ${vObj.c}:${vObj.v}`;
-            const verseString = vObj.words.join(' '); // Natural reading text
+            const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
+            const verseString = vObj.words.join(' ');
 
             for (let i = 0; i < verseString.length; i++) {
                 const char = verseString[i];
                 if (/[\u0590-\u05FF]/.test(char)) {
-                    letterSequence.push({
-                        char,
-                        ref,
-                        verseString,
-                        charIndexInString: i,
-                        globalIndex: letterSequence.length
-                    });
+                    letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: letterSequence.length });
                 }
             }
         });
 
-        // Scan for skips
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
           for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
@@ -91,15 +88,11 @@ self.onmessage = async (e) => {
 
             for (let k = 0; k < termLen; k++) {
               const idx = start + k * skip;
-              if (letterSequence[idx].char !== termLetters[k]) {
-                matched = false;
-                break;
-              }
+              if (letterSequence[idx].char !== termLetters[k]) { matched = false; break; }
               matchIndices.push(idx);
             }
 
             if (matched) {
-               // Group hits by Verse for the UI Feed
                let feedNodes = [];
                let currentRef = null;
                let currentContext = null;
@@ -109,22 +102,13 @@ self.onmessage = async (e) => {
                    if (currentRef !== item.ref) {
                        if (currentContext) feedNodes.push(currentContext);
                        currentRef = item.ref;
-                       currentContext = {
-                           ref: item.ref,
-                           text: item.verseString,
-                           highlights: [] // Stores the exact string indices to highlight
-                       };
+                       currentContext = { ref: item.ref, text: item.verseString, highlights: [] };
                    }
                    currentContext.highlights.push(item.charIndexInString);
                });
                if (currentContext) feedNodes.push(currentContext);
 
-               matches.push({
-                   term: targetTerm,
-                   skip,
-                   bookName: bookInfo.name,
-                   feedNodes
-               });
+               matches.push({ term: targetTerm, skip, bookName: localBookName, feedNodes });
 
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
@@ -153,16 +137,14 @@ self.onmessage = async (e) => {
     const formattedChartData = ranges.map((range) => {
       const bookData = bookCache[range.bookId] || [];
       const bookInfo = booksList.find(b => b.id === range.bookId);
+      const localBookName = getBookName(bookInfo);
 
       const rangeHits = {};
       const matchedVerses = {};
       let rangeTotalWords = 0;
       let rangeTotalChars = 0;
 
-      terms.forEach(term => {
-        rangeHits[term] = 0;
-        matchedVerses[term] = [];
-      });
+      terms.forEach(term => { rangeHits[term] = 0; matchedVerses[term] = []; });
 
       const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
       const verses = {};
@@ -173,9 +155,7 @@ self.onmessage = async (e) => {
         rangeTotalChars += item.w.length;
 
         const vKey = `${item.c}:${item.v}`;
-        if (!verses[vKey]) {
-          verses[vKey] = { text: [], matches: new Set(), highlights: new Set() };
-        }
+        if (!verses[vKey]) verses[vKey] = { text: [], matches: new Set(), highlights: new Set() };
         verses[vKey].text.push(item.w);
 
         parsedTerms.forEach(pt => {
@@ -185,38 +165,25 @@ self.onmessage = async (e) => {
           if (searchMode === 'exact') {
             isMatch = true;
             for(let j = 0; j < pt.words.length; j++) {
-                if (!filteredData[i + j] || filteredData[i + j].w !== pt.words[j]) {
-                    isMatch = false;
-                    break;
-                }
+                if (!filteredData[i + j] || filteredData[i + j].w !== pt.words[j]) { isMatch = false; break; }
             }
             if (isMatch) matchedStrings.push(pt.original);
           }
           else if (searchMode === 'root') {
-            if (item.r && item.r.includes(pt.original)) {
-                isMatch = true;
-                matchedStrings.push(item.w);
-            }
+            if (item.r && item.r.includes(pt.original)) { isMatch = true; matchedStrings.push(item.w); }
           }
           else if (searchMode === 'letter') {
             const hitsInWord = item.w.split(pt.original).length - 1;
-            if (hitsInWord > 0) {
-                isMatch = true;
-                matchedStrings.push(pt.original);
-            }
+            if (hitsInWord > 0) { isMatch = true; matchedStrings.push(pt.original); }
           }
           else if (searchMode === 'gematria') {
-            if (pt.isNumber && calculateGematria(item.w) === Number(pt.original)) {
-                isMatch = true;
-                matchedStrings.push(item.w);
-            }
+            if (pt.isNumber && calculateGematria(item.w) === Number(pt.original)) { isMatch = true; matchedStrings.push(item.w); }
           }
 
           if (isMatch) {
             const hitCount = (searchMode === 'letter') ? (item.w.split(pt.original).length - 1) : 1;
             rangeHits[pt.original] += hitCount;
             totals[pt.original] += hitCount;
-
             verses[vKey].matches.add(pt.original);
             matchedStrings.forEach(str => verses[vKey].highlights.add(str));
           }
@@ -229,18 +196,14 @@ self.onmessage = async (e) => {
           const verseText = verseObj.text.join(" ");
           verseObj.matches.forEach(term => {
             if (matchedVerses[term].length < 100) {
-               matchedVerses[term].push({
-                 ref: `${bookInfo.he} ${vKey.replace(':', ' ')}`,
-                 text: verseText,
-                 highlights: Array.from(verseObj.highlights)
-               });
+               matchedVerses[term].push({ ref: `${localBookName} ${vKey.replace(':', ' ')}`, text: verseText, highlights: Array.from(verseObj.highlights) });
             }
           });
         }
       });
 
       return {
-        name: `${bookInfo.he} (${range.selectedChapters.length} Chs)`,
+        name: `${localBookName} (${range.selectedChapters.length} ${chsStr})`,
         verses: matchedVerses,
         rangeTotalWords,
         rangeTotalChars,
