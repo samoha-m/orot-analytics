@@ -6,7 +6,7 @@ import { booksList, calculateGematria, COLORS } from './data/constants';
 import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
-import ELSLinearView from './components/ELSLinearView';
+import ELSTargetView from './components/ELSTargetView'; // <--- NEW COMPONENT IMPORT
 
 function App() {
   const workerRef = useRef(null);
@@ -156,7 +156,7 @@ function App() {
       <div className="app-layout">
         <main className="main-canvas">
           {searchMode === 'els' || isElsMode ? (
-            <ELSLinearView elsData={elsData} loading={loading} />
+            <ELSTargetView elsData={elsData} loading={loading} />
           ) : (
             <>
               <ChartDisplay

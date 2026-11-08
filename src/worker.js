@@ -50,10 +50,17 @@ self.onmessage = async (e) => {
           for (let j = 0; j < item.w.length; j++) {
             const char = item.w[j];
             if (/[\u0590-\u05FF]/.test(char)) {
+
+              // NEW: Detect exact word and verse boundaries for the UI reader
+              const isEndOfWord = (j === item.w.length - 1);
+              const isEndOfVerse = (isEndOfWord && i < filteredData.length - 1 && (filteredData[i+1].v !== item.v || filteredData[i+1].c !== item.c));
+
               letterSequence.push({
                 char,
                 ref: `${bookInfo.he} ${item.c}:${item.v}`,
-                letterIdx: letterSequence.length
+                letterIdx: letterSequence.length,
+                isEndOfWord,
+                isEndOfVerse
               });
             }
           }
@@ -74,7 +81,7 @@ self.onmessage = async (e) => {
             }
 
             if (matched) {
-              const padding = 12;
+              const padding = 35; // Expand context padding to show full readable sentences
               const gridStart = Math.max(0, start - padding);
               const gridEnd = Math.min(letterSequence.length, start + (termLen - 1) * skip + padding + 1);
               const gridLetters = letterSequence.slice(gridStart, gridEnd).map((item, idx) => ({
@@ -104,7 +111,7 @@ self.onmessage = async (e) => {
     }
 
     // ==========================================
-    // STANDARD SEARCH LOGIC (Stable Baseline)
+    // STANDARD SEARCH LOGIC
     // ==========================================
     const totals = {};
     terms.forEach(term => totals[term] = 0);
