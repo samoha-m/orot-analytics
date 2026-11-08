@@ -159,35 +159,50 @@ function App() {
   return (
     <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* GLOBAL TOP NAVIGATION BAR */}
+{/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
           <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
         </div>
 
-        {/* EMOJI FLAG LANGUAGE SELECTOR */}
-        <div>
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value)}
+        {/* ICON-BASED LANGUAGE SELECTOR */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            onClick={() => setLang('en')}
+            title="English"
             style={{
-              padding: '6px 10px',
-              borderRadius: '6px',
-              border: '1px solid #ced4da',
-              backgroundColor: '#f8f9fa',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              outline: 'none',
-              fontSize: '14px'
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
+              opacity: lang === 'en' ? 1 : 0.3, transform: lang === 'en' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'en' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
             }}
           >
-            <option value="en">🇺🇸 English</option>
-            <option value="he">🇮🇱 עברית</option>
-            <option value="fa">🇮🇷 فارسی</option>
-          </select>
+            🇺🇸
+          </button>
+          <button
+            onClick={() => setLang('he')}
+            title="עברית"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
+              opacity: lang === 'he' ? 1 : 0.3, transform: lang === 'he' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'he' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+            }}
+          >
+            🇮🇱
+          </button>
+          <button
+            onClick={() => setLang('fa')}
+            title="فارسی"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', padding: 0,
+              opacity: lang === 'fa' ? 1 : 0.3, transform: lang === 'fa' ? 'scale(1.1)' : 'scale(1)',
+              transition: 'all 0.2s ease-in-out', filter: lang === 'fa' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+            }}
+          >
+            🇮🇷
+          </button>
         </div>
       </header>
-
       {/* APP LAYOUT */}
       <div className="app-layout">
         <main className="main-canvas">
