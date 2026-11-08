@@ -28,7 +28,7 @@ self.onmessage = async (e) => {
     }
 
     // ==========================================
-    // ELS AUTO-DISCOVER LOGIC
+    // ELS AUTO-DISCOVER LOGIC (Feed View Upgrade)
     // ==========================================
     if (searchMode === 'els') {
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
@@ -44,28 +44,46 @@ self.onmessage = async (e) => {
         const bookData = bookCache[range.bookId] || [];
         const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
 
+        // Group data into full verse strings first
+        const versesList = [];
+        let currentVerseWords = [];
+        let currentC = -1;
+        let currentV = -1;
+
+        filteredData.forEach(item => {
+           if (item.c !== currentC || item.v !== currentV) {
+               if (currentC !== -1) {
+                   versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
+               }
+               currentC = item.c;
+               currentV = item.v;
+               currentVerseWords = [];
+           }
+           currentVerseWords.push(item.w);
+        });
+        if (currentVerseWords.length > 0) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
+
+        // Map every Hebrew letter to its absolute verse string index
         let letterSequence = [];
-        for (let i = 0; i < filteredData.length; i++) {
-          const item = filteredData[i];
-          for (let j = 0; j < item.w.length; j++) {
-            const char = item.w[j];
-            if (/[\u0590-\u05FF]/.test(char)) {
+        versesList.forEach(vObj => {
+            const ref = `${bookInfo.he} ${vObj.c}:${vObj.v}`;
+            const verseString = vObj.words.join(' '); // Natural reading text
 
-              // NEW: Detect exact word and verse boundaries for the UI reader
-              const isEndOfWord = (j === item.w.length - 1);
-              const isEndOfVerse = (isEndOfWord && i < filteredData.length - 1 && (filteredData[i+1].v !== item.v || filteredData[i+1].c !== item.c));
-
-              letterSequence.push({
-                char,
-                ref: `${bookInfo.he} ${item.c}:${item.v}`,
-                letterIdx: letterSequence.length,
-                isEndOfWord,
-                isEndOfVerse
-              });
+            for (let i = 0; i < verseString.length; i++) {
+                const char = verseString[i];
+                if (/[\u0590-\u05FF]/.test(char)) {
+                    letterSequence.push({
+                        char,
+                        ref,
+                        verseString,
+                        charIndexInString: i,
+                        globalIndex: letterSequence.length
+                    });
+                }
             }
-          }
-        }
+        });
 
+        // Scan for skips
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
           for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
@@ -81,22 +99,32 @@ self.onmessage = async (e) => {
             }
 
             if (matched) {
-              const padding = 35; // Expand context padding to show full readable sentences
-              const gridStart = Math.max(0, start - padding);
-              const gridEnd = Math.min(letterSequence.length, start + (termLen - 1) * skip + padding + 1);
-              const gridLetters = letterSequence.slice(gridStart, gridEnd).map((item, idx) => ({
-                ...item,
-                isMatch: matchIndices.includes(gridStart + idx)
-              }));
+               // Group hits by Verse for the UI Feed
+               let feedNodes = [];
+               let currentRef = null;
+               let currentContext = null;
 
-              matches.push({
-                term: targetTerm,
-                skip,
-                bookName: bookInfo.name,
-                startRef: letterSequence[start].ref,
-                width: skip,
-                gridLetters
-              });
+               matchIndices.forEach(globalIdx => {
+                   const item = letterSequence[globalIdx];
+                   if (currentRef !== item.ref) {
+                       if (currentContext) feedNodes.push(currentContext);
+                       currentRef = item.ref;
+                       currentContext = {
+                           ref: item.ref,
+                           text: item.verseString,
+                           highlights: [] // Stores the exact string indices to highlight
+                       };
+                   }
+                   currentContext.highlights.push(item.charIndexInString);
+               });
+               if (currentContext) feedNodes.push(currentContext);
+
+               matches.push({
+                   term: targetTerm,
+                   skip,
+                   bookName: bookInfo.name,
+                   feedNodes
+               });
 
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
