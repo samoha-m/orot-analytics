@@ -2,20 +2,13 @@ import React from 'react';
 import { booksList, numberToHebrew } from '../data/constants';
 
 function ControlSidebar({
-  showMobilePanel,
-  setShowMobilePanel,
-  searchTerm,
-  setSearchTerm,
-  searchMode,
-  setSearchMode,
-  ranges,
-  loading,
-  updateBook,
-  removeRange,
-  toggleAccordion,
-  handleChapterSelection,
-  addRange,
-  handleSearch
+  showMobilePanel, setShowMobilePanel,
+  searchTerm, setSearchTerm,
+  searchMode, setSearchMode,
+  ranges, loading,
+  updateBook, removeRange, toggleAccordion,
+  handleChapterSelection, addRange, handleSearch,
+  t, lang
 }) {
   const sectionLabelStyle = {
     display: 'block',
@@ -30,50 +23,38 @@ function ControlSidebar({
   return (
     <>
       <button className="mobile-trigger" onClick={() => setShowMobilePanel(true)}>
-        🔍 Edit Search & Scopes
+        {t('editSearch')}
       </button>
       {showMobilePanel && (
         <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>
       )}
 
-      <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`}>
+      <aside className={`control-sidebar ${showMobilePanel ? 'open' : ''}`} style={{ borderLeft: lang === 'en' ? '1px solid #e9ecef' : 'none', borderRight: lang !== 'en' ? '1px solid #e9ecef' : 'none' }}>
 
-        {/* --- UNIFIED STICKY CONTROL DECK (Logo Removed) --- */}
         <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          backgroundColor: '#ffffff',
-          padding: '20px',
-          borderBottom: '1px solid #e9ecef',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
+          position: 'sticky', top: 0, zIndex: 20, backgroundColor: '#ffffff',
+          padding: '20px', borderBottom: '1px solid #e9ecef', boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
         }}>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={sectionLabelStyle}>Compare Terms (comma separated)</label>
-              <button
-                className="mobile-close"
-                onClick={() => setShowMobilePanel(false)}
-                style={{ display: showMobilePanel ? 'block' : 'none' }}
-              >
-                ✖
-              </button>
+              <label style={sectionLabelStyle}>{t('compareTerms')}</label>
+              <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: showMobilePanel ? 'block' : 'none' }}>✖</button>
             </div>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <svg style={{ position: 'absolute', left: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg style={{ position: 'absolute', [lang === 'en' ? 'left' : 'right']: '12px', width: '16px', height: '16px', color: '#adb5bd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="e.g. ויאמר אלהים"
+                placeholder={t('egSearch')}
                 dir="rtl"
                 className="search-input"
                 style={{
                   width: '100%',
-                  padding: '10px 12px 10px 35px',
+                  padding: lang === 'en' ? '10px 12px 10px 35px' : '10px 35px 10px 12px',
                   borderRadius: '6px',
                   border: '1px solid #ced4da',
                   fontSize: '14px',
@@ -87,53 +68,38 @@ function ControlSidebar({
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={sectionLabelStyle}>Search Logic Mode</label>
-
+            <label style={sectionLabelStyle}>{t('searchLogicMode')}</label>
             <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
               {[
-                { val: 'exact', lbl: 'Exact' },
-                { val: 'root', lbl: 'Root' },
-                { val: 'letter', lbl: 'Letter' },
-                { val: 'gematria', lbl: 'Gematria' },
-                { val: 'els', lbl: 'Skip (ELS)' }
+                { val: 'exact', lbl: t('exact') },
+                { val: 'root', lbl: t('root') },
+                { val: 'letter', lbl: t('letter') },
+                { val: 'gematria', lbl: t('gematria') },
+                { val: 'els', lbl: t('els') }
               ].map((m, index) => (
                 <label
                   key={m.val}
                   style={{
-                    flex: 1,
-                    textAlign: 'center',
-                    padding: '8px 2px',
-                    margin: 0,
-                    cursor: 'pointer',
-                    fontSize: '10.5px',
-                    borderRight: index !== 4 ? '1px solid #ced4da' : 'none',
+                    flex: 1, textAlign: 'center', padding: '8px 2px', margin: 0, cursor: 'pointer', fontSize: '10.5px',
+                    borderRight: lang === 'en' && index !== 4 ? '1px solid #ced4da' : 'none',
+                    borderLeft: lang !== 'en' && index !== 4 ? '1px solid #ced4da' : 'none',
                     backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent',
                     color: searchMode === m.val ? '#ffffff' : '#495057',
                     fontWeight: searchMode === m.val ? 'bold' : 'normal',
                     transition: 'background-color 0.2s, color 0.2s'
                   }}
                 >
-                  <input
-                    type="radio"
-                    name="searchMode"
-                    value={m.val}
-                    checked={searchMode === m.val}
-                    onChange={(e) => setSearchMode(e.target.value)}
-                    style={{ display: 'none' }}
-                  />
+                  <input type="radio" name="searchMode" value={m.val} checked={searchMode === m.val} onChange={(e) => setSearchMode(e.target.value)} style={{ display: 'none' }} />
                   <span>{m.lbl}</span>
                 </label>
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* --- SCROLLABLE COMPARISON SCOPES --- */}
         <div className="sidebar-content">
           <div className="input-group">
-            <label style={sectionLabelStyle}>Comparison Scopes</label>
-
+            <label style={sectionLabelStyle}>{t('comparisonScopes')}</label>
             {ranges.map((range, index) => {
               const book = booksList.find(b => b.id === range.bookId);
               return (
@@ -141,24 +107,24 @@ function ControlSidebar({
                   <div className="range-header">
                     <span style={{ fontWeight: 'bold', color: '#adb5bd' }}>{index + 1}.</span>
                     <select value={range.bookId} onChange={(e) => updateBook(range.id, e.target.value)} className="range-select">
-                      {booksList.map(b => <option key={b.id} value={b.id}>{b.name.replace('_', ' ')} ({b.he})</option>)}
+                      {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : b.name.replace('_', ' ')}</option>)}
                     </select>
                     <button onClick={() => removeRange(range.id)} disabled={ranges.length === 1 || loading} className="btn btn-delete">X</button>
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button className="btn btn-edit-chapters" onClick={() => toggleAccordion(range.id)}>
-                      {range.isExpanded ? 'Hide Chapters' : `Ch: ${range.selectedChapters.length}/${book.maxCh} (Edit)`}
+                      {range.isExpanded ? t('hideChapters') : t('chEdit')(range.selectedChapters.length, book.maxCh)}
                     </button>
                   </div>
 
                   {range.isExpanded && (
                     <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #dee2e6' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{book.he} Chapters</span>
+                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'he' ? book.he : book.name.replace('_', ' ')} {t('chapters')}</span>
                         <div style={{ fontSize: '12px' }}>
-                          <a style={{cursor: 'pointer', color: '#0056b3'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'all')}>All</a> |
-                          <a style={{cursor: 'pointer', color: '#0056b3', marginLeft: '5px'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'none')}>None</a>
+                          <a style={{cursor: 'pointer', color: '#0056b3'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'all')}>{t('all')}</a> |
+                          <a style={{cursor: 'pointer', color: '#0056b3', margin: '0 5px'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'none')}>{t('none')}</a>
                         </div>
                       </div>
                       <div className="chapter-grid">
@@ -173,13 +139,13 @@ function ControlSidebar({
                 </div>
               );
             })}
-            <button onClick={addRange} disabled={loading} className="btn btn-add">+ Add Range to Compare</button>
+            <button onClick={addRange} disabled={loading} className="btn btn-add">{t('addRange')}</button>
           </div>
         </div>
 
         <div className="sidebar-footer">
           <button onClick={handleSearch} disabled={loading} className="btn btn-run">
-            {loading ? 'Processing...' : 'Run Analysis'}
+            {loading ? t('processing') : t('runAnalysis')}
           </button>
         </div>
       </aside>

@@ -2,13 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import logoIcon from './assets/OROT_ICON.png';
 import './App.css';
 
+import { translations } from './translations';
 import { booksList, calculateGematria, COLORS } from './data/constants';
 import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
-import ELSFeedView from './components/ELSFeedView'; // <--- NEW COMPONENT IMPORT
+import ELSFeedView from './components/ELSFeedView';
 
 function App() {
+  const [lang, setLang] = useState('en');
+  const t = (key) => translations[lang][key];
+  const isRTL = lang === 'he' || lang === 'fa';
+
   const workerRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
@@ -136,19 +141,40 @@ function App() {
     if (viewMode === 'absolute') return data;
     const denominator = searchMode === 'letter' ? data.rangeTotalChars : data.rangeTotalWords;
     const mappedData = { name: data.name, verses: data.verses };
-    activeTerms.forEach(t => { mappedData[t] = denominator > 0 ? Number(((data[t] / denominator) * 100).toFixed(3)) : 0; });
+    activeTerms.forEach(term => { mappedData[term] = denominator > 0 ? Number(((data[term] / denominator) * 100).toFixed(3)) : 0; });
     return mappedData;
   });
 
   const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
   return (
-    <div className="app-container">
+    <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
-          <h1 className="top-navbar-title" style={{ textAlign: 'left' }}>Orot</h1>
+          <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
+        </div>
+
+        {/* LANGUAGE SELECTOR */}
+        <div>
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #ced4da',
+              backgroundColor: '#f8f9fa',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              outline: 'none'
+            }}
+          >
+            <option value="en">En (English)</option>
+            <option value="he">עב (עברית)</option>
+            <option value="fa">فا (فارسی)</option>
+          </select>
         </div>
       </header>
 
@@ -156,7 +182,7 @@ function App() {
       <div className="app-layout">
         <main className="main-canvas">
           {searchMode === 'els' || isElsMode ? (
-            <ELSFeedView elsData={elsData} loading={loading} />
+            <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
             <>
               <ChartDisplay
@@ -170,12 +196,14 @@ function App() {
                 minComfortableWidth={minComfortableWidth}
                 renderChartData={renderChartData}
                 setActivePreview={setActivePreview}
+                t={t}
               />
               <VersePreview
                 activePreview={activePreview}
                 setActivePreview={setActivePreview}
                 activeTerms={activeTerms}
                 COLORS={COLORS}
+                t={t}
               />
             </>
           )}
@@ -196,6 +224,8 @@ function App() {
           handleChapterSelection={handleChapterSelection}
           addRange={addRange}
           handleSearch={handleSearch}
+          t={t}
+          lang={lang}
         />
       </div>
     </div>

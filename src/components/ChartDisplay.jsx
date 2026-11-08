@@ -2,27 +2,14 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
 import { calculateGematria, COLORS } from '../data/constants';
 
-function ChartDisplay({
-  resultTotals,
-  loading,
-  activeTerms,
-  searchMode,
-  viewMode,
-  setViewMode,
-  handleExportCSV,
-  minComfortableWidth,
-  renderChartData,
-  setActivePreview
-}) {
-  if (loading) {
-    return <h3 style={{ color: '#0056b3' }}>Analyzing dataset... please wait.</h3>;
-  }
+function ChartDisplay({ resultTotals, loading, activeTerms, searchMode, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, setActivePreview, t }) {
+  if (loading) return <h3 style={{ color: '#0056b3' }}>{t('analyzingDataset')}</h3>;
 
   if (!resultTotals) {
     return (
       <div style={{ textAlign: 'center', marginTop: '100px', color: '#6c757d' }}>
-        <h2>Ready to analyze Hebrew Text</h2>
-        <p>Use the control panel to start your search.</p>
+        <h2>{t('readyToAnalyze')}</h2>
+        <p>{t('useControlPanel')}</p>
       </div>
     );
   }
@@ -34,8 +21,8 @@ function ChartDisplay({
           {activeTerms.map((term, index) => (
             <div key={term} className="result-badge">
               <span style={{ color: COLORS[index % COLORS.length] }}>■ </span>
-              <strong>{term}</strong>: {resultTotals[term]} hits
-              {searchMode !== 'gematria' && ` (Gem: ${calculateGematria(term)})`}
+              <strong>{term}</strong>: {resultTotals[term]} {t('hits')}
+              {searchMode !== 'gematria' && ` (${t('gem')} ${calculateGematria(term)})`}
             </div>
           ))}
         </div>
@@ -43,13 +30,13 @@ function ChartDisplay({
         <div style={{ display: 'flex', gap: '10px' }}>
           <div className="segmented-control" style={{ background: '#f8f9fa', border: '1px solid #dee2e6' }}>
             <label className={`segment-btn ${viewMode === 'absolute' ? 'active' : ''}`}>
-              <input type="radio" checked={viewMode === 'absolute'} onChange={() => setViewMode('absolute')} /> Absolute
+              <input type="radio" checked={viewMode === 'absolute'} onChange={() => setViewMode('absolute')} /> {t('absolute')}
             </label>
             <label className={`segment-btn ${viewMode === 'relative' ? 'active' : ''}`}>
-              <input type="radio" checked={viewMode === 'relative'} onChange={() => setViewMode('relative')} /> Relative %
+              <input type="radio" checked={viewMode === 'relative'} onChange={() => setViewMode('relative')} /> {t('relative')}
             </label>
           </div>
-          <button onClick={handleExportCSV} className="btn btn-export">CSV</button>
+          <button onClick={handleExportCSV} className="btn btn-export">{t('csv')}</button>
         </div>
       </div>
 
@@ -63,15 +50,7 @@ function ChartDisplay({
               <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} formatter={(value) => viewMode === 'relative' ? `${value}%` : value} />
               <Legend verticalAlign="top" height={36} />
               {activeTerms.map((term, index) => (
-                <Bar
-                  key={term}
-                  dataKey={term}
-                  fill={COLORS[index % COLORS.length]}
-                  radius={[4, 4, 0, 0]}
-                  onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
-                  cursor="pointer"
-                  maxBarSize={45}
-                />
+                <Bar key={term} dataKey={term} fill={COLORS[index % COLORS.length]} radius={[4, 4, 0, 0]} onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })} cursor="pointer" maxBarSize={45} />
               ))}
             </BarChart>
           </ResponsiveContainer>
