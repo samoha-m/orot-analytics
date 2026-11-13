@@ -116,10 +116,14 @@ self.onmessage = async (e) => {
         });
         if (currentContext) feedNodes.push(currentContext);
 
+// Grab the start item to build a clean title
+        const startItem = letterSequence[globalStart];
+        const startBookName = getBookName(booksList.find(b => b.id === startItem.bookId));
+
         const matches = [{
-            term: generatedTerm.split('').join('-'), // Add dashes so it looks like a generated sequence!
+            term: generatedTerm.split('').join('-'), // Dashes for visual sequence
             skip,
-            bookName: "Generated Sequence",
+            bookName: `${startBookName} ${startItem.c}:${startItem.v}`, // E.g., "Genesis 1:1"
             feedNodes,
             isManual: true
         }];

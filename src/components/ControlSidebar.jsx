@@ -144,50 +144,52 @@ function ControlSidebar({
           )}
         </div>
 
-        <div className="sidebar-content">
-          <div className="input-group">
-            <label style={{...sectionLabelStyle, marginTop: '10px'}}>{t('comparisonScopes') || "Search Boundaries"}</label>
-            {ranges.map((range, index) => {
-              const book = booksList.find(b => b.id === range.bookId);
-              return (
-                <div key={range.id} className="range-card">
-                  <div className="range-header">
-                    <span style={{ fontWeight: 'bold', color: '#adb5bd' }}>{index + 1}.</span>
-                    <select value={range.bookId} onChange={(e) => updateBook(range.id, e.target.value)} className="range-select">
-                      {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name.replace('_', ' '))}</option>)}
-                    </select>
-                    <button onClick={() => removeRange(range.id)} disabled={ranges.length === 1 || loading} className="btn btn-delete">X</button>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn btn-edit-chapters" onClick={() => toggleAccordion(range.id)}>
-                      {range.isExpanded ? t('hideChapters') : (t('chEdit') ? t('chEdit')(range.selectedChapters.length, book.maxCh) : `Chs: ${range.selectedChapters.length}/${book.maxCh}`)}
-                    </button>
-                  </div>
-                  {range.isExpanded && (
-                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #dee2e6' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'he' ? book.he : book.name.replace('_', ' ')} {t('chapters')}</span>
-                        <div style={{ fontSize: '12px' }}>
-                          <a style={{cursor: 'pointer', color: '#0056b3'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'all')}>{t('all')}</a> |
-                          <a style={{cursor: 'pointer', color: '#0056b3', margin: '0 5px'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'none')}>{t('none')}</a>
+{/* HIDE COMPARISON SCOPES IN MANUAL MODE */}
+        {!(searchMode === 'els' && elsSubMode === 'manual') && (
+          <div className="sidebar-content">
+            <div className="input-group">
+              <label style={{...sectionLabelStyle, marginTop: '10px'}}>{t('comparisonScopes') || "Search Boundaries"}</label>
+              {ranges.map((range, index) => {
+                const book = booksList.find(b => b.id === range.bookId);
+                return (
+                  <div key={range.id} className="range-card">
+                    <div className="range-header">
+                      <span style={{ fontWeight: 'bold', color: '#adb5bd' }}>{index + 1}.</span>
+                      <select value={range.bookId} onChange={(e) => updateBook(range.id, e.target.value)} className="range-select">
+                        {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name.replace('_', ' '))}</option>)}
+                      </select>
+                      <button onClick={() => removeRange(range.id)} disabled={ranges.length === 1 || loading} className="btn btn-delete">X</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button className="btn btn-edit-chapters" onClick={() => toggleAccordion(range.id)}>
+                        {range.isExpanded ? t('hideChapters') : (t('chEdit') ? t('chEdit')(range.selectedChapters.length, book.maxCh) : `Chs: ${range.selectedChapters.length}/${book.maxCh}`)}
+                      </button>
+                    </div>
+                    {range.isExpanded && (
+                      <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #dee2e6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'he' ? book.he : book.name.replace('_', ' ')} {t('chapters')}</span>
+                          <div style={{ fontSize: '12px' }}>
+                            <a style={{cursor: 'pointer', color: '#0056b3'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'all')}>{t('all')}</a> |
+                            <a style={{cursor: 'pointer', color: '#0056b3', margin: '0 5px'}} onClick={() => handleChapterSelection(range.id, book.maxCh, 'none')}>{t('none')}</a>
+                          </div>
+                        </div>
+                        <div className="chapter-grid">
+                          {Array.from({length: book.maxCh}, (_, i) => i + 1).map(ch => (
+                            <button key={ch} className={`chapter-btn ${range.selectedChapters.includes(ch) ? 'selected' : ''}`} onClick={() => handleChapterSelection(range.id, book.maxCh, 'toggle', ch)}>
+                              {numberToHebrew(ch)}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                      <div className="chapter-grid">
-                        {Array.from({length: book.maxCh}, (_, i) => i + 1).map(ch => (
-                          <button key={ch} className={`chapter-btn ${range.selectedChapters.includes(ch) ? 'selected' : ''}`} onClick={() => handleChapterSelection(range.id, book.maxCh, 'toggle', ch)}>
-                            {numberToHebrew(ch)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            <button onClick={addRange} disabled={loading} className="btn btn-add">{t('addRange') || "+ Add Range"}</button>
+                    )}
+                  </div>
+                );
+              })}
+              <button onClick={addRange} disabled={loading} className="btn btn-add">{t('addRange') || "+ Add Range"}</button>
+            </div>
           </div>
-        </div>
-
+        )}
         <div className="sidebar-footer">
           <button onClick={handleSearch} disabled={loading} className="btn btn-run">
             {loading ? (t('processing') || "Processing...") : (t('runAnalysis') || "Run Analysis")}

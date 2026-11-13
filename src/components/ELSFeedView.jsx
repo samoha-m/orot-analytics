@@ -1,23 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function ELSFeedView({ elsData, loading, t, lang }) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
-  if (loading) return <h3 style={{ color: '#0056b3' }}>{t('autoDiscovering')}</h3>;
+  // FIX: Reset pagination index when new search results arrive
+  useEffect(() => {
+    setCurrentMatchIndex(0);
+  }, [elsData]);
+
+  if (loading) return <h3 style={{ color: '#0056b3' }}>{t('autoDiscovering') || "Processing..."}</h3>;
 
   const totalMatches = elsData?.matches?.length || 0;
   if (totalMatches === 0) {
     return (
       <div style={{ textAlign: 'center', marginTop: '60px', color: '#6c757d' }}>
-        <h3>{t('noEls')}</h3>
-        <p>{t('noLetterSkip')}</p>
+        <h3>{t('noEls') || "No ELS patterns discovered"}</h3>
+        <p>{t('noLetterSkip') || "No letter skip occurrences found."}</p>
       </div>
     );
   }
 
   const activeMatchIndex = Math.min(currentMatchIndex, Math.max(0, totalMatches - 1));
   const selectedMatch = elsData.matches[activeMatchIndex];
-  const { feedNodes, term, skip, bookName } = selectedMatch;
+  const { feedNodes, term, skip, bookName, isManual } = selectedMatch;
 
   const handleNextMatch = () => {
     if (activeMatchIndex < totalMatches - 1) setCurrentMatchIndex(activeMatchIndex + 1);
@@ -52,43 +57,62 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   };
 
   return (
-    <div style={{ padding: '10px', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+    <div style={{ padding: '0 10px 40px 10px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
+
+      {/* STICKY HEADER */}
+      <div style={{
+        position: 'sticky', top: '10px', zIndex: 10,
+        backgroundColor: '#fafbfc', border: '1px solid #e9ecef', borderRadius: '12px',
+        padding: '15px 20px', marginBottom: '20px',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
+      }}>
         <div>
-          <h3 style={{ margin: 0, color: '#0056b3' }}>{t('elsContextFeed')} "{term}"</h3>
+          <h3 style={{ margin: 0, color: '#0056b3' }}>
+            {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
+          </h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
-            {t('book')} <strong>{bookName}</strong> | {t('skipPattern')} <strong>{skip} {t('letters')}</strong>
+            {isManual ? "Start:" : (t('book') || "Book:")} <strong>{bookName}</strong> | {t('skipPattern') || "Skip:"} <strong>{skip} {t('letters') || "letters"}</strong>
           </p>
+          {isManual && (
+            <div style={{ marginTop: '10px', fontSize: '24px', fontWeight: 'bold', color: '#343a40', direction: 'rtl', letterSpacing: '2px' }}>
+              {term}
+            </div>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
-          <button
-            onClick={handlePrevMatch}
-            disabled={activeMatchIndex === 0}
-            style={{
-              border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer',
-              opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
-            }}
-          >
-            ◀
-          </button>
-          <span style={{ fontSize: '13px', margin: '0 5px', fontWeight: 'bold', color: '#495057' }}>
-            {t('patternOf')(activeMatchIndex + 1, totalMatches)}
-          </span>
-          <button
-            onClick={handleNextMatch}
-            disabled={activeMatchIndex === totalMatches - 1}
-            style={{
-              border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer',
-              opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
-            }}
-          >
-            ▶
-          </button>
-        </div>
+        {/* HIDE PAGINATION IN MANUAL MODE */}
+        {!isManual && (
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#ffffff', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
+            <button
+              onClick={handlePrevMatch}
+              disabled={activeMatchIndex === 0}
+              style={{
+                border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer',
+                opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
+              }}
+            >
+              ◀
+            </button>
+            <span style={{ fontSize: '13px', margin: '0 5px', fontWeight: 'bold', color: '#495057' }}>
+              {t('patternOf') ? t('patternOf')(activeMatchIndex + 1, totalMatches) : `Pattern ${activeMatchIndex + 1} of ${totalMatches}`}
+            </span>
+            <button
+              onClick={handleNextMatch}
+              disabled={activeMatchIndex === totalMatches - 1}
+              style={{
+                border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer',
+                opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
+              }}
+            >
+              ▶
+            </button>
+          </div>
+        )}
       </div>
 
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px', padding: '35px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginTop: '10px' }}>
+      {/* FEED READER */}
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px', padding: '35px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
         {feedNodes.map((node, i) => (
           <React.Fragment key={i}>
             <div style={{ textAlign: 'right', direction: 'rtl' }}>

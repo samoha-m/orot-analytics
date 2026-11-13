@@ -10,7 +10,7 @@ import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
 
 function App() {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState('he');
   // Added fallback logic so missing translations don't break the UI
   const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
