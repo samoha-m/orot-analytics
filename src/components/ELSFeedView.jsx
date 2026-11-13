@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 function ELSFeedView({ elsData, loading, t, lang }) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
-  // FIX: Reset pagination index when new search results arrive
   useEffect(() => {
     setCurrentMatchIndex(0);
   }, [elsData]);
@@ -22,15 +21,10 @@ function ELSFeedView({ elsData, loading, t, lang }) {
 
   const activeMatchIndex = Math.min(currentMatchIndex, Math.max(0, totalMatches - 1));
   const selectedMatch = elsData.matches[activeMatchIndex];
-  const { feedNodes, term, skip, bookName, isManual } = selectedMatch;
+  const { feedNodes, term, skip, bookName, isManual, startChar, jumpCount } = selectedMatch;
 
-  const handleNextMatch = () => {
-    if (activeMatchIndex < totalMatches - 1) setCurrentMatchIndex(activeMatchIndex + 1);
-  };
-
-  const handlePrevMatch = () => {
-    if (activeMatchIndex > 0) setCurrentMatchIndex(activeMatchIndex - 1);
-  };
+  const handleNextMatch = () => { if (activeMatchIndex < totalMatches - 1) setCurrentMatchIndex(activeMatchIndex + 1); };
+  const handlePrevMatch = () => { if (activeMatchIndex > 0) setCurrentMatchIndex(activeMatchIndex - 1); };
 
   const renderHighlightedString = (text, highlightIndices) => {
     let result = [];
@@ -72,7 +66,15 @@ function ELSFeedView({ elsData, loading, t, lang }) {
             {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
           </h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
-            {isManual ? "Start:" : (t('book') || "Book:")} <strong>{bookName}</strong> | {t('skipPattern') || "Skip:"} <strong>{skip} {t('letters') || "letters"}</strong>
+            {isManual ? t('start') || "Start:" : t('book') || "Book:"} <strong>{bookName} {isManual && `(${startChar})`}</strong>
+            <span style={{ margin: '0 8px', color: '#ced4da' }}>|</span>
+            {t('skipPattern') || "Skip:"} <strong>{skip}</strong>
+            {isManual && (
+              <>
+                <span style={{ margin: '0 8px', color: '#ced4da' }}>|</span>
+                {t('jumps') || "Jumps:"} <strong>{jumpCount}</strong>
+              </>
+            )}
           </p>
           {isManual && (
             <div style={{ marginTop: '10px', fontSize: '24px', fontWeight: 'bold', color: '#343a40', direction: 'rtl', letterSpacing: '2px' }}>

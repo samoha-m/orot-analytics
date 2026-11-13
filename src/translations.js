@@ -37,7 +37,19 @@ export const translations = {
     book: "Book:",
     skipPattern: "Skip Pattern:",
     letters: "letters",
-    patternOf: (x, y) => `Pattern ${x} of ${y}`
+    patternOf: (x, y) => `Pattern ${x} of ${y}`,
+
+    // NEW KEYS
+    autoDiscover: "Auto-Discover",
+    manualExplorer: "Manual Explorer",
+    sequenceViewer: "Sequence Viewer",
+    chapter: "Chapter",
+    verse: "Verse",
+    startPoint: "Select Start Point",
+    start: "Start:",
+    jumps: "Jumps",
+    jumpSize: "Jump Size",
+    jumpCount: "Jump Count"
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -77,7 +89,19 @@ export const translations = {
     book: "ספר:",
     skipPattern: "דילוג של:",
     letters: "אותיות",
-    patternOf: (x, y) => `תוצאה ${x} מתוך ${y}`
+    patternOf: (x, y) => `תוצאה ${x} מתוך ${y}`,
+
+    // NEW KEYS
+    autoDiscover: "גילוי אוטומטי",
+    manualExplorer: "סייר ידני",
+    sequenceViewer: "מציג דילוגים",
+    chapter: "פרק",
+    verse: "פסוק",
+    startPoint: "בחר נקודת התחלה",
+    start: "התחלה:",
+    jumps: "קפיצות",
+    jumpSize: "גודל קפיצה",
+    jumpCount: "מספר קפיצות"
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -117,6 +141,18 @@ export const translations = {
     book: "کتاب:",
     skipPattern: "الگوی پرش:",
     letters: "حرف",
-    patternOf: (x, y) => `الگوی ${x} از ${y}`
+    patternOf: (x, y) => `الگوی ${x} از ${y}`,
+
+    // NEW KEYS
+    autoDiscover: "کشف خودکار",
+    manualExplorer: "جستجوگر دستی",
+    sequenceViewer: "نمایشگر توالی",
+    chapter: "فصل",
+    verse: "آیه",
+    startPoint: "نقطه شروع را انتخاب کنید",
+    start: "شروع:",
+    jumps: "پرش‌ها",
+    jumpSize: "اندازه پرش",
+    jumpCount: "تعداد پرش"
   }
 };

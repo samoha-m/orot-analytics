@@ -36,12 +36,11 @@ self.onmessage = async (e) => {
     if (searchMode === 'els') {
       const isManual = elsSubMode === 'manual';
 
-      // --- NEW: MANUAL EXPLORER LOGIC ---
+      // --- MANUAL EXPLORER LOGIC ---
       if (isManual) {
         const { bookId, chapter, verse, letterIdx, skip, count } = manualConfig;
         let letterSequence = [];
 
-        // Build global string combining all selected scopes so manual jumps can cross books safely
         for (const range of ranges) {
             const bookInfo = booksList.find(b => b.id === range.bookId);
             const localBookName = getBookName(bookInfo);
@@ -76,7 +75,6 @@ self.onmessage = async (e) => {
             });
         }
 
-        // Locate exact start coordinate
         let globalStart = -1;
         let letterCounterInVerse = 0;
         for (let i = 0; i < letterSequence.length; i++) {
@@ -92,12 +90,11 @@ self.onmessage = async (e) => {
             return;
         }
 
-        // Jump and Collect
         let matchIndices = [];
         let generatedTerm = "";
         for (let k = 0; k < count; k++) {
             const idx = globalStart + (k * skip);
-            if (idx >= letterSequence.length) break; // Reached end of bounded text
+            if (idx >= letterSequence.length) break;
             matchIndices.push(idx);
             generatedTerm += letterSequence[idx].char;
         }
@@ -116,14 +113,15 @@ self.onmessage = async (e) => {
         });
         if (currentContext) feedNodes.push(currentContext);
 
-// Grab the start item to build a clean title
         const startItem = letterSequence[globalStart];
         const startBookName = getBookName(booksList.find(b => b.id === startItem.bookId));
 
         const matches = [{
-            term: generatedTerm.split('').join('-'), // Dashes for visual sequence
+            term: generatedTerm.split('').join('-'),
             skip,
-            bookName: `${startBookName} ${startItem.c}:${startItem.v}`, // E.g., "Genesis 1:1"
+            bookName: `${startBookName} ${startItem.c}:${startItem.v}`,
+            startChar: startItem.char,
+            jumpCount: count,
             feedNodes,
             isManual: true
         }];
@@ -132,7 +130,7 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- EXISTING: AUTO-DISCOVER LOGIC ---
+      // --- AUTO-DISCOVER LOGIC ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
@@ -173,7 +171,8 @@ self.onmessage = async (e) => {
         });
 
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
-          for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
+          // FIX: Changed `<=` to `<` to prevent off-by-one array boundary crash
+          for (let start = 0; start < letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
             let matchIndices = [];
             for (let k = 0; k < termLen; k++) {

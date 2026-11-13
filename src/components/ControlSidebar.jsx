@@ -18,7 +18,6 @@ function ControlSidebar({
   const [chaptersInBook, setChaptersInBook] = useState(50);
   const [versesInChapter, setVersesInChapter] = useState([]);
 
-  // Fetch book dynamically when navigating the visual picker
   useEffect(() => {
     if (searchMode === 'els' && elsSubMode === 'manual') {
       const bookInfo = booksList.find(b => b.id === manualConfig.bookId);
@@ -46,7 +45,7 @@ function ControlSidebar({
         setManualConfig({...manualConfig, verse: vList[0], letterIdx: null});
       }
     }
-  }, [manualConfig.chapter, manualConfig.verse, manualData]);
+  }, [manualConfig.chapter, manualConfig.verse, manualData, manualConfig, setManualConfig]);
 
   const renderPickerVerse = () => {
     let letterCounter = 0;
@@ -108,15 +107,22 @@ function ControlSidebar({
           {searchMode === 'els' && elsSubMode === 'manual' ? (
             <div>
               <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
+
+              <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
+                 <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
+                 <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('chapter') || 'Chapter'}</div>
+                 <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('verse') || 'Verse'}</div>
+              </div>
+
               <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
                  <select value={manualConfig.bookId} onChange={e => setManualConfig({...manualConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '6px', fontSize: '12px' }}>
                    {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
                  </select>
                  <select value={manualConfig.chapter} onChange={e => setManualConfig({...manualConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '6px', fontSize: '12px' }}>
-                   {Array.from({length: chaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>Ch {c}</option>)}
+                   {Array.from({length: chaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
                  </select>
                  <select value={manualConfig.verse} onChange={e => setManualConfig({...manualConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '6px', fontSize: '12px' }}>
-                   {versesInChapter.map(v => <option key={v} value={v}>V {v}</option>)}
+                   {versesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
                  </select>
               </div>
 
@@ -127,11 +133,11 @@ function ControlSidebar({
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold' }}>Jump Size</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpSize') || "Jump Size"}</label>
                   <input type="number" value={manualConfig.skip} onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold' }}>Jump Count</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpCount') || "Jump Count"}</label>
                   <input type="number" value={manualConfig.count} onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
                 </div>
               </div>
@@ -144,7 +150,7 @@ function ControlSidebar({
           )}
         </div>
 
-{/* HIDE COMPARISON SCOPES IN MANUAL MODE */}
+        {/* HIDE COMPARISON SCOPES IN MANUAL MODE */}
         {!(searchMode === 'els' && elsSubMode === 'manual') && (
           <div className="sidebar-content">
             <div className="input-group">
@@ -190,6 +196,7 @@ function ControlSidebar({
             </div>
           </div>
         )}
+
         <div className="sidebar-footer">
           <button onClick={handleSearch} disabled={loading} className="btn btn-run">
             {loading ? (t('processing') || "Processing...") : (t('runAnalysis') || "Run Analysis")}
