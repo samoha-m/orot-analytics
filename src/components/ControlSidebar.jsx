@@ -18,8 +18,14 @@ function ControlSidebar({
   const [chaptersInBook, setChaptersInBook] = useState(50);
   const [versesInChapter, setVersesInChapter] = useState([]);
 
-  // Determine which major group we are currently in
   const currentGroup = ['exact', 'root', 'letter'].includes(searchMode) ? 'text' : searchMode;
+
+  // DYNAMIC INPUT TITLE LOGIC
+  const getInputTitle = () => {
+    if (searchMode === 'els') return t('searchTarget');
+    if (searchMode === 'gematria') return t('compareGematria');
+    return t('compareTerms');
+  };
 
   useEffect(() => {
     if (searchMode === 'els' && elsSubMode === 'manual') {
@@ -89,7 +95,6 @@ function ControlSidebar({
             <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: showMobilePanel ? 'block' : 'none' }}>✖</button>
           </div>
 
-          {/* MAIN GROUP SELECTOR (3 Tabs) */}
           <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
             <button
               onClick={() => { if (currentGroup !== 'text') setSearchMode('exact'); }}
@@ -111,7 +116,6 @@ function ControlSidebar({
             </button>
           </div>
 
-          {/* TEXT SEARCH SUB-SELECTOR */}
           {currentGroup === 'text' && (
             <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px' }}>
               {[ { val: 'exact', lbl: t('exact') || "Exact" }, { val: 'root', lbl: t('root') || "Root" }, { val: 'letter', lbl: t('letter') || "Letter" } ].map(m => (
@@ -126,7 +130,6 @@ function ControlSidebar({
             </div>
           )}
 
-          {/* ELS SUB-SELECTOR */}
           {currentGroup === 'els' && (
             <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px' }}>
                <button onClick={() => setElsSubMode('auto')} style={{ flex: 1, border: 'none', background: elsSubMode === 'auto' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: 'bold', color: elsSubMode === 'auto' ? '#0056b3' : '#495057', cursor: 'pointer' }}>{t('autoDiscover') || "Auto-Discover"}</button>
@@ -136,7 +139,6 @@ function ControlSidebar({
 
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
-          {/* MANUAL EXPLORER CONTROLS */}
           {searchMode === 'els' && elsSubMode === 'manual' ? (
             <div>
               <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
@@ -159,12 +161,13 @@ function ControlSidebar({
                  </select>
               </div>
 
-             <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
+              <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
                  {verseText ? renderPickerVerse() : "..."}
               </div>
               <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
                 {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
               </div>
+
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpSize') || "Jump Size"}</label>
@@ -178,13 +181,12 @@ function ControlSidebar({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label style={sectionLabelStyle}>{t('compareTerms') || "Compare Terms"}</label>
+              <label style={sectionLabelStyle}>{getInputTitle()}</label>
               <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('egSearch')} dir="rtl" style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
             </div>
           )}
         </div>
 
-        {/* HIDE COMPARISON SCOPES IN MANUAL MODE */}
         {!(searchMode === 'els' && elsSubMode === 'manual') && (
           <div className="sidebar-content">
             <div className="input-group">

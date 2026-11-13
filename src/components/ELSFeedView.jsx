@@ -54,21 +54,21 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   return (
     <div style={{ padding: '0 10px 40px 10px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
 
-      {/* STICKY HEADER */}
+      {/* FIXED STICKY HEADER - Background set to solid white, zIndex to 100 */}
       <div style={{
-        position: 'sticky', top: '10px', zIndex: 10,
-        backgroundColor: '#fafbfc', border: '1px solid #e9ecef', borderRadius: '12px',
+        position: 'sticky', top: '10px', zIndex: 100,
+        backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px',
         padding: '15px 20px', marginBottom: '20px',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
       }}>
-        {/* Left Align Block if Manual Explorer and RTL */}
-        <div style={{ width: isManual ? '100%' : 'auto', textAlign: (isManual && isRTL) ? 'left' : 'inherit' }}>
+        {/* Dynamic LTR/RTL Alignment */}
+        <div style={{ width: isManual ? '100%' : 'auto', textAlign: isRTL ? 'right' : 'left', direction: isRTL ? 'rtl' : 'ltr' }}>
           <h3 style={{ margin: 0, color: '#0056b3' }}>
             {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
           </h3>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
-            {isManual ? t('start') || "Start:" : t('book') || "Book:"} <strong>{bookName} {isManual && `(${startChar})`}</strong>
+            {isManual ? (t('start') || "Start:") : (t('book') || "Book:")} <strong>{bookName} {isManual && `(${startChar})`}</strong>
             <span style={{ margin: '0 8px', color: '#ced4da' }}>|</span>
             {t('skipPattern') || "Skip:"} <strong>{skip}</strong>
             {isManual && (
@@ -85,9 +85,8 @@ function ELSFeedView({ elsData, loading, t, lang }) {
           )}
         </div>
 
-        {/* HIDE PAGINATION IN MANUAL MODE */}
         {!isManual && (
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#ffffff', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
             <button
               onClick={handlePrevMatch}
               disabled={activeMatchIndex === 0}

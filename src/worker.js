@@ -36,22 +36,29 @@ self.onmessage = async (e) => {
     if (searchMode === 'els') {
       const isManual = elsSubMode === 'manual';
 
-      // --- MANUAL EXPLORER LOGIC ---
+      // --- NEW ARCHITECTURE: MANUAL EXPLORER CROSS-BOOK FETCHING ---
       if (isManual) {
         const { bookId, chapter, verse, letterIdx, skip, count } = manualConfig;
         let letterSequence = [];
+        const requiredLetters = skip * count;
 
-        for (const range of ranges) {
-            const bookInfo = booksList.find(b => b.id === range.bookId);
+        let currentBookIdx = booksList.findIndex(b => b.id === bookId);
+        let globalStart = -1;
+
+        // Fetch consecutive books until we have enough letters to complete the manual jump
+        while (currentBookIdx < booksList.length) {
+            const bookInfo = booksList[currentBookIdx];
+            if (!bookCache[bookInfo.id]) {
+                const fileName = `/data/${bookInfo.id}_${bookInfo.name.toLowerCase()}.json`;
+                const res = await fetch(fileName);
+                bookCache[bookInfo.id] = await res.json();
+            }
+            const bookData = bookCache[bookInfo.id];
             const localBookName = getBookName(bookInfo);
-            const bookData = bookCache[range.bookId] || [];
-            const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
 
+            let currentC = -1, currentV = -1, currentVerseWords = [];
             const versesList = [];
-            let currentVerseWords = [];
-            let currentC = -1, currentV = -1;
-
-            filteredData.forEach(item => {
+            bookData.forEach(item => {
                if (item.c !== currentC || item.v !== currentV) {
                    if (currentC !== -1) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
                    currentC = item.c; currentV = item.v; currentVerseWords = [];
@@ -60,33 +67,37 @@ self.onmessage = async (e) => {
             });
             if (currentVerseWords.length > 0) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
 
+            let letterCounterInVerse = 0;
             versesList.forEach(vObj => {
                 const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
                 const verseString = vObj.words.join(' ');
                 for (let i = 0; i < verseString.length; i++) {
                     const char = verseString[i];
                     if (/[\u0590-\u05FF]/.test(char)) {
+                        const currentGlobalIdx = letterSequence.length;
                         letterSequence.push({
                             char, ref, verseString, charIndexInString: i,
-                            bookId: range.bookId, c: vObj.c, v: vObj.v
+                            bookId: bookInfo.id, c: vObj.c, v: vObj.v
                         });
+
+                        // Locate exact start coordinate
+                        if (globalStart === -1 && bookInfo.id === bookId && vObj.c === chapter && vObj.v === verse) {
+                            if (letterCounterInVerse === letterIdx) { globalStart = currentGlobalIdx; }
+                            letterCounterInVerse++;
+                        }
                     }
                 }
             });
-        }
 
-        let globalStart = -1;
-        let letterCounterInVerse = 0;
-        for (let i = 0; i < letterSequence.length; i++) {
-            const item = letterSequence[i];
-            if (item.bookId === bookId && item.c === chapter && item.v === verse) {
-                if (letterCounterInVerse === letterIdx) { globalStart = i; break; }
-                letterCounterInVerse++;
+            // If we found the start AND mapped enough letters across books, stop fetching
+            if (globalStart !== -1 && letterSequence.length >= globalStart + requiredLetters) {
+                break;
             }
+            currentBookIdx++;
         }
 
         if (globalStart === -1) {
-            self.postMessage({ status: 'error', error: "Start coordinate not found in bounds. Make sure your Search Boundaries include the book/chapter you picked!" });
+            self.postMessage({ status: 'error', error: "Start coordinate not found. Please ensure valid selection." });
             return;
         }
 
@@ -171,7 +182,6 @@ self.onmessage = async (e) => {
         });
 
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
-          // FIX: Changed `<=` to `<` to prevent off-by-one array boundary crash
           for (let start = 0; start < letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
             let matchIndices = [];

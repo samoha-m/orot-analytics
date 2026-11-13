@@ -7,6 +7,8 @@ export const translations = {
     autoDiscovering: "Auto-discovering Equidistant Letter Sequences...",
     editSearch: "🔍 Edit Search & Scopes",
     compareTerms: "Compare Terms (comma separated)",
+    searchTarget: "Search Term (Auto-Discover)",
+    compareGematria: "Gematria Terms (comma separated)",
     egSearch: "e.g. ויאמר אלהים",
     searchLogicMode: "Search Logic Mode",
     textSearch: "Text Search",
@@ -49,7 +51,9 @@ export const translations = {
     jumps: "Jumps:",
     jumpSize: "Jump Size",
     jumpCount: "Jump Count",
-    clickLetterToLock: "Click a letter above to lock exact starting coordinate."
+    clickLetterToLock: "Click a letter above to lock exact starting coordinate.",
+    errorSelectChapter: "Please select at least one chapter for all ranges.",
+    errorSelectLetter: "Please click a specific starting letter in the verse viewer before running."
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -59,6 +63,8 @@ export const translations = {
     autoDiscovering: "מחפש דילוגי אותיות (ELS)...",
     editSearch: "🔍 ערוך חיפוש וטווחים",
     compareTerms: "מונחים להשוואה (מופרדים בפסיק)",
+    searchTarget: "מונח חיפוש (גילוי אוטומטי)",
+    compareGematria: "מונחי גימטריה (מופרדים בפסיק)",
     egSearch: "לדוגמה: ויאמר אלהים",
     searchLogicMode: "סוג חיפוש",
     textSearch: "חיפוש טקסט",
@@ -66,7 +72,7 @@ export const translations = {
     root: "שורש",
     letter: "אות",
     gematria: "גימטריה",
-    els: "דילוג", // Removed (ELS)
+    els: "דילוג",
     comparisonScopes: "טווחי בדיקה",
     hideChapters: "הסתר פרקים",
     chEdit: (x, y) => `פרקים: ${x}/${y} (ערוך)`,
@@ -98,10 +104,12 @@ export const translations = {
     verse: "פסוק",
     startPoint: "בחר נקודת התחלה",
     start: "התחלה:",
-    jumps: "קפיצות:", // Added colon
+    jumps: "קפיצות:",
     jumpSize: "גודל קפיצה",
     jumpCount: "מספר קפיצות",
-    clickLetterToLock: "לחץ על אות למעלה כדי לנעול את נקודת ההתחלה המדויקת."
+    clickLetterToLock: "לחץ על אות למעלה כדי לנעול את נקודת ההתחלה המדויקת.",
+    errorSelectChapter: "אנא בחר לפחות פרק אחד עבור כל הטווחים.",
+    errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש."
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -111,6 +119,8 @@ export const translations = {
     autoDiscovering: "در حال کشف توالی‌های ELS...",
     editSearch: "🔍 ویرایش جستجو و دامنه‌ها",
     compareTerms: "عبارات مقایسه (با کاما جدا شوند)",
+    searchTarget: "عبارت جستجو (کشف خودکار)",
+    compareGematria: "عبارات ابجد (با کاما جدا شوند)",
     egSearch: "مثال: ויאמר אלהים",
     searchLogicMode: "حالت منطق جستجو",
     textSearch: "جستجوی متنی",
@@ -153,6 +163,8 @@ export const translations = {
     jumps: "پرش‌ها:",
     jumpSize: "اندازه پرش",
     jumpCount: "تعداد پرش",
-    clickLetterToLock: "برای قفل کردن مختصات شروع دقیق، روی یک حرف در بالا کلیک کنید."
+    clickLetterToLock: "برای قفل کردن مختصات شروع دقیق، روی یک حرف در بالا کلیک کنید.",
+    errorSelectChapter: "لطفاً حداقل یک فصل برای همه دامنه‌ها انتخاب کنید.",
+    errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید."
   }
 };

@@ -11,12 +11,12 @@ import ELSFeedView from './components/ELSFeedView';
 
 function App() {
   const [lang, setLang] = useState('he');
-  // Added fallback logic so missing translations don't break the UI
   const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
 
   const workerRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [appError, setAppError] = useState(null); // NEW: Custom Error State
   const [showMobilePanel, setShowMobilePanel] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
@@ -24,16 +24,8 @@ function App() {
   const [searchMode, setSearchMode] = useState('exact');
   const [viewMode, setViewMode] = useState('absolute');
 
-  // --- NEW: Manual ELS Explorer State ---
-  const [elsSubMode, setElsSubMode] = useState('auto'); // 'auto' | 'manual'
-  const [manualConfig, setManualConfig] = useState({
-    bookId: '01',
-    chapter: 1,
-    verse: 1,
-    letterIdx: null,
-    skip: 50,
-    count: 10
-  });
+  const [elsSubMode, setElsSubMode] = useState('auto');
+  const [manualConfig, setManualConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null, skip: 50, count: 10 });
 
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
@@ -57,7 +49,7 @@ function App() {
           setResultTotals(totals);
         }
       } else {
-        alert(error); // Show worker errors nicely
+        setAppError(error);
         console.error("Worker failed:", error);
       }
       setLoading(false);
@@ -91,34 +83,39 @@ function App() {
   };
 
   const handleSearch = () => {
+    setAppError(null);
     if (searchMode === 'els' && elsSubMode === 'manual') {
-      if (manualConfig.letterIdx === null) return alert("Please click a specific starting letter in the verse viewer before running.");
+      if (manualConfig.letterIdx === null) {
+        setAppError(t('errorSelectLetter'));
+        return;
+      }
       setLoading(true);
       setActivePreview(null);
       setShowMobilePanel(false);
-      workerRef.current.postMessage({
-        ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs',
-        elsSubMode, manualConfig
-      });
+      workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig });
       return;
     }
 
     if (!searchTerm) return;
-    let terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+
+    // FIX: Deduplicate terms using Set
+    let rawTerms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+    let terms = [...new Set(rawTerms)];
+
     if (searchMode === 'gematria') {
       terms = terms.map(term => /^\d+$/.test(term) ? term : calculateGematria(term).toString());
     }
     if (terms.length === 0) return;
-    if (ranges.some(r => r.selectedChapters.length === 0)) return alert("Please select at least one chapter for all ranges.");
+    if (ranges.some(r => r.selectedChapters.length === 0)) {
+       setAppError(t('errorSelectChapter'));
+       return;
+    }
 
     setLoading(true);
     setActiveTerms(terms);
     setActivePreview(null);
     setShowMobilePanel(false);
-
-    workerRef.current.postMessage({
-      ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode
-    });
+    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -160,7 +157,6 @@ function App() {
     activeTerms.forEach(term => { mappedData[term] = denominator > 0 ? Number(((data[term] / denominator) * 100).toFixed(3)) : 0; });
     return mappedData;
   });
-
   const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
   return (
@@ -185,6 +181,14 @@ function App() {
 
       <div className="app-layout">
         <main className="main-canvas">
+          {/* CUSTOM ERROR BANNER */}
+          {appError && (
+            <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontWeight: 'bold' }}>{appError}</span>
+              <button onClick={() => setAppError(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#856404' }}>✖</button>
+            </div>
+          )}
+
           {searchMode === 'els' || isElsMode ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
