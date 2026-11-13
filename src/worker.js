@@ -14,9 +14,8 @@ const calculateGematria = (word) => {
 };
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList, lang, chsStr } = e.data;
+  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig } = e.data;
 
-  // Helper to dynamically get the localized book name
   const getBookName = (bookInfo) => {
     if (lang === 'he') return bookInfo.he;
     if (lang === 'fa') return bookInfo.fa;
@@ -34,10 +33,102 @@ self.onmessage = async (e) => {
       }
     }
 
-    // ==========================================
-    // ELS AUTO-DISCOVER LOGIC
-    // ==========================================
     if (searchMode === 'els') {
+      const isManual = elsSubMode === 'manual';
+
+      // --- NEW: MANUAL EXPLORER LOGIC ---
+      if (isManual) {
+        const { bookId, chapter, verse, letterIdx, skip, count } = manualConfig;
+        let letterSequence = [];
+
+        // Build global string combining all selected scopes so manual jumps can cross books safely
+        for (const range of ranges) {
+            const bookInfo = booksList.find(b => b.id === range.bookId);
+            const localBookName = getBookName(bookInfo);
+            const bookData = bookCache[range.bookId] || [];
+            const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
+
+            const versesList = [];
+            let currentVerseWords = [];
+            let currentC = -1, currentV = -1;
+
+            filteredData.forEach(item => {
+               if (item.c !== currentC || item.v !== currentV) {
+                   if (currentC !== -1) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
+                   currentC = item.c; currentV = item.v; currentVerseWords = [];
+               }
+               currentVerseWords.push(item.w);
+            });
+            if (currentVerseWords.length > 0) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
+
+            versesList.forEach(vObj => {
+                const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
+                const verseString = vObj.words.join(' ');
+                for (let i = 0; i < verseString.length; i++) {
+                    const char = verseString[i];
+                    if (/[\u0590-\u05FF]/.test(char)) {
+                        letterSequence.push({
+                            char, ref, verseString, charIndexInString: i,
+                            bookId: range.bookId, c: vObj.c, v: vObj.v
+                        });
+                    }
+                }
+            });
+        }
+
+        // Locate exact start coordinate
+        let globalStart = -1;
+        let letterCounterInVerse = 0;
+        for (let i = 0; i < letterSequence.length; i++) {
+            const item = letterSequence[i];
+            if (item.bookId === bookId && item.c === chapter && item.v === verse) {
+                if (letterCounterInVerse === letterIdx) { globalStart = i; break; }
+                letterCounterInVerse++;
+            }
+        }
+
+        if (globalStart === -1) {
+            self.postMessage({ status: 'error', error: "Start coordinate not found in bounds. Make sure your Search Boundaries include the book/chapter you picked!" });
+            return;
+        }
+
+        // Jump and Collect
+        let matchIndices = [];
+        let generatedTerm = "";
+        for (let k = 0; k < count; k++) {
+            const idx = globalStart + (k * skip);
+            if (idx >= letterSequence.length) break; // Reached end of bounded text
+            matchIndices.push(idx);
+            generatedTerm += letterSequence[idx].char;
+        }
+
+        let feedNodes = [];
+        let currentRef = null, currentContext = null;
+
+        matchIndices.forEach(globalIdx => {
+            const item = letterSequence[globalIdx];
+            if (currentRef !== item.ref) {
+                if (currentContext) feedNodes.push(currentContext);
+                currentRef = item.ref;
+                currentContext = { ref: item.ref, text: item.verseString, highlights: [] };
+            }
+            currentContext.highlights.push(item.charIndexInString);
+        });
+        if (currentContext) feedNodes.push(currentContext);
+
+        const matches = [{
+            term: generatedTerm.split('').join('-'), // Add dashes so it looks like a generated sequence!
+            skip,
+            bookName: "Generated Sequence",
+            feedNodes,
+            isManual: true
+        }];
+
+        self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
+        return;
+      }
+
+      // --- EXISTING: AUTO-DISCOVER LOGIC ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
@@ -54,15 +145,12 @@ self.onmessage = async (e) => {
 
         const versesList = [];
         let currentVerseWords = [];
-        let currentC = -1;
-        let currentV = -1;
+        let currentC = -1, currentV = -1;
 
         filteredData.forEach(item => {
            if (item.c !== currentC || item.v !== currentV) {
                if (currentC !== -1) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
-               currentC = item.c;
-               currentV = item.v;
-               currentVerseWords = [];
+               currentC = item.c; currentV = item.v; currentVerseWords = [];
            }
            currentVerseWords.push(item.w);
         });
@@ -72,7 +160,6 @@ self.onmessage = async (e) => {
         versesList.forEach(vObj => {
             const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
             const verseString = vObj.words.join(' ');
-
             for (let i = 0; i < verseString.length; i++) {
                 const char = verseString[i];
                 if (/[\u0590-\u05FF]/.test(char)) {
@@ -85,7 +172,6 @@ self.onmessage = async (e) => {
           for (let start = 0; start <= letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
             let matchIndices = [];
-
             for (let k = 0; k < termLen; k++) {
               const idx = start + k * skip;
               if (letterSequence[idx].char !== termLetters[k]) { matched = false; break; }
@@ -94,9 +180,7 @@ self.onmessage = async (e) => {
 
             if (matched) {
                let feedNodes = [];
-               let currentRef = null;
-               let currentContext = null;
-
+               let currentRef = null, currentContext = null;
                matchIndices.forEach(globalIdx => {
                    const item = letterSequence[globalIdx];
                    if (currentRef !== item.ref) {
@@ -107,9 +191,7 @@ self.onmessage = async (e) => {
                    currentContext.highlights.push(item.charIndexInString);
                });
                if (currentContext) feedNodes.push(currentContext);
-
                matches.push({ term: targetTerm, skip, bookName: localBookName, feedNodes });
-
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
           }
@@ -117,7 +199,6 @@ self.onmessage = async (e) => {
         }
         if (matches.length >= MAX_TOTAL_MATCHES) break;
       }
-
       self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
       return;
     }
@@ -141,11 +222,9 @@ self.onmessage = async (e) => {
 
       const rangeHits = {};
       const matchedVerses = {};
-      let rangeTotalWords = 0;
-      let rangeTotalChars = 0;
+      let rangeTotalWords = 0, rangeTotalChars = 0;
 
       terms.forEach(term => { rangeHits[term] = 0; matchedVerses[term] = []; });
-
       const filteredData = bookData.filter(item => range.selectedChapters.includes(item.c));
       const verses = {};
 
@@ -159,9 +238,7 @@ self.onmessage = async (e) => {
         verses[vKey].text.push(item.w);
 
         parsedTerms.forEach(pt => {
-          let matchedStrings = [];
-          let isMatch = false;
-
+          let matchedStrings = [], isMatch = false;
           if (searchMode === 'exact') {
             isMatch = true;
             for(let j = 0; j < pt.words.length; j++) {
@@ -212,7 +289,6 @@ self.onmessage = async (e) => {
     });
 
     self.postMessage({ status: 'success', isEls: false, chartData: formattedChartData, totals });
-
   } catch (error) {
     self.postMessage({ status: 'error', error: error.message });
   }

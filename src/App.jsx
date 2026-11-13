@@ -11,7 +11,8 @@ import ELSFeedView from './components/ELSFeedView';
 
 function App() {
   const [lang, setLang] = useState('en');
-  const t = (key) => translations[lang][key];
+  // Added fallback logic so missing translations don't break the UI
+  const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
 
   const workerRef = useRef(null);
@@ -22,6 +23,17 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('אור');
   const [searchMode, setSearchMode] = useState('exact');
   const [viewMode, setViewMode] = useState('absolute');
+
+  // --- NEW: Manual ELS Explorer State ---
+  const [elsSubMode, setElsSubMode] = useState('auto'); // 'auto' | 'manual'
+  const [manualConfig, setManualConfig] = useState({
+    bookId: '01',
+    chapter: 1,
+    verse: 1,
+    letterIdx: null,
+    skip: 50,
+    count: 10
+  });
 
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
@@ -45,6 +57,7 @@ function App() {
           setResultTotals(totals);
         }
       } else {
+        alert(error); // Show worker errors nicely
         console.error("Worker failed:", error);
       }
       setLoading(false);
@@ -61,9 +74,7 @@ function App() {
   };
 
   const toggleAccordion = (id) => {
-    setRanges(ranges.map(r =>
-      r.id === id ? { ...r, isExpanded: !r.isExpanded } : { ...r, isExpanded: false }
-    ));
+    setRanges(ranges.map(r => r.id === id ? { ...r, isExpanded: !r.isExpanded } : { ...r, isExpanded: false }));
   };
 
   const handleChapterSelection = (id, maxCh, action, singleCh = null) => {
@@ -80,16 +91,23 @@ function App() {
   };
 
   const handleSearch = () => {
-    if (!searchTerm) return;
-    let terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
-
-    if (searchMode === 'gematria') {
-      terms = terms.map(term => {
-        if (/^\d+$/.test(term)) return term;
-        return calculateGematria(term).toString();
+    if (searchMode === 'els' && elsSubMode === 'manual') {
+      if (manualConfig.letterIdx === null) return alert("Please click a specific starting letter in the verse viewer before running.");
+      setLoading(true);
+      setActivePreview(null);
+      setShowMobilePanel(false);
+      workerRef.current.postMessage({
+        ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs',
+        elsSubMode, manualConfig
       });
+      return;
     }
 
+    if (!searchTerm) return;
+    let terms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+    if (searchMode === 'gematria') {
+      terms = terms.map(term => /^\d+$/.test(term) ? term : calculateGematria(term).toString());
+    }
     if (terms.length === 0) return;
     if (ranges.some(r => r.selectedChapters.length === 0)) return alert("Please select at least one chapter for all ranges.");
 
@@ -98,14 +116,8 @@ function App() {
     setActivePreview(null);
     setShowMobilePanel(false);
 
-    // Pass lang and translated chs string to the worker so it can build local labels
     workerRef.current.postMessage({
-      ranges,
-      terms,
-      searchMode,
-      booksList,
-      lang,
-      chsStr: t('chsAbbr')
+      ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode
     });
   };
 
@@ -114,15 +126,10 @@ function App() {
     if (maxCh && chapters.length === maxCh) return `1-${maxCh} (All)`;
     const sorted = [...chapters].sort((a, b) => a - b);
     const rangesArr = [];
-    let start = sorted[0];
-    let prev = sorted[0];
+    let start = sorted[0], prev = sorted[0];
     for (let i = 1; i < sorted.length; i++) {
       if (sorted[i] === prev + 1) { prev = sorted[i]; }
-      else {
-        rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`);
-        start = sorted[i];
-        prev = sorted[i];
-      }
+      else { rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`); start = sorted[i]; prev = sorted[i]; }
     }
     rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`);
     return rangesArr.join(', ');
@@ -158,102 +165,45 @@ function App() {
 
   return (
     <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* GLOBAL TOP NAVIGATION BAR */}
-{/* GLOBAL TOP NAVIGATION BAR */}
-      {/* GLOBAL TOP NAVIGATION BAR */}
       <header className="top-navbar">
         <div className="top-navbar-brand">
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
           <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
         </div>
-
-        {/* IMAGE FLAG LANGUAGE SELECTOR */}
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <button
-            onClick={() => setLang('en')}
-            title="English"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              opacity: lang === 'en' ? 1 : 0.4, transform: lang === 'en' ? 'scale(1.15)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'en' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
-            }}
-          >
+          <button onClick={() => setLang('en')} title="English" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'en' ? 1 : 0.4, transform: lang === 'en' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'en' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
             <img src="https://flagcdn.com/us.svg" alt="English" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
-
-          <button
-            onClick={() => setLang('he')}
-            title="עברית"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              opacity: lang === 'he' ? 1 : 0.4, transform: lang === 'he' ? 'scale(1.15)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'he' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
-            }}
-          >
+          <button onClick={() => setLang('he')} title="עברית" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'he' ? 1 : 0.4, transform: lang === 'he' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'he' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
             <img src="https://flagcdn.com/il.svg" alt="Hebrew" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
-
-          <button
-            onClick={() => setLang('fa')}
-            title="فارسی"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              opacity: lang === 'fa' ? 1 : 0.4, transform: lang === 'fa' ? 'scale(1.15)' : 'scale(1)',
-              transition: 'all 0.2s ease-in-out', filter: lang === 'fa' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none'
-            }}
-          >
+          <button onClick={() => setLang('fa')} title="فارسی" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'fa' ? 1 : 0.4, transform: lang === 'fa' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'fa' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
             <img src="https://flagcdn.com/ir.svg" alt="Farsi" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
           </button>
         </div>
       </header>
-      {/* APP LAYOUT */}
+
       <div className="app-layout">
         <main className="main-canvas">
           {searchMode === 'els' || isElsMode ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
             <>
-              <ChartDisplay
-                resultTotals={resultTotals}
-                loading={loading}
-                activeTerms={activeTerms}
-                searchMode={searchMode}
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                handleExportCSV={handleExportCSV}
-                minComfortableWidth={minComfortableWidth}
-                renderChartData={renderChartData}
-                setActivePreview={setActivePreview}
-                t={t}
-              />
-              <VersePreview
-                activePreview={activePreview}
-                setActivePreview={setActivePreview}
-                activeTerms={activeTerms}
-                COLORS={COLORS}
-                t={t}
-              />
+              <ChartDisplay resultTotals={resultTotals} loading={loading} activeTerms={activeTerms} searchMode={searchMode} viewMode={viewMode} setViewMode={setViewMode} handleExportCSV={handleExportCSV} minComfortableWidth={minComfortableWidth} renderChartData={renderChartData} setActivePreview={setActivePreview} t={t} />
+              <VersePreview activePreview={activePreview} setActivePreview={setActivePreview} activeTerms={activeTerms} COLORS={COLORS} t={t} />
             </>
           )}
         </main>
 
         <ControlSidebar
-          showMobilePanel={showMobilePanel}
-          setShowMobilePanel={setShowMobilePanel}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchMode={searchMode}
-          setSearchMode={setSearchMode}
-          ranges={ranges}
-          loading={loading}
-          updateBook={updateBook}
-          removeRange={removeRange}
-          toggleAccordion={toggleAccordion}
-          handleChapterSelection={handleChapterSelection}
-          addRange={addRange}
-          handleSearch={handleSearch}
-          t={t}
-          lang={lang}
+          showMobilePanel={showMobilePanel} setShowMobilePanel={setShowMobilePanel}
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+          searchMode={searchMode} setSearchMode={setSearchMode}
+          ranges={ranges} loading={loading}
+          updateBook={updateBook} removeRange={removeRange} toggleAccordion={toggleAccordion} handleChapterSelection={handleChapterSelection} addRange={addRange} handleSearch={handleSearch}
+          t={t} lang={lang}
+          elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
+          manualConfig={manualConfig} setManualConfig={setManualConfig}
         />
       </div>
     </div>
