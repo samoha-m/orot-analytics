@@ -16,7 +16,7 @@ function App() {
 
   const workerRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [appError, setAppError] = useState(null); // NEW: Custom Error State
+  const [appError, setAppError] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
@@ -84,6 +84,8 @@ function App() {
 
   const handleSearch = () => {
     setAppError(null);
+
+    // Handing Manual Explorer Mode
     if (searchMode === 'els' && elsSubMode === 'manual') {
       if (manualConfig.letterIdx === null) {
         setAppError(t('errorSelectLetter'));
@@ -96,16 +98,26 @@ function App() {
       return;
     }
 
-    if (!searchTerm) return;
-
-    // FIX: Deduplicate terms using Set
+    // Process Search Terms
     let rawTerms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
     let terms = [...new Set(rawTerms)];
+
+    // Check for Empty Input
+    if (terms.length === 0) {
+      setRawChartData([]);
+      setElsData(null);
+      setResultTotals(null);
+      setActiveTerms([]);
+      setActivePreview(null);
+      setIsElsMode(false); // Force back to chart canvas view
+      setAppError(t('errorEmptyInput')); // Display error banner
+      return;
+    }
 
     if (searchMode === 'gematria') {
       terms = terms.map(term => /^\d+$/.test(term) ? term : calculateGematria(term).toString());
     }
-    if (terms.length === 0) return;
+
     if (ranges.some(r => r.selectedChapters.length === 0)) {
        setAppError(t('errorSelectChapter'));
        return;

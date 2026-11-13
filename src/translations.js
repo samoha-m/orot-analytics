@@ -53,7 +53,8 @@ export const translations = {
     jumpCount: "Jump Count",
     clickLetterToLock: "Click a letter above to lock exact starting coordinate.",
     errorSelectChapter: "Please select at least one chapter for all ranges.",
-    errorSelectLetter: "Please click a specific starting letter in the verse viewer before running."
+    errorSelectLetter: "Please click a specific starting letter in the verse viewer before running.",
+    errorEmptyInput: "Please enter a search term before running the analysis."
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -109,7 +110,8 @@ export const translations = {
     jumpCount: "מספר קפיצות",
     clickLetterToLock: "לחץ על אות למעלה כדי לנעול את נקודת ההתחלה המדויקת.",
     errorSelectChapter: "אנא בחר לפחות פרק אחד עבור כל הטווחים.",
-    errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש."
+    errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש.",
+    errorEmptyInput: "אנא הזן מונח לחיפוש לפני הפעלת הניתוח."
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -165,6 +167,7 @@ export const translations = {
     jumpCount: "تعداد پرش",
     clickLetterToLock: "برای قفل کردن مختصات شروع دقیق، روی یک حرف در بالا کلیک کنید.",
     errorSelectChapter: "لطفاً حداقل یک فصل برای همه دامنه‌ها انتخاب کنید.",
-    errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید."
+    errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید.",
+    errorEmptyInput: "لطفاً قبل از اجرای تحلیل یک عبارت جستجو وارد کنید."
   }
 };
