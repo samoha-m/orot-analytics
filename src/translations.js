@@ -9,7 +9,7 @@ export const translations = {
     compareTerms: "Compare Terms (comma separated)",
     egSearch: "e.g. ויאמר אלהים",
     searchLogicMode: "Search Logic Mode",
-    textSearch: "Text Search", // NEW
+    textSearch: "Text Search",
     exact: "Exact",
     root: "Root",
     letter: "Letter",
@@ -46,9 +46,10 @@ export const translations = {
     verse: "Verse",
     startPoint: "Select Start Point",
     start: "Start:",
-    jumps: "Jumps",
+    jumps: "Jumps:",
     jumpSize: "Jump Size",
-    jumpCount: "Jump Count"
+    jumpCount: "Jump Count",
+    clickLetterToLock: "Click a letter above to lock exact starting coordinate."
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -60,12 +61,12 @@ export const translations = {
     compareTerms: "מונחים להשוואה (מופרדים בפסיק)",
     egSearch: "לדוגמה: ויאמר אלהים",
     searchLogicMode: "סוג חיפוש",
-    textSearch: "חיפוש טקסט", // NEW
+    textSearch: "חיפוש טקסט",
     exact: "מדויק",
     root: "שורש",
     letter: "אות",
     gematria: "גימטריה",
-    els: "דילוג (ELS)",
+    els: "דילוג", // Removed (ELS)
     comparisonScopes: "טווחי בדיקה",
     hideChapters: "הסתר פרקים",
     chEdit: (x, y) => `פרקים: ${x}/${y} (ערוך)`,
@@ -97,9 +98,10 @@ export const translations = {
     verse: "פסוק",
     startPoint: "בחר נקודת התחלה",
     start: "התחלה:",
-    jumps: "קפיצות",
+    jumps: "קפיצות:", // Added colon
     jumpSize: "גודל קפיצה",
-    jumpCount: "מספר קפיצות"
+    jumpCount: "מספר קפיצות",
+    clickLetterToLock: "לחץ על אות למעלה כדי לנעול את נקודת ההתחלה המדויקת."
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -111,7 +113,7 @@ export const translations = {
     compareTerms: "عبارات مقایسه (با کاما جدا شوند)",
     egSearch: "مثال: ויאמר אלהים",
     searchLogicMode: "حالت منطق جستجو",
-    textSearch: "جستجوی متنی", // NEW
+    textSearch: "جستجوی متنی",
     exact: "دقیق",
     root: "ریشه",
     letter: "حرف",
@@ -148,8 +150,9 @@ export const translations = {
     verse: "آیه",
     startPoint: "نقطه شروع را انتخاب کنید",
     start: "شروع:",
-    jumps: "پرش‌ها",
+    jumps: "پرش‌ها:",
     jumpSize: "اندازه پرش",
-    jumpCount: "تعداد پرش"
+    jumpCount: "تعداد پرش",
+    clickLetterToLock: "برای قفل کردن مختصات شروع دقیق، روی یک حرف در بالا کلیک کنید."
   }
 };

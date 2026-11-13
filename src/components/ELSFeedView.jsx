@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function ELSFeedView({ elsData, loading, t, lang }) {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const isRTL = lang === 'he' || lang === 'fa';
 
   useEffect(() => {
     setCurrentMatchIndex(0);
@@ -61,7 +62,8 @@ function ELSFeedView({ elsData, loading, t, lang }) {
         boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
       }}>
-        <div>
+        {/* Left Align Block if Manual Explorer and RTL */}
+        <div style={{ width: isManual ? '100%' : 'auto', textAlign: (isManual && isRTL) ? 'left' : 'inherit' }}>
           <h3 style={{ margin: 0, color: '#0056b3' }}>
             {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
           </h3>

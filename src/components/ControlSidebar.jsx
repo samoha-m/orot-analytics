@@ -159,11 +159,12 @@ function ControlSidebar({
                  </select>
               </div>
 
-              <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
+             <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
                  {verseText ? renderPickerVerse() : "..."}
               </div>
-              <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>Click a letter above to lock exact starting coordinate.</div>
-
+              <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
+                {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
+              </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpSize') || "Jump Size"}</label>
