@@ -9,6 +9,7 @@ export const translations = {
     compareTerms: "Compare Terms (comma separated)",
     egSearch: "e.g. ויאמר אלהים",
     searchLogicMode: "Search Logic Mode",
+    textSearch: "Text Search", // NEW
     exact: "Exact",
     root: "Root",
     letter: "Letter",
@@ -38,8 +39,6 @@ export const translations = {
     skipPattern: "Skip Pattern:",
     letters: "letters",
     patternOf: (x, y) => `Pattern ${x} of ${y}`,
-
-    // NEW KEYS
     autoDiscover: "Auto-Discover",
     manualExplorer: "Manual Explorer",
     sequenceViewer: "Sequence Viewer",
@@ -61,6 +60,7 @@ export const translations = {
     compareTerms: "מונחים להשוואה (מופרדים בפסיק)",
     egSearch: "לדוגמה: ויאמר אלהים",
     searchLogicMode: "סוג חיפוש",
+    textSearch: "חיפוש טקסט", // NEW
     exact: "מדויק",
     root: "שורש",
     letter: "אות",
@@ -90,8 +90,6 @@ export const translations = {
     skipPattern: "דילוג של:",
     letters: "אותיות",
     patternOf: (x, y) => `תוצאה ${x} מתוך ${y}`,
-
-    // NEW KEYS
     autoDiscover: "גילוי אוטומטי",
     manualExplorer: "סייר ידני",
     sequenceViewer: "מציג דילוגים",
@@ -113,6 +111,7 @@ export const translations = {
     compareTerms: "عبارات مقایسه (با کاما جدا شوند)",
     egSearch: "مثال: ויאמר אלהים",
     searchLogicMode: "حالت منطق جستجو",
+    textSearch: "جستجوی متنی", // NEW
     exact: "دقیق",
     root: "ریشه",
     letter: "حرف",
@@ -142,8 +141,6 @@ export const translations = {
     skipPattern: "الگوی پرش:",
     letters: "حرف",
     patternOf: (x, y) => `الگوی ${x} از ${y}`,
-
-    // NEW KEYS
     autoDiscover: "کشف خودکار",
     manualExplorer: "جستجوگر دستی",
     sequenceViewer: "نمایشگر توالی",

@@ -18,6 +18,9 @@ function ControlSidebar({
   const [chaptersInBook, setChaptersInBook] = useState(50);
   const [versesInChapter, setVersesInChapter] = useState([]);
 
+  // Determine which major group we are currently in
+  const currentGroup = ['exact', 'root', 'letter'].includes(searchMode) ? 'text' : searchMode;
+
   useEffect(() => {
     if (searchMode === 'els' && elsSubMode === 'manual') {
       const bookInfo = booksList.find(b => b.id === manualConfig.bookId);
@@ -86,24 +89,54 @@ function ControlSidebar({
             <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: showMobilePanel ? 'block' : 'none' }}>✖</button>
           </div>
 
+          {/* MAIN GROUP SELECTOR (3 Tabs) */}
           <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
-            {[ { val: 'exact', lbl: t('exact') || "Exact" }, { val: 'root', lbl: t('root') || "Root" }, { val: 'letter', lbl: t('letter') || "Letter" }, { val: 'gematria', lbl: t('gematria') || "Gem" }, { val: 'els', lbl: t('els') || "ELS" } ].map((m, index) => (
-              <label key={m.val} style={{ flex: 1, textAlign: 'center', padding: '8px 2px', margin: 0, cursor: 'pointer', fontSize: '10.5px', borderRight: lang === 'en' && index !== 4 ? '1px solid #ced4da' : 'none', borderLeft: lang !== 'en' && index !== 4 ? '1px solid #ced4da' : 'none', backgroundColor: searchMode === m.val ? '#0056b3' : 'transparent', color: searchMode === m.val ? '#ffffff' : '#495057', fontWeight: searchMode === m.val ? 'bold' : 'normal', transition: 'all 0.2s' }}>
-                <input type="radio" name="searchMode" value={m.val} checked={searchMode === m.val} onChange={(e) => setSearchMode(e.target.value)} style={{ display: 'none' }} />
-                <span>{m.lbl}</span>
-              </label>
-            ))}
+            <button
+              onClick={() => { if (currentGroup !== 'text') setSearchMode('exact'); }}
+              style={{ flex: 1, border: 'none', padding: '8px 2px', fontSize: '11px', fontWeight: currentGroup === 'text' ? 'bold' : 'normal', backgroundColor: currentGroup === 'text' ? '#0056b3' : 'transparent', color: currentGroup === 'text' ? '#fff' : '#495057', cursor: 'pointer', transition: 'all 0.2s', borderRight: lang === 'en' ? '1px solid #ced4da' : 'none', borderLeft: lang !== 'en' ? '1px solid #ced4da' : 'none' }}
+            >
+              {t('textSearch') || "Text Search"}
+            </button>
+            <button
+              onClick={() => setSearchMode('gematria')}
+              style={{ flex: 1, border: 'none', padding: '8px 2px', fontSize: '11px', fontWeight: currentGroup === 'gematria' ? 'bold' : 'normal', backgroundColor: currentGroup === 'gematria' ? '#0056b3' : 'transparent', color: currentGroup === 'gematria' ? '#fff' : '#495057', cursor: 'pointer', transition: 'all 0.2s', borderRight: lang === 'en' ? '1px solid #ced4da' : 'none', borderLeft: lang !== 'en' ? '1px solid #ced4da' : 'none' }}
+            >
+              {t('gematria') || "Gematria"}
+            </button>
+            <button
+              onClick={() => setSearchMode('els')}
+              style={{ flex: 1, border: 'none', padding: '8px 2px', fontSize: '11px', fontWeight: currentGroup === 'els' ? 'bold' : 'normal', backgroundColor: currentGroup === 'els' ? '#0056b3' : 'transparent', color: currentGroup === 'els' ? '#fff' : '#495057', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              {t('els') || "ELS"}
+            </button>
           </div>
 
-          {searchMode === 'els' && (
+          {/* TEXT SEARCH SUB-SELECTOR */}
+          {currentGroup === 'text' && (
             <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px' }}>
-               <button onClick={() => setElsSubMode('auto')} style={{ flex: 1, border: 'none', background: elsSubMode === 'auto' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '12px', fontWeight: 'bold', color: elsSubMode === 'auto' ? '#0056b3' : '#495057' }}>{t('autoDiscover') || "Auto-Discover"}</button>
-               <button onClick={() => setElsSubMode('manual')} style={{ flex: 1, border: 'none', background: elsSubMode === 'manual' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '12px', fontWeight: 'bold', color: elsSubMode === 'manual' ? '#0056b3' : '#495057' }}>{t('manualExplorer') || "Manual Explorer"}</button>
+              {[ { val: 'exact', lbl: t('exact') || "Exact" }, { val: 'root', lbl: t('root') || "Root" }, { val: 'letter', lbl: t('letter') || "Letter" } ].map(m => (
+                 <button
+                   key={m.val}
+                   onClick={() => setSearchMode(m.val)}
+                   style={{ flex: 1, border: 'none', background: searchMode === m.val ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: searchMode === m.val ? 'bold' : 'normal', color: searchMode === m.val ? '#0056b3' : '#495057', cursor: 'pointer' }}
+                 >
+                   {m.lbl}
+                 </button>
+              ))}
+            </div>
+          )}
+
+          {/* ELS SUB-SELECTOR */}
+          {currentGroup === 'els' && (
+            <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px' }}>
+               <button onClick={() => setElsSubMode('auto')} style={{ flex: 1, border: 'none', background: elsSubMode === 'auto' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: 'bold', color: elsSubMode === 'auto' ? '#0056b3' : '#495057', cursor: 'pointer' }}>{t('autoDiscover') || "Auto-Discover"}</button>
+               <button onClick={() => setElsSubMode('manual')} style={{ flex: 1, border: 'none', background: elsSubMode === 'manual' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: 'bold', color: elsSubMode === 'manual' ? '#0056b3' : '#495057', cursor: 'pointer' }}>{t('manualExplorer') || "Manual Explorer"}</button>
             </div>
           )}
 
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
+          {/* MANUAL EXPLORER CONTROLS */}
           {searchMode === 'els' && elsSubMode === 'manual' ? (
             <div>
               <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
