@@ -148,14 +148,14 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC WITH PRECISE ANCHOR RESOLUTION ---
+      // --- AUTO-DISCOVER LOGIC (Up to 500 matches) ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
 
       let matches = [];
-      const MAX_SKIP = 500;
-      const MAX_TOTAL_MATCHES = 100;
+      const MAX_SKIP = 600;
+      const MAX_TOTAL_MATCHES = 500; // Scaled to 500 matches
 
       let targetRanges = ranges;
       if (useAnchor && anchorConfig?.bookId) {
@@ -197,7 +197,6 @@ self.onmessage = async (e) => {
                     const currentIdx = letterSequence.length;
                     letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
 
-                    // PRECISE ANCHOR MATCHING LOGIC
                     if (useAnchor && anchorGlobalIndex === -1 &&
                         range.bookId === anchorConfig.bookId &&
                         vObj.c === anchorConfig.chapter &&
@@ -224,7 +223,6 @@ self.onmessage = async (e) => {
             }
         });
 
-        // STRICT ANCHOR VALIDATION
         if (useAnchor) {
             if (anchorGlobalIndex === -1) {
                 self.postMessage({ status: 'error', error: "Anchor starting coordinate not found in selected scope." });
