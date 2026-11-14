@@ -23,7 +23,13 @@ self.onmessage = async (e) => {
   };
 
   try {
-    const neededBookIds = [...new Set(ranges.map(r => r.bookId))];
+    let neededBookIds = [...new Set(ranges.map(r => r.bookId))];
+    if (searchMode === 'els' && elsSubMode === 'auto' && useAnchor && anchorConfig?.bookId) {
+      if (!neededBookIds.includes(anchorConfig.bookId)) {
+        neededBookIds.push(anchorConfig.bookId);
+      }
+    }
+
     for (const id of neededBookIds) {
       if (!bookCache[id]) {
         const bookInfo = booksList.find(b => b.id === id);
@@ -74,7 +80,6 @@ self.onmessage = async (e) => {
 
                 for (let i = 0; i < verseString.length; i++) {
                     const char = verseString[i];
-                    // If includeSpaces is true, keep spaces. Otherwise filter Hebrew letters only.
                     const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
 
                     if (isValidChar) {
@@ -143,16 +148,21 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC (Up to 100 matches, sorted by skip size, anchor & spaces support) ---
+      // --- AUTO-DISCOVER LOGIC WITH ANCHOR & STRICT LETTER VALIDATION ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
 
       let matches = [];
       const MAX_SKIP = 500;
-      const MAX_TOTAL_MATCHES = 100; // Increased limit to 100
+      const MAX_TOTAL_MATCHES = 100;
 
-      for (const range of ranges) {
+      let targetRanges = ranges;
+      if (useAnchor && anchorConfig?.bookId) {
+        targetRanges = [{ id: 'anchor-scope', bookId: anchorConfig.bookId, selectedChapters: Array.from({length: booksList.find(b => b.id === anchorConfig.bookId).maxCh}, (_, i) => i + 1) }];
+      }
+
+      for (const range of targetRanges) {
         const bookInfo = booksList.find(b => b.id === range.bookId);
         const localBookName = getBookName(bookInfo);
         const bookData = bookCache[range.bookId] || [];
@@ -186,7 +196,6 @@ self.onmessage = async (e) => {
                     const currentIdx = letterSequence.length;
                     letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
 
-                    // Resolve Starting Anchor if enabled
                     if (useAnchor && anchorGlobalIndex === -1 && range.bookId === anchorConfig.bookId && vObj.c === anchorConfig.chapter && vObj.v === anchorConfig.verse) {
                         if (anchorLetterCounter === anchorConfig.letterIdx) {
                             anchorGlobalIndex = currentIdx;
@@ -197,7 +206,23 @@ self.onmessage = async (e) => {
             }
         });
 
-        // Determine scan start index
+        // STRICT ANCHOR VALIDATION
+        if (useAnchor) {
+            if (anchorGlobalIndex === -1) {
+                self.postMessage({ status: 'error', error: "Anchor starting coordinate not found in selected scope." });
+                return;
+            }
+            const actualAnchorChar = letterSequence[anchorGlobalIndex].char;
+            const expectedFirstChar = termLetters[0];
+            if (actualAnchorChar !== expectedFirstChar) {
+                self.postMessage({
+                    status: 'error',
+                    error: `Anchor mismatch: Selected anchor letter is '${actualAnchorChar}', but the search term '${targetTerm}' starts with '${expectedFirstChar}'.`
+                });
+                return;
+            }
+        }
+
         const startIndex = (useAnchor && anchorGlobalIndex !== -1) ? anchorGlobalIndex : 0;
 
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
@@ -224,7 +249,6 @@ self.onmessage = async (e) => {
                });
                if (currentContext) feedNodes.push(currentContext);
 
-               // Prevent duplicate matches at same start/skip
                if (!matches.some(m => m.skip === skip && m.feedNodes[0]?.ref === feedNodes[0]?.ref)) {
                    matches.push({ term: targetTerm, skip, bookName: localBookName, feedNodes });
                }
@@ -237,9 +261,7 @@ self.onmessage = async (e) => {
         if (matches.length >= MAX_TOTAL_MATCHES) break;
       }
 
-      // SORT MATCHES BY ASCENDING SKIP SIZE (Shortest skip first)
       matches.sort((a, b) => a.skip - b.skip);
-
       self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
       return;
     }

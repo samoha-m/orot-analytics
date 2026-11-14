@@ -252,7 +252,8 @@ function ControlSidebar({
           )}
         </div>
 
-        {!(searchMode === 'els' && elsSubMode === 'manual') && (
+        {/* HIDE COMPARISON SCOPES IN MANUAL MODE AND WHEN AUTO-DISCOVER ANCHOR IS ACTIVE */}
+        {!(searchMode === 'els' && elsSubMode === 'manual') && !(searchMode === 'els' && elsSubMode === 'auto' && useAnchor) && (
           <div className="sidebar-content">
             <div className="input-group">
               <label style={{...sectionLabelStyle, marginTop: '10px'}}>{t('comparisonScopes') || "Search Boundaries"}</label>
