@@ -148,14 +148,14 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC (Up to 500 matches) ---
+      // --- AUTO-DISCOVER LOGIC (Anchor-Locked) ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
 
       let matches = [];
       const MAX_SKIP = 600;
-      const MAX_TOTAL_MATCHES = 500; // Scaled to 500 matches
+      const MAX_TOTAL_MATCHES = 500;
 
       let targetRanges = ranges;
       if (useAnchor && anchorConfig?.bookId) {
@@ -239,10 +239,15 @@ self.onmessage = async (e) => {
             }
         }
 
-        const startIndex = (useAnchor && anchorGlobalIndex !== -1) ? anchorGlobalIndex : 0;
+        // STRICT ANCHOR LOCK: If anchor is active, start ONLY at anchorGlobalIndex. Otherwise scan all indices.
+        const startPositions = (useAnchor && anchorGlobalIndex !== -1) ? [anchorGlobalIndex] : Array.from({ length: letterSequence.length }, (_, i) => i);
 
-        for (let skip = 2; skip <= MAX_SKIP; skip++) {
-          for (let start = startIndex; start < letterSequence.length - (termLen - 1) * skip; start++) {
+        for (const start of startPositions) {
+          if (start > letterSequence.length - (termLen - 1) * 2) continue;
+
+          for (let skip = 2; skip <= MAX_SKIP; skip++) {
+            if (start + (termLen - 1) * skip >= letterSequence.length) continue;
+
             let matched = true;
             let matchIndices = [];
             for (let k = 0; k < termLen; k++) {
@@ -272,9 +277,8 @@ self.onmessage = async (e) => {
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
           }
-          if (matches.length >= MAX_TOTAL_MATCHES) break;
+          if (useAnchor && matches.length >= MAX_TOTAL_MATCHES) break;
         }
-        if (matches.length >= MAX_TOTAL_MATCHES) break;
       }
 
       matches.sort((a, b) => a.skip - b.skip);
