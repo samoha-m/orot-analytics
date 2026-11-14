@@ -25,7 +25,10 @@ function App() {
   const [viewMode, setViewMode] = useState('absolute');
 
   const [elsSubMode, setElsSubMode] = useState('auto');
+  const [includeSpaces, setIncludeSpaces] = useState(false); // NEW TOGGLE
+  const [useAnchor, setUseAnchor] = useState(false); // NEW TOGGLE
   const [manualConfig, setManualConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null, skip: 50, count: 10 });
+  const [anchorConfig, setAnchorConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null }); // NEW ANCHOR CONFIG
 
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
@@ -85,7 +88,6 @@ function App() {
   const handleSearch = () => {
     setAppError(null);
 
-    // Handing Manual Explorer Mode
     if (searchMode === 'els' && elsSubMode === 'manual') {
       if (manualConfig.letterIdx === null) {
         setAppError(t('errorSelectLetter'));
@@ -94,23 +96,40 @@ function App() {
       setLoading(true);
       setActivePreview(null);
       setShowMobilePanel(false);
-      workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig });
+      workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig, includeSpaces });
       return;
     }
 
-    // Process Search Terms
+    if (searchMode === 'els' && elsSubMode === 'auto') {
+      if (useAnchor && anchorConfig.letterIdx === null) {
+        setAppError(t('errorSelectLetter'));
+        return;
+      }
+    }
+
     let rawTerms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
     let terms = [...new Set(rawTerms)];
 
-    // Check for Empty Input
+    if (searchMode === 'els') {
+      if (terms.length === 0) {
+        setElsData(null);
+        setIsElsMode(false);
+        setAppError(t('errorEmptyInput'));
+        return;
+      }
+      setLoading(true);
+      setActivePreview(null);
+      setShowMobilePanel(false);
+      workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, useAnchor, anchorConfig });
+      return;
+    }
+
     if (terms.length === 0) {
       setRawChartData([]);
-      setElsData(null);
       setResultTotals(null);
       setActiveTerms([]);
       setActivePreview(null);
-      setIsElsMode(false); // Force back to chart canvas view
-      setAppError(t('errorEmptyInput')); // Display error banner
+      setAppError(t('errorEmptyInput'));
       return;
     }
 
@@ -127,7 +146,7 @@ function App() {
     setActiveTerms(terms);
     setActivePreview(null);
     setShowMobilePanel(false);
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode });
+    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -193,7 +212,6 @@ function App() {
 
       <div className="app-layout">
         <main className="main-canvas">
-          {/* CUSTOM ERROR BANNER */}
           {appError && (
             <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <span style={{ fontWeight: 'bold' }}>{appError}</span>
@@ -220,6 +238,9 @@ function App() {
           t={t} lang={lang}
           elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
           manualConfig={manualConfig} setManualConfig={setManualConfig}
+          includeSpaces={includeSpaces} setIncludeSpaces={setIncludeSpaces}
+          useAnchor={useAnchor} setUseAnchor={setUseAnchor}
+          anchorConfig={anchorConfig} setAnchorConfig={setAnchorConfig}
         />
       </div>
     </div>

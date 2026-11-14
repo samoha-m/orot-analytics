@@ -14,7 +14,7 @@ const calculateGematria = (word) => {
 };
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig } = e.data;
+  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig, includeSpaces, useAnchor, anchorConfig } = e.data;
 
   const getBookName = (bookInfo) => {
     if (lang === 'he') return bookInfo.he;
@@ -36,7 +36,7 @@ self.onmessage = async (e) => {
     if (searchMode === 'els') {
       const isManual = elsSubMode === 'manual';
 
-      // --- NEW ARCHITECTURE: MANUAL EXPLORER CROSS-BOOK FETCHING ---
+      // --- MANUAL EXPLORER LOGIC ---
       if (isManual) {
         const { bookId, chapter, verse, letterIdx, skip, count } = manualConfig;
         let letterSequence = [];
@@ -45,7 +45,6 @@ self.onmessage = async (e) => {
         let currentBookIdx = booksList.findIndex(b => b.id === bookId);
         let globalStart = -1;
 
-        // Fetch consecutive books until we have enough letters to complete the manual jump
         while (currentBookIdx < booksList.length) {
             const bookInfo = booksList[currentBookIdx];
             if (!bookCache[bookInfo.id]) {
@@ -70,17 +69,21 @@ self.onmessage = async (e) => {
             let letterCounterInVerse = 0;
             versesList.forEach(vObj => {
                 const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
-                const verseString = vObj.words.join(' ');
+                const rawVerseWords = [...vObj.words];
+                const verseString = rawVerseWords.join(' ');
+
                 for (let i = 0; i < verseString.length; i++) {
                     const char = verseString[i];
-                    if (/[\u0590-\u05FF]/.test(char)) {
+                    // If includeSpaces is true, keep spaces. Otherwise filter Hebrew letters only.
+                    const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
+
+                    if (isValidChar) {
                         const currentGlobalIdx = letterSequence.length;
                         letterSequence.push({
                             char, ref, verseString, charIndexInString: i,
                             bookId: bookInfo.id, c: vObj.c, v: vObj.v
                         });
 
-                        // Locate exact start coordinate
                         if (globalStart === -1 && bookInfo.id === bookId && vObj.c === chapter && vObj.v === verse) {
                             if (letterCounterInVerse === letterIdx) { globalStart = currentGlobalIdx; }
                             letterCounterInVerse++;
@@ -89,7 +92,6 @@ self.onmessage = async (e) => {
                 }
             });
 
-            // If we found the start AND mapped enough letters across books, stop fetching
             if (globalStart !== -1 && letterSequence.length >= globalStart + requiredLetters) {
                 break;
             }
@@ -141,14 +143,14 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC ---
+      // --- AUTO-DISCOVER LOGIC (Up to 100 matches, sorted by skip size, anchor & spaces support) ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
 
       let matches = [];
       const MAX_SKIP = 500;
-      const MAX_TOTAL_MATCHES = 20;
+      const MAX_TOTAL_MATCHES = 100; // Increased limit to 100
 
       for (const range of ranges) {
         const bookInfo = booksList.find(b => b.id === range.bookId);
@@ -170,19 +172,36 @@ self.onmessage = async (e) => {
         if (currentVerseWords.length > 0) versesList.push({ c: currentC, v: currentV, words: currentVerseWords });
 
         let letterSequence = [];
+        let anchorGlobalIndex = -1;
+        let anchorLetterCounter = 0;
+
         versesList.forEach(vObj => {
             const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
             const verseString = vObj.words.join(' ');
             for (let i = 0; i < verseString.length; i++) {
                 const char = verseString[i];
-                if (/[\u0590-\u05FF]/.test(char)) {
-                    letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: letterSequence.length });
+                const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
+
+                if (isValidChar) {
+                    const currentIdx = letterSequence.length;
+                    letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
+
+                    // Resolve Starting Anchor if enabled
+                    if (useAnchor && anchorGlobalIndex === -1 && range.bookId === anchorConfig.bookId && vObj.c === anchorConfig.chapter && vObj.v === anchorConfig.verse) {
+                        if (anchorLetterCounter === anchorConfig.letterIdx) {
+                            anchorGlobalIndex = currentIdx;
+                        }
+                        anchorLetterCounter++;
+                    }
                 }
             }
         });
 
+        // Determine scan start index
+        const startIndex = (useAnchor && anchorGlobalIndex !== -1) ? anchorGlobalIndex : 0;
+
         for (let skip = 2; skip <= MAX_SKIP; skip++) {
-          for (let start = 0; start < letterSequence.length - (termLen - 1) * skip; start++) {
+          for (let start = startIndex; start < letterSequence.length - (termLen - 1) * skip; start++) {
             let matched = true;
             let matchIndices = [];
             for (let k = 0; k < termLen; k++) {
@@ -204,7 +223,12 @@ self.onmessage = async (e) => {
                    currentContext.highlights.push(item.charIndexInString);
                });
                if (currentContext) feedNodes.push(currentContext);
-               matches.push({ term: targetTerm, skip, bookName: localBookName, feedNodes });
+
+               // Prevent duplicate matches at same start/skip
+               if (!matches.some(m => m.skip === skip && m.feedNodes[0]?.ref === feedNodes[0]?.ref)) {
+                   matches.push({ term: targetTerm, skip, bookName: localBookName, feedNodes });
+               }
+
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
           }
@@ -212,6 +236,10 @@ self.onmessage = async (e) => {
         }
         if (matches.length >= MAX_TOTAL_MATCHES) break;
       }
+
+      // SORT MATCHES BY ASCENDING SKIP SIZE (Shortest skip first)
+      matches.sort((a, b) => a.skip - b.skip);
+
       self.postMessage({ status: 'success', isEls: true, elsData: { matches } });
       return;
     }

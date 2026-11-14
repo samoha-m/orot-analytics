@@ -9,24 +9,30 @@ function ControlSidebar({
   updateBook, removeRange, toggleAccordion,
   handleChapterSelection, addRange, handleSearch,
   t, lang,
-  elsSubMode, setElsSubMode, manualConfig, setManualConfig
+  elsSubMode, setElsSubMode, manualConfig, setManualConfig,
+  includeSpaces, setIncludeSpaces,
+  useAnchor, setUseAnchor,
+  anchorConfig, setAnchorConfig
 }) {
   const sectionLabelStyle = { display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6c757d', fontWeight: 'bold', marginBottom: '8px' };
 
   const [manualData, setManualData] = useState([]);
   const [verseText, setVerseText] = useState("");
+  const [anchorVerseText, setAnchorVerseText] = useState("");
   const [chaptersInBook, setChaptersInBook] = useState(50);
+  const [anchorChaptersInBook, setAnchorChaptersInBook] = useState(50);
   const [versesInChapter, setVersesInChapter] = useState([]);
+  const [anchorVersesInChapter, setAnchorVersesInChapter] = useState([]);
 
   const currentGroup = ['exact', 'root', 'letter'].includes(searchMode) ? 'text' : searchMode;
 
-  // DYNAMIC INPUT TITLE LOGIC
   const getInputTitle = () => {
     if (searchMode === 'els') return t('searchTarget');
     if (searchMode === 'gematria') return t('compareGematria');
     return t('compareTerms');
   };
 
+  // Manual Explorer Data Fetcher
   useEffect(() => {
     if (searchMode === 'els' && elsSubMode === 'manual') {
       const bookInfo = booksList.find(b => b.id === manualConfig.bookId);
@@ -46,26 +52,41 @@ function ControlSidebar({
     if (manualData.length > 0) {
       const vList = [...new Set(manualData.filter(d => d.c === manualConfig.chapter).map(d => d.v))];
       setVersesInChapter(vList);
-
       const words = manualData.filter(d => d.c === manualConfig.chapter && d.v === manualConfig.verse).map(d => d.w);
       setVerseText(words.join(' '));
-
       if (words.length === 0 && vList.length > 0) {
         setManualConfig({...manualConfig, verse: vList[0], letterIdx: null});
       }
     }
   }, [manualConfig.chapter, manualConfig.verse, manualData, manualConfig, setManualConfig]);
 
-  const renderPickerVerse = () => {
+  // Auto-Discover Anchor Data Fetcher
+  useEffect(() => {
+    if (searchMode === 'els' && elsSubMode === 'auto' && useAnchor) {
+      const bookInfo = booksList.find(b => b.id === anchorConfig.bookId);
+      fetch(`/data/${bookInfo.id}_${bookInfo.name.toLowerCase()}.json`)
+        .then(res => res.json())
+        .then(data => {
+          const maxCh = Math.max(...data.map(d => d.c));
+          setAnchorChaptersInBook(maxCh);
+          const vList = [...new Set(data.filter(d => d.c === anchorConfig.chapter).map(d => d.v))];
+          setAnchorVersesInChapter(vList);
+          const words = data.filter(d => d.c === anchorConfig.chapter && d.v === anchorConfig.verse).map(d => d.w);
+          setAnchorVerseText(words.join(' '));
+        });
+    }
+  }, [anchorConfig.bookId, anchorConfig.chapter, anchorConfig.verse, searchMode, elsSubMode, useAnchor]);
+
+  const renderPickerVerse = (text, currentIdx, onSelect) => {
     let letterCounter = 0;
-    return verseText.split('').map((char, idx) => {
+    return text.split('').map((char, idx) => {
         if (/[\u0590-\u05FF]/.test(char)) {
             const currentLetterIdx = letterCounter++;
-            const isSelected = manualConfig.letterIdx === currentLetterIdx;
+            const isSelected = currentIdx === currentLetterIdx;
             return (
                 <span
                     key={idx}
-                    onClick={() => setManualConfig({...manualConfig, letterIdx: currentLetterIdx})}
+                    onClick={() => onSelect(currentLetterIdx)}
                     style={{
                         cursor: 'pointer', backgroundColor: isSelected ? '#0056b3' : 'transparent',
                         color: isSelected ? '#fff' : 'inherit', borderRadius: '3px', padding: '0 2px',
@@ -139,6 +160,7 @@ function ControlSidebar({
 
           <hr style={{ border: 'none', borderTop: '1px solid #e9ecef', margin: '20px 0' }} />
 
+          {/* MANUAL EXPLORER MODE */}
           {searchMode === 'els' && elsSubMode === 'manual' ? (
             <div>
               <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
@@ -162,7 +184,7 @@ function ControlSidebar({
               </div>
 
               <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
-                 {verseText ? renderPickerVerse() : "..."}
+                 {verseText ? renderPickerVerse(verseText, manualConfig.letterIdx, (idx) => setManualConfig({...manualConfig, letterIdx: idx})) : "..."}
               </div>
               <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
                 {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
@@ -178,11 +200,54 @@ function ControlSidebar({
                   <input type="number" value={manualConfig.count} onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
                 </div>
               </div>
+
+              {/* INCLUDE SPACES TOGGLE */}
+              <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input type="checkbox" id="spacesManual" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
+                <label htmlFor="spacesManual" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
+              </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <label style={sectionLabelStyle}>{getInputTitle()}</label>
-              <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('egSearch')} dir="rtl" style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+            /* AUTO-DISCOVER & STANDARD SEARCH */
+            <div>
+              <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
+                <label style={sectionLabelStyle}>{getInputTitle()}</label>
+                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('egSearch')} dir="rtl" style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              {/* AUTO-DISCOVER EXTRA OPTIONS */}
+              {searchMode === 'els' && elsSubMode === 'auto' && (
+                <div style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '6px', border: '1px solid #e9ecef', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <input type="checkbox" id="spacesAuto" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
+                    <label htmlFor="spacesAuto" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: useAnchor ? '10px' : '0' }}>
+                    <input type="checkbox" id="useAnchor" checked={useAnchor} onChange={e => setUseAnchor(e.target.checked)} style={{ cursor: 'pointer' }} />
+                    <label htmlFor="useAnchor" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('useStartAnchor')}</label>
+                  </div>
+
+                  {useAnchor && (
+                    <div style={{ marginTop: '10px', borderTop: '1px dashed #ced4da', paddingTop: '10px' }}>
+                      <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+                         <select value={anchorConfig.bookId} onChange={e => setAnchorConfig({...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '4px', fontSize: '11px' }}>
+                           {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
+                         </select>
+                         <select value={anchorConfig.chapter} onChange={e => setAnchorConfig({...anchorConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '4px', fontSize: '11px' }}>
+                           {Array.from({length: anchorChaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
+                         </select>
+                         <select value={anchorConfig.verse} onChange={e => setAnchorConfig({...anchorConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '4px', fontSize: '11px' }}>
+                           {anchorVersesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
+                         </select>
+                      </div>
+                      <div style={{ direction: 'rtl', fontSize: '15px', padding: '6px', border: '1px solid #ced4da', borderRadius: '4px', backgroundColor: '#fff', maxHeight: '80px', overflowY: 'auto' }}>
+                         {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

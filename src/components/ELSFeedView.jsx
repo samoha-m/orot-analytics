@@ -54,7 +54,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   return (
     <div style={{ padding: '0 10px 40px 10px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
 
-      {/* FIXED STICKY HEADER - Background set to solid white, zIndex to 100 */}
+      {/* STICKY HEADER */}
       <div style={{
         position: 'sticky', top: '10px', zIndex: 100,
         backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px',
@@ -62,7 +62,6 @@ function ELSFeedView({ elsData, loading, t, lang }) {
         boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
       }}>
-        {/* Dynamic LTR/RTL Alignment */}
         <div style={{ width: isManual ? '100%' : 'auto', textAlign: isRTL ? 'right' : 'left', direction: isRTL ? 'rtl' : 'ltr' }}>
           <h3 style={{ margin: 0, color: '#0056b3' }}>
             {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
@@ -85,31 +84,38 @@ function ELSFeedView({ elsData, loading, t, lang }) {
           )}
         </div>
 
+        {/* MATCH DRAWER / PAGINATION */}
         {!isManual && (
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '4px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
-            <button
-              onClick={handlePrevMatch}
-              disabled={activeMatchIndex === 0}
-              style={{
-                border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer',
-                opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
-              }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Match Drawer Dropdown for scaling past 20 matches cleanly */}
+            <select
+              value={activeMatchIndex}
+              onChange={(e) => setCurrentMatchIndex(Number(e.target.value))}
+              style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #ced4da', fontSize: '12px', backgroundColor: '#f8f9fa', color: '#343a40', cursor: 'pointer', fontWeight: 'bold' }}
             >
-              ◀
-            </button>
-            <span style={{ fontSize: '13px', margin: '0 5px', fontWeight: 'bold', color: '#495057' }}>
-              {t('patternOf') ? t('patternOf')(activeMatchIndex + 1, totalMatches) : `Pattern ${activeMatchIndex + 1} of ${totalMatches}`}
-            </span>
-            <button
-              onClick={handleNextMatch}
-              disabled={activeMatchIndex === totalMatches - 1}
-              style={{
-                border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer',
-                opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '18px', padding: '8px 14px'
-              }}
-            >
-              ▶
-            </button>
+              {elsData.matches.map((m, idx) => (
+                <option key={idx} value={idx}>
+                  #{idx + 1} — Skip: {m.skip} ({m.bookName})
+                </option>
+              ))}
+            </select>
+
+            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '2px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
+              <button
+                onClick={handlePrevMatch}
+                disabled={activeMatchIndex === 0}
+                style={{ border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer', opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '16px', padding: '6px 10px' }}
+              >
+                ◀
+              </button>
+              <button
+                onClick={handleNextMatch}
+                disabled={activeMatchIndex === totalMatches - 1}
+                style={{ border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer', opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '16px', padding: '6px 10px' }}
+              >
+                ▶
+              </button>
+            </div>
           </div>
         )}
       </div>

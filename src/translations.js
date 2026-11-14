@@ -36,11 +36,11 @@ export const translations = {
     first100: "(First 100)",
     noEls: "No ELS patterns discovered",
     noLetterSkip: "No letter skip occurrences found for this term in the selected scopes.",
-    elsContextFeed: "ELS Context Feed:",
+    elsContextFeed: "Sequence Viewer:",
     book: "Book:",
     skipPattern: "Skip Pattern:",
     letters: "letters",
-    patternOf: (x, y) => `Pattern ${x} of ${y}`,
+    patternOf: (x, y) => `Pattern ${x} of ${y} (Skip: ${skip})`,
     autoDiscover: "Auto-Discover",
     manualExplorer: "Manual Explorer",
     sequenceViewer: "Sequence Viewer",
@@ -54,7 +54,10 @@ export const translations = {
     clickLetterToLock: "Click a letter above to lock exact starting coordinate.",
     errorSelectChapter: "Please select at least one chapter for all ranges.",
     errorSelectLetter: "Please click a specific starting letter in the verse viewer before running.",
-    errorEmptyInput: "Please enter a search term before running the analysis."
+    errorEmptyInput: "Please enter a search term before running the analysis.",
+    useStartAnchor: "Use Starting Anchor Letter",
+    includeSpaces: "Include Spaces in Jumps",
+    matchDrawerTitle: "Select Match (Sorted by Shortest Skip)"
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -93,7 +96,7 @@ export const translations = {
     first100: "(100 ראשונים)",
     noEls: "לא נמצאו דילוגים",
     noLetterSkip: "לא נמצאו מופעי דילוג עבור מונח זה.",
-    elsContextFeed: "פיד תוצאות דילוגים:",
+    elsContextFeed: "מציג דילוגים:",
     book: "ספר:",
     skipPattern: "דילוג של:",
     letters: "אותיות",
@@ -111,7 +114,10 @@ export const translations = {
     clickLetterToLock: "לחץ על אות למעלה כדי לנעול את נקודת ההתחלה המדויקת.",
     errorSelectChapter: "אנא בחר לפחות פרק אחד עבור כל הטווחים.",
     errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש.",
-    errorEmptyInput: "אנא הזן מונח לחיפוש לפני הפעלת הניתוח."
+    errorEmptyInput: "אנא הזן מונח לחיפוש לפני הפעלת הניתוח.",
+    useStartAnchor: "התחל מעוגן אות ספציפי",
+    includeSpaces: "כלול רווחים בדילוגים",
+    matchDrawerTitle: "בחר התאמה (ממוין לפי דילוג קצר)"
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -150,7 +156,7 @@ export const translations = {
     first100: "(۱۰۰ مورد اول)",
     noEls: "هیچ الگوی ELS یافت نشد",
     noLetterSkip: "هیچ پرش حروفی برای این عبارت یافت نشد.",
-    elsContextFeed: "فید متن ELS:",
+    elsContextFeed: "نمایشگر توالی:",
     book: "کتاب:",
     skipPattern: "الگوی پرش:",
     letters: "حرف",
@@ -168,6 +174,9 @@ export const translations = {
     clickLetterToLock: "برای قفل کردن مختصات شروع دقیق، روی یک حرف در بالا کلیک کنید.",
     errorSelectChapter: "لطفاً حداقل یک فصل برای همه دامنه‌ها انتخاب کنید.",
     errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید.",
-    errorEmptyInput: "لطفاً قبل از اجرای تحلیل یک عبارت جستجو وارد کنید."
+    errorEmptyInput: "لطفاً قبل از اجرای تحلیل یک عبارت جستجو وارد کنید.",
+    useStartAnchor: "استفاده از حرف لنگر شروع",
+    includeSpaces: "شامل فاصله ها در پرش ها",
+    matchDrawerTitle: "انتخاب تطابق (مرتب شده بر اساس کوتاه ترین پرش)"
   }
 };
