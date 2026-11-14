@@ -230,6 +230,11 @@ function ControlSidebar({
 
                   {useAnchor && (
                     <div style={{ marginTop: '10px', borderTop: '1px dashed #ced4da', paddingTop: '10px' }}>
+                      <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
+                         <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
+                         <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('chapter') || 'Chapter'}</div>
+                         <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('verse') || 'Verse'}</div>
+                      </div>
                       <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
                          <select value={anchorConfig.bookId} onChange={e => setAnchorConfig({...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '4px', fontSize: '11px' }}>
                            {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
