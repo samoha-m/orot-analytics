@@ -148,7 +148,7 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC WITH ANCHOR & STRICT LETTER VALIDATION ---
+      // --- AUTO-DISCOVER LOGIC WITH PRECISE ANCHOR RESOLUTION ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
@@ -159,7 +159,8 @@ self.onmessage = async (e) => {
 
       let targetRanges = ranges;
       if (useAnchor && anchorConfig?.bookId) {
-        targetRanges = [{ id: 'anchor-scope', bookId: anchorConfig.bookId, selectedChapters: Array.from({length: booksList.find(b => b.id === anchorConfig.bookId).maxCh}, (_, i) => i + 1) }];
+        const anchorBookObj = booksList.find(b => b.id === anchorConfig.bookId);
+        targetRanges = [{ id: 'anchor-scope', bookId: anchorConfig.bookId, selectedChapters: Array.from({length: anchorBookObj.maxCh}, (_, i) => i + 1) }];
       }
 
       for (const range of targetRanges) {
@@ -183,11 +184,11 @@ self.onmessage = async (e) => {
 
         let letterSequence = [];
         let anchorGlobalIndex = -1;
-        let anchorLetterCounter = 0;
 
         versesList.forEach(vObj => {
             const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
             const verseString = vObj.words.join(' ');
+
             for (let i = 0; i < verseString.length; i++) {
                 const char = verseString[i];
                 const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
@@ -196,11 +197,28 @@ self.onmessage = async (e) => {
                     const currentIdx = letterSequence.length;
                     letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
 
-                    if (useAnchor && anchorGlobalIndex === -1 && range.bookId === anchorConfig.bookId && vObj.c === anchorConfig.chapter && vObj.v === anchorConfig.verse) {
-                        if (anchorLetterCounter === anchorConfig.letterIdx) {
+                    // PRECISE ANCHOR MATCHING LOGIC
+                    if (useAnchor && anchorGlobalIndex === -1 &&
+                        range.bookId === anchorConfig.bookId &&
+                        vObj.c === anchorConfig.chapter &&
+                        vObj.v === anchorConfig.verse) {
+
+                        let localLetterCount = 0;
+                        let matchedIndex = false;
+                        for (let k = 0; k <= i; k++) {
+                            const subChar = verseString[k];
+                            const subValid = includeSpaces ? (/[\u0590-\u05FF]/.test(subChar) || subChar === ' ') : /[\u0590-\u05FF]/.test(subChar);
+                            if (subValid) {
+                                if (localLetterCount === anchorConfig.letterIdx) {
+                                    if (k === i) matchedIndex = true;
+                                    break;
+                                }
+                                localLetterCount++;
+                            }
+                        }
+                        if (matchedIndex) {
                             anchorGlobalIndex = currentIdx;
                         }
-                        anchorLetterCounter++;
                     }
                 }
             }
