@@ -34,19 +34,25 @@ function ControlSidebar({
   };
 
   const getScopeSummary = () => {
-    const activeRanges = ranges.filter(r => r.selectedChapters.length > 0);
-    if (activeRanges.length === 0) return t('noBooksSelected');
+    const activeRanges = (ranges || []).filter(r => r.selectedChapters.length > 0);
+    if (activeRanges.length === 0) {
+      return t('noBooksSelected') !== 'noBooksSelected' ? t('noBooksSelected') : 'No books selected';
+    }
     if (activeRanges.length === 1) {
       const r = activeRanges[0];
       const book = booksList.find(b => b.id === r.bookId);
       const bookName = book ? (lang === 'he' ? book.he : (lang === 'fa' ? book.fa : book.name.replace('_', ' '))) : '';
-      return t('singleBookSummary')(bookName, r.selectedChapters.length, book?.maxCh || r.selectedChapters.length);
+      const maxCh = book?.maxCh || r.selectedChapters.length;
+      const fn = t('singleBookSummary');
+      return typeof fn === 'function' ? fn(bookName, r.selectedChapters.length, maxCh) : `${bookName} (${r.selectedChapters.length}/${maxCh})`;
     }
     const totalChs = activeRanges.reduce((sum, r) => sum + r.selectedChapters.length, 0);
     if (activeRanges.length === booksList.length) {
-      return t('allBooksSummary')(activeRanges.length, totalChs);
+      const fn = t('allBooksSummary');
+      return typeof fn === 'function' ? fn(activeRanges.length, totalChs) : `All Books (${activeRanges.length}) · ${totalChs} Chs`;
     }
-    return t('multiBooksSummary')(activeRanges.length, totalChs);
+    const fn = t('multiBooksSummary');
+    return typeof fn === 'function' ? fn(activeRanges.length, totalChs) : `${activeRanges.length} Books · ${totalChs} Chs`;
   };
 
   // Manual Explorer Data Fetcher
@@ -387,7 +393,7 @@ function ControlSidebar({
               <label style={sectionLabelStyle}>{t('comparisonScopes') || "Comparison Scopes"}</label>
               <button
                 type="button"
-                onClick={() => (isScopeOpen ? onCloseScope() : onOpenScope())}
+                onClick={() => (isScopeOpen ? onCloseScope?.() : onOpenScope?.())}
                 disabled={loading}
                 style={{
                   width: '100%',

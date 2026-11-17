@@ -95,6 +95,18 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
   const totalSelectedBooks = ranges.filter(r => r.selectedChapters.length > 0).length;
   const totalSelectedChapters = ranges.reduce((sum, r) => sum + r.selectedChapters.length, 0);
 
+  const renderBadgeSummary = () => {
+    if (totalSelectedBooks === 0) {
+      return t('noBooksSelected') !== 'noBooksSelected' ? t('noBooksSelected') : 'No books selected';
+    }
+    if (totalSelectedBooks === booksList.length) {
+      const fn = t('allBooksSummary');
+      return typeof fn === 'function' ? fn(totalSelectedBooks, totalSelectedChapters) : `All Books (${totalSelectedBooks}) · ${totalSelectedChapters} Chs`;
+    }
+    const fn = t('multiBooksSummary');
+    return typeof fn === 'function' ? fn(totalSelectedBooks, totalSelectedChapters) : `${totalSelectedBooks} Books · ${totalSelectedChapters} Chs`;
+  };
+
   return (
     <div
       onClick={onClose}
@@ -186,11 +198,7 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 color: totalSelectedBooks > 0 ? '#0056b3' : '#64748b'
               }}
             >
-              {totalSelectedBooks === 0
-                ? t('noBooksSelected')
-                : totalSelectedBooks === booksList.length
-                  ? t('allBooksSummary')(totalSelectedBooks, totalSelectedChapters)
-                  : t('multiBooksSummary')(totalSelectedBooks, totalSelectedChapters)}
+              {renderBadgeSummary()}
             </span>
           </div>
 
