@@ -125,7 +125,11 @@ function ControlSidebar({
 
   return (
     <>
-      <button className="mobile-trigger" onClick={() => setShowMobilePanel(true)}>{t('editSearch') || "Edit Search"}</button>
+      {!isScopeOpen && (
+        <button className="mobile-trigger" onClick={() => setShowMobilePanel(true)}>
+          {t('editSearch') || "Edit Search"}
+        </button>
+      )}
       {showMobilePanel && <div className="mobile-overlay" onClick={() => setShowMobilePanel(false)}></div>}
 
       <aside
