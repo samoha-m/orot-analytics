@@ -6,7 +6,7 @@ function ControlSidebar({
   searchTerm, setSearchTerm,
   searchMode, setSearchMode,
   ranges, loading,
-  isScopeOpen, setIsScopeOpen,
+  isScopeOpen, onOpenScope, onCloseScope,
   handleSearch,
   t, lang,
   elsSubMode, setElsSubMode, manualConfig, setManualConfig,
@@ -386,10 +386,7 @@ function ControlSidebar({
               <label style={sectionLabelStyle}>{t('comparisonScopes') || "Comparison Scopes"}</label>
               <button
                 type="button"
-                onClick={() => {
-                  setIsScopeOpen(prev => !prev);
-                  if (showMobilePanel) setShowMobilePanel(false);
-                }}
+                onClick={() => (isScopeOpen ? onCloseScope() : onOpenScope())}
                 disabled={loading}
                 style={{
                   width: '100%',

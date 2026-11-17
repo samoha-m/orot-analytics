@@ -20,6 +20,7 @@ function App() {
   const [appError, setAppError] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
+  const [returnToMobileSearch, setReturnToMobileSearch] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,10 +48,27 @@ function App() {
     setActivePreview(null);
   };
 
+  const handleOpenScope = () => {
+    if (showMobilePanel) {
+      setReturnToMobileSearch(true);
+      setShowMobilePanel(false);
+    }
+    setIsScopeOpen(true);
+  };
+
+  const handleCloseScope = () => {
+    setIsScopeOpen(false);
+    if (returnToMobileSearch) {
+      setShowMobilePanel(true);
+      setReturnToMobileSearch(false);
+    }
+  };
+
   // Close scope overlay automatically if user enters Manual or Anchored ELS modes
   useEffect(() => {
     if (searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) {
       setIsScopeOpen(false);
+      setReturnToMobileSearch(false);
     }
   }, [searchMode, elsSubMode]);
 
@@ -103,6 +121,7 @@ function App() {
   const handleSearch = () => {
     setAppError(null);
     setIsScopeOpen(false);
+    setReturnToMobileSearch(false);
     clearResults();
 
     if (searchMode === 'els' && elsSubMode === 'manual') {
@@ -228,7 +247,7 @@ function App() {
         <main className="main-canvas" style={{ position: 'relative' }}>
           <ScopeSelectorOverlay
             isOpen={isScopeOpen}
-            onClose={() => setIsScopeOpen(false)}
+            onClose={handleCloseScope}
             ranges={ranges}
             setRanges={setRanges}
             t={t}
@@ -257,7 +276,9 @@ function App() {
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           searchMode={searchMode} setSearchMode={setSearchMode}
           ranges={ranges} loading={loading}
-          isScopeOpen={isScopeOpen} setIsScopeOpen={setIsScopeOpen}
+          isScopeOpen={isScopeOpen}
+          onOpenScope={handleOpenScope}
+          onCloseScope={handleCloseScope}
           handleSearch={handleSearch}
           t={t} lang={lang}
           elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
