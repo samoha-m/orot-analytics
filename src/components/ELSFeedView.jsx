@@ -18,8 +18,20 @@ function ELSFeedView({ elsData, loading, t }) {
 
   if (!elsData || !elsData.matches) {
     return (
-      <div className="empty-state">
-        <p style={{ color: '#adb5bd', fontSize: '15px', margin: 0 }}>
+      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd', padding: '0 16px' }}>
+        <div
+          dir="ltr"
+          style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            letterSpacing: '0.3px',
+            color: '#adb5bd',
+            marginBottom: '8px'
+          }}
+        >
+          OROT - Hebrew Bible Analytics Engine
+        </div>
+        <p style={{ fontSize: '14px', margin: 0, color: '#adb5bd' }}>
           {t('useControlPanel') || "Use the control panel to start your search."}
         </p>
       </div>
