@@ -269,7 +269,7 @@ function App() {
           alignItems: 'center'
         }}
       >
-        {/* Always Left-Aligned Brand */}
+        {/* Always Left-Aligned Logo Icon Only */}
         <div
           className="top-navbar-brand"
           style={{
@@ -279,7 +279,6 @@ function App() {
           }}
         >
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
-          <h1 className="top-navbar-title" style={{ textAlign: 'left', margin: 0 }}>OROT</h1>
         </div>
 
         {/* Single-Flag Language Switcher Dropdown */}

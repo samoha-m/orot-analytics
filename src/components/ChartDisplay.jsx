@@ -7,8 +7,22 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
 
   if (!resultTotals) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd' }}>
-        <p style={{ fontSize: '15px', margin: 0 }}>{t('useControlPanel')}</p>
+      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd', padding: '0 16px' }}>
+        <div
+          dir="ltr"
+          style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            letterSpacing: '0.3px',
+            color: '#adb5bd',
+            marginBottom: '8px'
+          }}
+        >
+          OROT - Hebrew Bible Analytics Engine
+        </div>
+        <p style={{ fontSize: '14px', margin: 0, color: '#adb5bd' }}>
+          {t('useControlPanel')}
+        </p>
       </div>
     );
   }
