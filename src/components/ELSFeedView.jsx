@@ -1,141 +1,196 @@
 import React, { useState, useEffect } from 'react';
 
-function ELSFeedView({ elsData, loading, t, lang }) {
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-  const isRTL = lang === 'he' || lang === 'fa';
+function ELSFeedView({ elsData, loading, t }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   useEffect(() => {
-    setCurrentMatchIndex(0);
+    setSelectedIdx(0);
   }, [elsData]);
 
-  if (loading) return <h3 style={{ color: '#0056b3' }}>{t('autoDiscovering') || "Processing..."}</h3>;
-
-  const totalMatches = elsData?.matches?.length || 0;
-  if (totalMatches === 0) {
+  if (loading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '60px', color: '#6c757d' }}>
-        <h3>{t('noEls') || "No ELS patterns discovered"}</h3>
-        <p>{t('noLetterSkip') || "No letter skip occurrences found."}</p>
+      <div className="empty-state">
+        <div className="spinner"></div>
+        <p>{t('autoDiscovering') || "Analyzing Equidistant Letter Sequences..."}</p>
       </div>
     );
   }
 
-  const activeMatchIndex = Math.min(currentMatchIndex, Math.max(0, totalMatches - 1));
-  const selectedMatch = elsData.matches[activeMatchIndex];
-  const { feedNodes, term, skip, bookName, isManual, startChar, jumpCount } = selectedMatch;
+  if (!elsData || !elsData.matches) {
+    return (
+      <div className="empty-state">
+        <h3>{t('readyToAnalyze') || "Ready to analyze Hebrew Text"}</h3>
+        <p>{t('useControlPanel') || "Use the control panel to start your search."}</p>
+      </div>
+    );
+  }
 
-  const handleNextMatch = () => { if (activeMatchIndex < totalMatches - 1) setCurrentMatchIndex(activeMatchIndex + 1); };
-  const handlePrevMatch = () => { if (activeMatchIndex > 0) setCurrentMatchIndex(activeMatchIndex - 1); };
+  const matches = elsData.matches;
 
-  const renderHighlightedString = (text, highlightIndices) => {
-    let result = [];
-    for (let i = 0; i < text.length; i++) {
-      if (highlightIndices.includes(i)) {
-        result.push(
+  if (matches.length === 0) {
+    return (
+      <div className="empty-state">
+        <h3>{t('noEls') || "No ELS patterns discovered"}</h3>
+        <p>{t('noLetterSkip') || "No letter skip occurrences found for this term in the selected scopes."}</p>
+      </div>
+    );
+  }
+
+  const activeMatch = matches[selectedIdx] || matches[0];
+
+  const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+  const handleExportElsCSV = () => {
+    const BOM = '\uFEFF';
+    let csvLines = [];
+
+    if (activeMatch.isManual) {
+      csvLines.push(["Start Coordinate", "Start Letter", "Jump Size (Skip)", "Jump Count", "Discovered Sequence", "Verses Context"].join(","));
+      matches.forEach(m => {
+        const contextStr = (m.feedNodes || []).map(n => `[${n.ref}] ${n.text}`).join(" | ");
+        csvLines.push([
+          escapeCsv(m.bookName),
+          escapeCsv(m.startChar),
+          m.skip,
+          m.jumpCount,
+          escapeCsv(m.term),
+          escapeCsv(contextStr)
+        ].join(","));
+      });
+    } else {
+      csvLines.push(["Match #", "Search Term", "Book", "Skip", "Start Reference", "End Reference", "Verses Context"].join(","));
+      matches.forEach((m, idx) => {
+        const nodes = m.feedNodes || [];
+        const startRef = nodes[0]?.ref || "";
+        const endRef = nodes[nodes.length - 1]?.ref || "";
+        const contextStr = nodes.map(n => `[${n.ref}] ${n.text}`).join(" | ");
+        csvLines.push([
+          idx + 1,
+          escapeCsv(m.term),
+          escapeCsv(m.bookName),
+          m.skip,
+          escapeCsv(startRef),
+          escapeCsv(endRef),
+          escapeCsv(contextStr)
+        ].join(","));
+      });
+    }
+
+    const blob = new Blob([BOM + csvLines.join("\n")], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = activeMatch.isManual ? "orot_els_manual.csv" : `orot_els_${activeMatch.term}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderHighlightedVerse = (text, highlights = []) => {
+    const highlightSet = new Set(highlights);
+    return text.split('').map((char, idx) => {
+      if (highlightSet.has(idx)) {
+        return (
           <span
-            key={i}
+            key={idx}
             style={{
-              backgroundColor: '#0056b3', color: '#ffffff', fontWeight: 'bold',
-              padding: '2px 4px', margin: '0 2px', borderRadius: '4px',
-              boxShadow: '0 2px 4px rgba(0, 86, 179, 0.25)', display: 'inline-block',
-              transform: 'scale(1.05)'
+              backgroundColor: '#4c1d95',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              borderRadius: '4px',
+              padding: '0 4px',
+              margin: '0 1px',
+              display: 'inline-block',
+              boxShadow: '0 2px 4px rgba(76, 29, 149, 0.25)'
             }}
           >
-            {text[i]}
+            {char === ' ' ? '␣' : char}
           </span>
         );
-      } else {
-        result.push(text[i]);
       }
-    }
-    return result;
+      return <span key={idx}>{char}</span>;
+    });
   };
 
   return (
-    <div style={{ padding: '0 10px 40px 10px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
-
-      {/* STICKY HEADER */}
-      <div style={{
-        position: 'sticky', top: '10px', zIndex: 100,
-        backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px',
-        padding: '15px 20px', marginBottom: '20px',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px'
-      }}>
-        <div style={{ width: isManual ? '100%' : 'auto', textAlign: isRTL ? 'right' : 'left', direction: isRTL ? 'rtl' : 'ltr' }}>
-          <h3 style={{ margin: 0, color: '#0056b3' }}>
-            {t('sequenceViewer') || "Sequence Viewer"} {!isManual && `"${term}"`}
-          </h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
-            {isManual ? (t('start') || "Start:") : (t('book') || "Book:")} <strong>{bookName} {isManual && `(${startChar})`}</strong>
-            <span style={{ margin: '0 8px', color: '#ced4da' }}>|</span>
-            {t('skipPattern') || "Skip:"} <strong>{skip}</strong>
-            {isManual && (
-              <>
-                <span style={{ margin: '0 8px', color: '#ced4da' }}>|</span>
-                {t('jumps') || "Jumps:"} <strong>{jumpCount}</strong>
-              </>
-            )}
-          </p>
-          {isManual && (
-            <div style={{ marginTop: '10px', fontSize: '24px', fontWeight: 'bold', color: '#343a40', direction: 'rtl', letterSpacing: '2px' }}>
-              {term}
-            </div>
-          )}
-        </div>
-
-        {/* MATCH DRAWER / PAGINATION */}
-        {!isManual && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {/* Match Drawer Dropdown for scaling past 20 matches cleanly */}
-            <select
-              value={activeMatchIndex}
-              onChange={(e) => setCurrentMatchIndex(Number(e.target.value))}
-              style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #ced4da', fontSize: '12px', backgroundColor: '#f8f9fa', color: '#343a40', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              {elsData.matches.map((m, idx) => (
-                <option key={idx} value={idx}>
-                  #{idx + 1} — Skip: {m.skip} ({m.bookName})
-                </option>
-              ))}
-            </select>
-
-            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8f9fa', padding: '2px', borderRadius: '8px', border: '1px solid #ced4da', direction: 'ltr' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Header Card */}
+      <div style={{ backgroundColor: '#ffffff', padding: '18px 22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e9ecef', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {!activeMatch.isManual && matches.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button
-                onClick={handlePrevMatch}
-                disabled={activeMatchIndex === 0}
-                style={{ border: 'none', background: 'none', cursor: activeMatchIndex === 0 ? 'default' : 'pointer', opacity: activeMatchIndex === 0 ? 0.3 : 1, color: '#0056b3', fontSize: '16px', padding: '6px 10px' }}
+                onClick={() => setSelectedIdx(prev => (prev > 0 ? prev - 1 : matches.length - 1))}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', backgroundColor: '#f8f9fa', cursor: 'pointer', fontWeight: 'bold', color: '#4c1d95' }}
               >
                 ◀
               </button>
               <button
-                onClick={handleNextMatch}
-                disabled={activeMatchIndex === totalMatches - 1}
-                style={{ border: 'none', background: 'none', cursor: activeMatchIndex === totalMatches - 1 ? 'default' : 'pointer', opacity: activeMatchIndex === totalMatches - 1 ? 0.3 : 1, color: '#0056b3', fontSize: '16px', padding: '6px 10px' }}
+                onClick={() => setSelectedIdx(prev => (prev < matches.length - 1 ? prev + 1 : 0))}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', backgroundColor: '#f8f9fa', cursor: 'pointer', fontWeight: 'bold', color: '#4c1d95' }}
               >
                 ▶
               </button>
+              <select
+                value={selectedIdx}
+                onChange={(e) => setSelectedIdx(Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '13px', fontWeight: '600', color: '#343a40', backgroundColor: '#fff' }}
+              >
+                {matches.map((m, i) => (
+                  <option key={i} value={i}>
+                    #{i + 1} — Skip: {m.skip} ({m.feedNodes[0]?.ref || m.bookName})
+                  </option>
+                ))}
+              </select>
             </div>
+          )}
+
+          <button
+            onClick={handleExportElsCSV}
+            className="btn"
+            style={{
+              padding: '7px 14px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              backgroundColor: '#198754',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            {t('csv') || "CSV (Export)"}
+          </button>
+        </div>
+
+        <div style={{ textAlign: 'end' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', color: '#4c1d95' }}>
+            {t('elsContextFeed')} "{activeMatch.term}"
+          </h2>
+          <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '4px' }}>
+            {activeMatch.isManual ? (
+              <>
+                {t('start')} <strong>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong>{activeMatch.skip}</strong> | {t('jumps')} <strong>{activeMatch.jumpCount}</strong>
+              </>
+            ) : (
+              <>
+                {t('book')} <strong>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong>{activeMatch.skip}</strong> ({selectedIdx + 1} / {matches.length})
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* FEED READER */}
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e9ecef', borderRadius: '12px', padding: '35px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-        {feedNodes.map((node, i) => (
-          <React.Fragment key={i}>
-            <div style={{ textAlign: 'right', direction: 'rtl' }}>
-              <div style={{ fontSize: '12px', color: '#adb5bd', fontWeight: 'bold', marginBottom: '10px', letterSpacing: '0.5px' }}>
-                {node.ref}
-              </div>
-              <div style={{ fontSize: '24px', fontFamily: '"Times New Roman", serif', color: '#343a40', lineHeight: '1.9' }}>
-                {renderHighlightedString(node.text, node.highlights)}
-              </div>
+      {/* Verse Nodes Card */}
+      <div style={{ backgroundColor: '#ffffff', padding: '22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {activeMatch.feedNodes.map((node, idx) => (
+          <div key={idx} style={{ paddingBottom: idx < activeMatch.feedNodes.length - 1 ? '16px' : '0', borderBottom: idx < activeMatch.feedNodes.length - 1 ? '1px dashed #dee2e6' : 'none' }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6c757d', marginBottom: '6px' }}>
+              {node.ref}
             </div>
-            {i < feedNodes.length - 1 && (
-              <div style={{ textAlign: 'center', color: '#ced4da', margin: '25px 0', fontSize: '28px', letterSpacing: '8px' }}>...</div>
-            )}
-          </React.Fragment>
+            <div dir="rtl" style={{ fontSize: '20px', lineHeight: '2', color: '#212529' }}>
+              {renderHighlightedVerse(node.text, node.highlights)}
+            </div>
+          </div>
         ))}
       </div>
     </div>

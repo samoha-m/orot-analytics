@@ -38,10 +38,17 @@ function App() {
   const [isElsMode, setIsElsMode] = useState(false);
   const [elsData, setElsData] = useState(null);
 
+  const clearResults = () => {
+    setElsData(null);
+    setRawChartData([]);
+    setResultTotals(null);
+    setActivePreview(null);
+  };
+
   useEffect(() => {
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
     workerRef.current.onmessage = (e) => {
-      const { status, isEls, chartData, totals, elsData: resEls, error } = e.data;
+      const { status, isEls, chartData, totals, elsData: resEls, errorCode, errorParams, error } = e.data;
       if (status === 'success') {
         if (isEls) {
           setIsElsMode(true);
@@ -52,13 +59,37 @@ function App() {
           setResultTotals(totals);
         }
       } else {
-        setAppError(error);
+        clearResults();
+        setAppError({ code: errorCode || 'ERR_GENERIC', params: errorParams || {}, raw: error });
         console.error("Worker failed:", error);
       }
       setLoading(false);
     };
     return () => workerRef.current.terminate();
   }, []);
+
+  const renderErrorText = (errObj) => {
+    if (!errObj) return null;
+    const dict = translations[lang] || translations.en;
+    switch (errObj.code) {
+      case 'ERR_SELECT_CHAPTER':
+        return dict.errorSelectChapter;
+      case 'ERR_SELECT_LETTER':
+        return dict.errorSelectLetter;
+      case 'ERR_EMPTY_INPUT':
+        return dict.errorEmptyInput;
+      case 'ERR_START_NOT_FOUND':
+        return dict.errStartNotFound;
+      case 'ERR_ANCHOR_NOT_FOUND':
+        return dict.errAnchorNotFound;
+      case 'ERR_ANCHOR_MISMATCH':
+        return typeof dict.errAnchorMismatch === 'function'
+          ? dict.errAnchorMismatch(errObj.params.actual, errObj.params.term, errObj.params.expected)
+          : errObj.raw;
+      default:
+        return errObj.raw || "An error occurred.";
+    }
+  };
 
   const addRange = () => setRanges([...ranges, { id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const removeRange = (id) => { if (ranges.length > 1) setRanges(ranges.filter(r => r.id !== id)); };
@@ -87,14 +118,14 @@ function App() {
 
   const handleSearch = () => {
     setAppError(null);
+    clearResults();
 
     if (searchMode === 'els' && elsSubMode === 'manual') {
       if (manualConfig.letterIdx === null) {
-        setAppError(t('errorSelectLetter'));
+        setAppError({ code: 'ERR_SELECT_LETTER' });
         return;
       }
       setLoading(true);
-      setActivePreview(null);
       setShowMobilePanel(false);
       workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig, includeSpaces });
       return;
@@ -102,7 +133,7 @@ function App() {
 
     if (searchMode === 'els' && elsSubMode === 'anchor') {
       if (anchorConfig.letterIdx === null) {
-        setAppError(t('errorSelectLetter'));
+        setAppError({ code: 'ERR_SELECT_LETTER' });
         return;
       }
     }
@@ -112,28 +143,23 @@ function App() {
 
     if (searchMode === 'els') {
       if (terms.length === 0) {
-        setElsData(null);
         setIsElsMode(false);
-        setAppError(t('errorEmptyInput'));
+        setAppError({ code: 'ERR_EMPTY_INPUT' });
         return;
       }
       if (elsSubMode === 'auto' && ranges.some(r => r.selectedChapters.length === 0)) {
-        setAppError(t('errorSelectChapter'));
+        setAppError({ code: 'ERR_SELECT_CHAPTER' });
         return;
       }
       setLoading(true);
-      setActivePreview(null);
       setShowMobilePanel(false);
       workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, anchorConfig });
       return;
     }
 
     if (terms.length === 0) {
-      setRawChartData([]);
-      setResultTotals(null);
       setActiveTerms([]);
-      setActivePreview(null);
-      setAppError(t('errorEmptyInput'));
+      setAppError({ code: 'ERR_EMPTY_INPUT' });
       return;
     }
 
@@ -142,13 +168,12 @@ function App() {
     }
 
     if (ranges.some(r => r.selectedChapters.length === 0)) {
-       setAppError(t('errorSelectChapter'));
+       setAppError({ code: 'ERR_SELECT_CHAPTER' });
        return;
     }
 
     setLoading(true);
     setActiveTerms(terms);
-    setActivePreview(null);
     setShowMobilePanel(false);
     workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces });
   };
@@ -218,7 +243,7 @@ function App() {
         <main className="main-canvas">
           {appError && (
             <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <span style={{ fontWeight: 'bold' }}>{appError}</span>
+              <span style={{ fontWeight: 'bold' }}>{renderErrorText(appError)}</span>
               <button onClick={() => setAppError(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#856404' }}>✖</button>
             </div>
           )}

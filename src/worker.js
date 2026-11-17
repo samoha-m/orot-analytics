@@ -106,7 +106,11 @@ self.onmessage = async (e) => {
         }
 
         if (globalStart === -1) {
-            self.postMessage({ status: 'error', error: "Start coordinate not found. Please ensure valid selection." });
+            self.postMessage({
+              status: 'error',
+              errorCode: 'ERR_START_NOT_FOUND',
+              error: "Start coordinate not found. Please ensure valid selection."
+            });
             return;
         }
 
@@ -227,7 +231,11 @@ self.onmessage = async (e) => {
 
         if (isAnchored) {
             if (anchorGlobalIndex === -1) {
-                self.postMessage({ status: 'error', error: "Anchor starting coordinate not found in selected scope." });
+                self.postMessage({
+                  status: 'error',
+                  errorCode: 'ERR_ANCHOR_NOT_FOUND',
+                  error: "Anchor starting coordinate not found in selected scope."
+                });
                 return;
             }
             const actualAnchorChar = letterSequence[anchorGlobalIndex].char;
@@ -235,13 +243,14 @@ self.onmessage = async (e) => {
             if (actualAnchorChar !== expectedFirstChar) {
                 self.postMessage({
                     status: 'error',
+                    errorCode: 'ERR_ANCHOR_MISMATCH',
+                    errorParams: { actual: actualAnchorChar, term: targetTerm, expected: expectedFirstChar },
                     error: `Anchor mismatch: Selected anchor letter is '${actualAnchorChar}', but the search term '${targetTerm}' starts with '${expectedFirstChar}'.`
                 });
                 return;
             }
         }
 
-        // STRICT ANCHOR LOCK: If Anchored mode is active, start ONLY at anchorGlobalIndex. Otherwise scan all indices.
         const startPositions = (isAnchored && anchorGlobalIndex !== -1) ? [anchorGlobalIndex] : Array.from({ length: letterSequence.length }, (_, i) => i);
 
         for (const start of startPositions) {
@@ -375,6 +384,6 @@ self.onmessage = async (e) => {
 
     self.postMessage({ status: 'success', isEls: false, chartData: formattedChartData, totals });
   } catch (error) {
-    self.postMessage({ status: 'error', error: error.message });
+    self.postMessage({ status: 'error', errorCode: 'ERR_GENERIC', error: error.message });
   }
 };

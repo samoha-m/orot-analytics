@@ -56,7 +56,12 @@ export const translations = {
     errorSelectChapter: "Please select at least one chapter for all ranges.",
     errorSelectLetter: "Please click a specific starting letter in the verse viewer before running.",
     errorEmptyInput: "Please enter a search term before running the analysis.",
+    errStartNotFound: "Start coordinate not found. Please ensure a valid selection.",
+    errAnchorNotFound: "Anchor starting coordinate not found in the selected book.",
+    errAnchorMismatch: (actual, term, expected) =>
+      `Anchor mismatch: Selected anchor letter is '${actual}', but the search term '${term}' starts with '${expected}'.`,
     includeSpaces: "Include Spaces in Jumps",
+    includeSpacesShort: "With Spaces",
     matchDrawerTitle: "Select Match (Sorted by Shortest Skip)"
   },
   he: {
@@ -116,7 +121,12 @@ export const translations = {
     errorSelectChapter: "אנא בחר לפחות פרק אחד עבור כל הטווחים.",
     errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש.",
     errorEmptyInput: "אנא הזן מונח לחיפוש לפני הפעלת הניתוח.",
+    errStartNotFound: "נקודת ההתחלה לא נמצאה. אנא ודא בחירה תקינה.",
+    errAnchorNotFound: "אות העוגן שנבחרה לא נמצאה בספר המבוקש.",
+    errAnchorMismatch: (actual, term, expected) =>
+      `אי-התאמה בעוגן: אות העוגן שנבחרה היא '${actual}', אך מונח החיפוש '${term}' מתחיל באות '${expected}'.`,
     includeSpaces: "כלול רווחים בדילוגים",
+    includeSpacesShort: "כולל רווחים",
     matchDrawerTitle: "בחר התאמה (ממוין לפי דילוג קצר)"
   },
   fa: {
@@ -168,6 +178,7 @@ export const translations = {
     chapter: "فصل",
     verse: "آیه",
     startPoint: "نقطه شروع را انتخاب کنید",
+    startPointShort: "نقطه شروع",
     start: "شروع:",
     jumps: "پرش‌ها:",
     jumpSize: "اندازه پرش",
@@ -176,7 +187,12 @@ export const translations = {
     errorSelectChapter: "لطفاً حداقل یک فصل برای همه دامنه‌ها انتخاب کنید.",
     errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید.",
     errorEmptyInput: "لطفاً قبل از اجرای تحلیل یک عبارت جستجو وارد کنید.",
+    errStartNotFound: "مختصات شروع یافت نشد. لطفاً از انتخاب معتبر اطمینان حاصل کنید.",
+    errAnchorNotFound: "حرف لنگر انتخاب‌شده در کتاب مورد نظر یافت نشد.",
+    errAnchorMismatch: (actual, term, expected) =>
+      `عدم تطابق لنگر: حرف لنگر انتخاب‌شده '${actual}' است، اما عبارت جستجوی '${term}' با حرف '${expected}' شروع می‌شود.`,
     includeSpaces: "شامل فاصله ها در پرش ها",
+    includeSpacesShort: "با فاصله",
     matchDrawerTitle: "انتخاب تطابق (مرتب شده بر اساس کوتاه ترین پرش)"
   }
 };
