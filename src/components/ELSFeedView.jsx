@@ -19,8 +19,9 @@ function ELSFeedView({ elsData, loading, t }) {
   if (!elsData || !elsData.matches) {
     return (
       <div className="empty-state">
-        <h3>{t('readyToAnalyze') || "Ready to analyze Hebrew Text"}</h3>
-        <p>{t('useControlPanel') || "Use the control panel to start your search."}</p>
+        <p style={{ color: '#adb5bd', fontSize: '15px', margin: 0 }}>
+          {t('useControlPanel') || "Use the control panel to start your search."}
+        </p>
       </div>
     );
   }

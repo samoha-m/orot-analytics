@@ -7,9 +7,8 @@ function ChartDisplay({ resultTotals, loading, activeTerms, searchMode, viewMode
 
   if (!resultTotals) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px', color: '#6c757d' }}>
-        <h2>{t('readyToAnalyze')}</h2>
-        <p>{t('useControlPanel')}</p>
+      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd' }}>
+        <p style={{ fontSize: '15px', margin: 0 }}>{t('useControlPanel')}</p>
       </div>
     );
   }
