@@ -24,11 +24,11 @@ function App() {
   const [searchMode, setSearchMode] = useState('exact');
   const [viewMode, setViewMode] = useState('absolute');
 
+  // elsSubMode supports: 'auto' | 'anchor' | 'manual'
   const [elsSubMode, setElsSubMode] = useState('auto');
-  const [includeSpaces, setIncludeSpaces] = useState(false); // NEW TOGGLE
-  const [useAnchor, setUseAnchor] = useState(false); // NEW TOGGLE
+  const [includeSpaces, setIncludeSpaces] = useState(false);
   const [manualConfig, setManualConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null, skip: 50, count: 10 });
-  const [anchorConfig, setAnchorConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null }); // NEW ANCHOR CONFIG
+  const [anchorConfig, setAnchorConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null });
 
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
@@ -100,8 +100,8 @@ function App() {
       return;
     }
 
-    if (searchMode === 'els' && elsSubMode === 'auto') {
-      if (useAnchor && anchorConfig.letterIdx === null) {
+    if (searchMode === 'els' && elsSubMode === 'anchor') {
+      if (anchorConfig.letterIdx === null) {
         setAppError(t('errorSelectLetter'));
         return;
       }
@@ -117,10 +117,14 @@ function App() {
         setAppError(t('errorEmptyInput'));
         return;
       }
+      if (elsSubMode === 'auto' && ranges.some(r => r.selectedChapters.length === 0)) {
+        setAppError(t('errorSelectChapter'));
+        return;
+      }
       setLoading(true);
       setActivePreview(null);
       setShowMobilePanel(false);
-      workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, useAnchor, anchorConfig });
+      workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, anchorConfig });
       return;
     }
 
@@ -239,7 +243,6 @@ function App() {
           elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
           manualConfig={manualConfig} setManualConfig={setManualConfig}
           includeSpaces={includeSpaces} setIncludeSpaces={setIncludeSpaces}
-          useAnchor={useAnchor} setUseAnchor={setUseAnchor}
           anchorConfig={anchorConfig} setAnchorConfig={setAnchorConfig}
         />
       </div>

@@ -14,7 +14,7 @@ const calculateGematria = (word) => {
 };
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig, includeSpaces, useAnchor, anchorConfig } = e.data;
+  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig, includeSpaces, anchorConfig } = e.data;
 
   const getBookName = (bookInfo) => {
     if (lang === 'he') return bookInfo.he;
@@ -23,8 +23,10 @@ self.onmessage = async (e) => {
   };
 
   try {
+    const isAnchored = searchMode === 'els' && elsSubMode === 'anchor';
+
     let neededBookIds = [...new Set(ranges.map(r => r.bookId))];
-    if (searchMode === 'els' && elsSubMode === 'auto' && useAnchor && anchorConfig?.bookId) {
+    if (isAnchored && anchorConfig?.bookId) {
       if (!neededBookIds.includes(anchorConfig.bookId)) {
         neededBookIds.push(anchorConfig.bookId);
       }
@@ -148,7 +150,7 @@ self.onmessage = async (e) => {
         return;
       }
 
-      // --- AUTO-DISCOVER LOGIC (Anchor-Locked) ---
+      // --- AUTO-DISCOVER & ANCHORED SEARCH LOGIC ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
       const termLen = termLetters.length;
@@ -158,7 +160,7 @@ self.onmessage = async (e) => {
       const MAX_TOTAL_MATCHES = 500;
 
       let targetRanges = ranges;
-      if (useAnchor && anchorConfig?.bookId) {
+      if (isAnchored && anchorConfig?.bookId) {
         const anchorBookObj = booksList.find(b => b.id === anchorConfig.bookId);
         targetRanges = [{ id: 'anchor-scope', bookId: anchorConfig.bookId, selectedChapters: Array.from({length: anchorBookObj.maxCh}, (_, i) => i + 1) }];
       }
@@ -197,7 +199,7 @@ self.onmessage = async (e) => {
                     const currentIdx = letterSequence.length;
                     letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
 
-                    if (useAnchor && anchorGlobalIndex === -1 &&
+                    if (isAnchored && anchorGlobalIndex === -1 &&
                         range.bookId === anchorConfig.bookId &&
                         vObj.c === anchorConfig.chapter &&
                         vObj.v === anchorConfig.verse) {
@@ -223,7 +225,7 @@ self.onmessage = async (e) => {
             }
         });
 
-        if (useAnchor) {
+        if (isAnchored) {
             if (anchorGlobalIndex === -1) {
                 self.postMessage({ status: 'error', error: "Anchor starting coordinate not found in selected scope." });
                 return;
@@ -239,8 +241,8 @@ self.onmessage = async (e) => {
             }
         }
 
-        // STRICT ANCHOR LOCK: If anchor is active, start ONLY at anchorGlobalIndex. Otherwise scan all indices.
-        const startPositions = (useAnchor && anchorGlobalIndex !== -1) ? [anchorGlobalIndex] : Array.from({ length: letterSequence.length }, (_, i) => i);
+        // STRICT ANCHOR LOCK: If Anchored mode is active, start ONLY at anchorGlobalIndex. Otherwise scan all indices.
+        const startPositions = (isAnchored && anchorGlobalIndex !== -1) ? [anchorGlobalIndex] : Array.from({ length: letterSequence.length }, (_, i) => i);
 
         for (const start of startPositions) {
           if (start > letterSequence.length - (termLen - 1) * 2) continue;
@@ -277,7 +279,7 @@ self.onmessage = async (e) => {
               if (matches.length >= MAX_TOTAL_MATCHES) break;
             }
           }
-          if (useAnchor && matches.length >= MAX_TOTAL_MATCHES) break;
+          if (isAnchored && matches.length >= MAX_TOTAL_MATCHES) break;
         }
       }
 

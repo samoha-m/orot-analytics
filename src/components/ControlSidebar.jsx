@@ -11,7 +11,6 @@ function ControlSidebar({
   t, lang,
   elsSubMode, setElsSubMode, manualConfig, setManualConfig,
   includeSpaces, setIncludeSpaces,
-  useAnchor, setUseAnchor,
   anchorConfig, setAnchorConfig
 }) {
   const sectionLabelStyle = { display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6c757d', fontWeight: 'bold', marginBottom: '8px' };
@@ -60,9 +59,9 @@ function ControlSidebar({
     }
   }, [manualConfig.chapter, manualConfig.verse, manualData, manualConfig, setManualConfig]);
 
-  // Auto-Discover Anchor Data Fetcher
+  // Anchored Search Data Fetcher
   useEffect(() => {
-    if (searchMode === 'els' && elsSubMode === 'auto' && useAnchor) {
+    if (searchMode === 'els' && elsSubMode === 'anchor') {
       const bookInfo = booksList.find(b => b.id === anchorConfig.bookId);
       fetch(`/data/${bookInfo.id}_${bookInfo.name.toLowerCase()}.json`)
         .then(res => res.json())
@@ -73,9 +72,12 @@ function ControlSidebar({
           setAnchorVersesInChapter(vList);
           const words = data.filter(d => d.c === anchorConfig.chapter && d.v === anchorConfig.verse).map(d => d.w);
           setAnchorVerseText(words.join(' '));
+          if (words.length === 0 && vList.length > 0) {
+            setAnchorConfig({...anchorConfig, verse: vList[0], letterIdx: null});
+          }
         });
     }
-  }, [anchorConfig.bookId, anchorConfig.chapter, anchorConfig.verse, searchMode, elsSubMode, useAnchor]);
+  }, [anchorConfig.bookId, anchorConfig.chapter, anchorConfig.verse, searchMode, elsSubMode]);
 
   const renderPickerVerse = (text, currentIdx, onSelect) => {
     let letterCounter = 0;
@@ -151,10 +153,22 @@ function ControlSidebar({
             </div>
           )}
 
+          {/* THREE-WAY ELS SUB-MODE SWITCHER */}
           {currentGroup === 'els' && (
-            <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px' }}>
-               <button onClick={() => setElsSubMode('auto')} style={{ flex: 1, border: 'none', background: elsSubMode === 'auto' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: 'bold', color: elsSubMode === 'auto' ? '#0056b3' : '#495057', cursor: 'pointer' }}>{t('autoDiscover') || "Auto-Discover"}</button>
-               <button onClick={() => setElsSubMode('manual')} style={{ flex: 1, border: 'none', background: elsSubMode === 'manual' ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px', fontSize: '11px', fontWeight: 'bold', color: elsSubMode === 'manual' ? '#0056b3' : '#495057', cursor: 'pointer' }}>{t('manualExplorer') || "Manual Explorer"}</button>
+            <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#e9ecef', borderRadius: '6px', padding: '4px', gap: '2px' }}>
+               {[
+                 { val: 'auto', lbl: t('autoDiscover') || "Auto-Discover" },
+                 { val: 'anchor', lbl: t('anchoredSearch') || "Anchored" },
+                 { val: 'manual', lbl: t('manualExplorer') || "Manual Explorer" }
+               ].map(sub => (
+                 <button
+                   key={sub.val}
+                   onClick={() => setElsSubMode(sub.val)}
+                   style={{ flex: 1, border: 'none', background: elsSubMode === sub.val ? '#fff' : 'transparent', borderRadius: '4px', padding: '6px 4px', fontSize: '11px', fontWeight: elsSubMode === sub.val ? 'bold' : 'normal', color: elsSubMode === sub.val ? '#0056b3' : '#495057', cursor: 'pointer' }}
+                 >
+                   {sub.lbl}
+                 </button>
+               ))}
             </div>
           )}
 
@@ -201,64 +215,64 @@ function ControlSidebar({
                 </div>
               </div>
 
-              {/* INCLUDE SPACES TOGGLE */}
               <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input type="checkbox" id="spacesManual" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
                 <label htmlFor="spacesManual" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
               </div>
             </div>
           ) : (
-            /* AUTO-DISCOVER & STANDARD SEARCH */
+            /* ANCHORED SEARCH, AUTO-DISCOVER, & STANDARD SEARCH */
             <div>
               <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '15px' }}>
                 <label style={sectionLabelStyle}>{getInputTitle()}</label>
                 <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('egSearch')} dir="rtl" style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
 
-              {/* AUTO-DISCOVER EXTRA OPTIONS */}
-              {searchMode === 'els' && elsSubMode === 'auto' && (
-                <div style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '6px', border: '1px solid #e9ecef', marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <input type="checkbox" id="spacesAuto" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
-                    <label htmlFor="spacesAuto" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
+              {/* DEDICATED ANCHORED SEARCH PICKER */}
+              {searchMode === 'els' && elsSubMode === 'anchor' && (
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
+
+                  <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
+                     <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
+                     <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('chapter') || 'Chapter'}</div>
+                     <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('verse') || 'Verse'}</div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: useAnchor ? '10px' : '0' }}>
-                    <input type="checkbox" id="useAnchor" checked={useAnchor} onChange={e => setUseAnchor(e.target.checked)} style={{ cursor: 'pointer' }} />
-                    <label htmlFor="useAnchor" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('useStartAnchor')}</label>
+                  <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+                     <select value={anchorConfig.bookId} onChange={e => setAnchorConfig({...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '6px', fontSize: '12px' }}>
+                       {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
+                     </select>
+                     <select value={anchorConfig.chapter} onChange={e => setAnchorConfig({...anchorConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '6px', fontSize: '12px' }}>
+                       {Array.from({length: anchorChaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
+                     </select>
+                     <select value={anchorConfig.verse} onChange={e => setAnchorConfig({...anchorConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '6px', fontSize: '12px' }}>
+                       {anchorVersesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
+                     </select>
                   </div>
 
-                  {useAnchor && (
-                    <div style={{ marginTop: '10px', borderTop: '1px dashed #ced4da', paddingTop: '10px' }}>
-                      <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
-                         <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
-                         <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('chapter') || 'Chapter'}</div>
-                         <div style={{ flex: 1, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('verse') || 'Verse'}</div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-                         <select value={anchorConfig.bookId} onChange={e => setAnchorConfig({...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '4px', fontSize: '11px' }}>
-                           {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
-                         </select>
-                         <select value={anchorConfig.chapter} onChange={e => setAnchorConfig({...anchorConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '4px', fontSize: '11px' }}>
-                           {Array.from({length: anchorChaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
-                         </select>
-                         <select value={anchorConfig.verse} onChange={e => setAnchorConfig({...anchorConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '4px', fontSize: '11px' }}>
-                           {anchorVersesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
-                         </select>
-                      </div>
-                      <div style={{ direction: 'rtl', fontSize: '15px', padding: '6px', border: '1px solid #ced4da', borderRadius: '4px', backgroundColor: '#fff', maxHeight: '80px', overflowY: 'auto' }}>
-                         {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
-                      </div>
-                    </div>
-                  )}
+                  <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
+                     {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
+                    {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
+                  </div>
+                </div>
+              )}
+
+              {/* INCLUDE SPACES TOGGLE FOR AUTO & ANCHORED MODES */}
+              {searchMode === 'els' && (elsSubMode === 'auto' || elsSubMode === 'anchor') && (
+                <div style={{ backgroundColor: '#f8f9fa', padding: '10px 12px', borderRadius: '6px', border: '1px solid #e9ecef', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="checkbox" id="spacesEls" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
+                  <label htmlFor="spacesEls" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* HIDE COMPARISON SCOPES IN MANUAL MODE AND WHEN AUTO-DISCOVER ANCHOR IS ACTIVE */}
-        {!(searchMode === 'els' && elsSubMode === 'manual') && !(searchMode === 'els' && elsSubMode === 'auto' && useAnchor) && (
+        {/* COMPARISON SCOPES (Shown in Text, Gematria, and ELS Auto-Discover; hidden in Anchored and Manual) */}
+        {!(searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) && (
           <div className="sidebar-content">
             <div className="input-group">
               <label style={{...sectionLabelStyle, marginTop: '10px'}}>{t('comparisonScopes') || "Search Boundaries"}</label>
