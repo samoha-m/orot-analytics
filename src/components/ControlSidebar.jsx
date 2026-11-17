@@ -13,6 +13,7 @@ function ControlSidebar({
   includeSpaces, setIncludeSpaces,
   anchorConfig, setAnchorConfig
 }) {
+  const isRTL = lang === 'he' || lang === 'fa';
   const sectionLabelStyle = { display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6c757d', fontWeight: 'bold', marginBottom: '8px' };
 
   const [manualData, setManualData] = useState([]);
@@ -24,11 +25,12 @@ function ControlSidebar({
   const [anchorVersesInChapter, setAnchorVersesInChapter] = useState([]);
 
   const currentGroup = ['exact', 'root', 'letter'].includes(searchMode) ? 'text' : searchMode;
+  const showComparisonScopes = !(searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor'));
 
   const getInputPlaceholder = () => {
-    if (searchMode === 'els') return t('searchTarget');
-    if (searchMode === 'gematria') return t('compareGematria');
-    return t('compareTerms');
+    if (searchMode === 'els') return t('placeholderEls');
+    if (searchMode === 'gematria') return t('placeholderGematria');
+    return t('placeholderText');
   };
 
   // Manual Explorer Data Fetcher
@@ -124,7 +126,7 @@ function ControlSidebar({
       >
         {/* Scrollable Upper + Middle Container */}
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ backgroundColor: '#ffffff', padding: '16px 20px', borderBottom: '1px solid #e9ecef' }}>
+          <div style={{ backgroundColor: '#ffffff', padding: '16px 20px 10px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <label style={sectionLabelStyle}>{t('searchLogicMode') || "Logic"}</label>
               <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: showMobilePanel ? 'block' : 'none' }}>✖</button>
@@ -189,7 +191,7 @@ function ControlSidebar({
             {/* MANUAL EXPLORER MODE */}
             {searchMode === 'els' && elsSubMode === 'manual' ? (
               <div>
-                <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
+                <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
                 <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
                    <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
@@ -209,27 +211,66 @@ function ControlSidebar({
                    </select>
                 </div>
 
-                <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '110px', overflowY: 'auto' }}>
+                <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
                    {verseText ? renderPickerVerse(verseText, manualConfig.letterIdx, (idx) => setManualConfig({...manualConfig, letterIdx: idx})) : "..."}
                 </div>
-                <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
-                  {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
-                </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpSize') || "Jump Size"}</label>
-                    <input type="number" value={manualConfig.skip} onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
+                {/* Single Compact Row: Jump Size + Jump Count + Include Spaces */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                  <div style={{ flex: '0 0 76px' }}>
+                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 'bold', color: '#495057', marginBottom: '4px', whiteSpace: 'nowrap' }}>
+                      {t('jumpSize') || "Jump Size"}
+                    </label>
+                    <input
+                      type="number"
+                      value={manualConfig.skip}
+                      onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})}
+                      style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t('jumpCount') || "Jump Count"}</label>
-                    <input type="number" value={manualConfig.count} onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ced4da', boxSizing: 'border-box' }} />
+                  <div style={{ flex: '0 0 76px' }}>
+                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 'bold', color: '#495057', marginBottom: '4px', whiteSpace: 'nowrap' }}>
+                      {t('jumpCount') || "Jump Count"}
+                    </label>
+                    <input
+                      type="number"
+                      value={manualConfig.count}
+                      onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})}
+                      style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
                   </div>
-                </div>
-
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="checkbox" id="spacesManual" checked={includeSpaces} onChange={e => setIncludeSpaces(e.target.checked)} style={{ cursor: 'pointer' }} />
-                  <label htmlFor="spacesManual" style={{ fontSize: '12px', cursor: 'pointer', color: '#343a40', fontWeight: '500' }}>{t('includeSpaces')}</label>
+                  <label
+                    htmlFor="spacesManual"
+                    title={t('includeSpaces')}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      fontSize: '11px',
+                      color: '#343a40',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      backgroundColor: '#f8f9fa',
+                      padding: '7px 6px',
+                      borderRadius: '6px',
+                      border: '1px solid #ced4da',
+                      height: '33px',
+                      boxSizing: 'border-box',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      id="spacesManual"
+                      checked={includeSpaces}
+                      onChange={e => setIncludeSpaces(e.target.checked)}
+                      style={{ cursor: 'pointer', margin: 0 }}
+                    />
+                    <span>{t('includeSpacesShort') || t('includeSpaces')}</span>
+                  </label>
                 </div>
               </div>
             ) : (
@@ -242,7 +283,7 @@ function ControlSidebar({
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={getInputPlaceholder()}
                     aria-label={getInputPlaceholder()}
-                    dir="rtl"
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     style={{
                       flex: 1,
                       minWidth: 0,
@@ -250,6 +291,7 @@ function ControlSidebar({
                       borderRadius: '6px',
                       border: '1px solid #ced4da',
                       fontSize: '13px',
+                      textAlign: isRTL ? 'right' : 'left',
                       outline: 'none',
                       boxSizing: 'border-box'
                     }}
@@ -290,7 +332,7 @@ function ControlSidebar({
                 {/* DEDICATED ANCHORED SEARCH PICKER */}
                 {searchMode === 'els' && elsSubMode === 'anchor' && (
                   <div>
-                    <label style={sectionLabelStyle}>{t('startPoint') || "Select Start Point"}</label>
+                    <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
                     <div style={{ display: 'flex', gap: '5px', marginBottom: '2px' }}>
                        <div style={{ flex: 2, fontSize: '10px', color: '#6c757d', fontWeight: 'bold' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
@@ -313,9 +355,6 @@ function ControlSidebar({
                     <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.8', padding: '10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#f8f9fa', maxHeight: '120px', overflowY: 'auto' }}>
                        {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
                     </div>
-                    <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '5px', textAlign: 'center' }}>
-                      {t('clickLetterToLock') || "Click a letter above to lock exact starting coordinate."}
-                    </div>
                   </div>
                 )}
               </div>
@@ -323,10 +362,10 @@ function ControlSidebar({
           </div>
 
           {/* COMPARISON SCOPES (Shown in Text, Gematria, and ELS Auto-Discover; hidden in Anchored and Manual) */}
-          {!(searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) && (
-            <div className="sidebar-content" style={{ flex: 1 }}>
-              <div className="input-group">
-                <label style={{...sectionLabelStyle, marginTop: '10px'}}>{t('comparisonScopes') || "Search Boundaries"}</label>
+          {showComparisonScopes && (
+            <div className="sidebar-content" style={{ flex: 1, paddingTop: '6px', borderTop: 'none' }}>
+              <div className="input-group" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+                <label style={sectionLabelStyle}>{t('comparisonScopes') || "Search Boundaries"}</label>
                 {ranges.map((range, index) => {
                   const book = booksList.find(b => b.id === range.bookId);
                   return (

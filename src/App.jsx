@@ -20,7 +20,7 @@ function App() {
   const [showMobilePanel, setShowMobilePanel] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
-  const [searchTerm, setSearchTerm] = useState('אור');
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchMode, setSearchMode] = useState('exact');
   const [viewMode, setViewMode] = useState('absolute');
 
