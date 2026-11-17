@@ -147,10 +147,11 @@ function ControlSidebar({
         {/* Scrollable Upper Container */}
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <div style={{ backgroundColor: '#ffffff', padding: '16px 20px 10px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <label style={sectionLabelStyle}>{t('searchLogicMode') || "Logic"}</label>
-              <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: showMobilePanel ? 'block' : 'none' }}>✖</button>
-            </div>
+            {showMobilePanel && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                <button className="mobile-close" onClick={() => setShowMobilePanel(false)} style={{ display: 'block' }}>✖</button>
+              </div>
+            )}
 
             <div style={{ display: 'flex', borderRadius: '6px', border: '1px solid #ced4da', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
               <button
