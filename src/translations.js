@@ -55,7 +55,7 @@ export const translations = {
     jumps: "Jumps:",
     jumpSize: "Jump Size",
     jumpCount: "Jump Count",
-    errorSelectChapter: "Please select at least one chapter for all ranges.",
+    errorSelectChapter: "Please select at least one book and chapter before running.",
     errorSelectLetter: "Please click a specific starting letter in the verse viewer before running.",
     errorEmptyInput: "Please enter a search term before running the analysis.",
     errStartNotFound: "Start coordinate not found. Please ensure a valid selection.",
@@ -64,7 +64,14 @@ export const translations = {
       `Anchor mismatch: Selected anchor letter is '${actual}', but the search term '${term}' starts with '${expected}'.`,
     includeSpaces: "Include Spaces in Jumps",
     includeSpacesShort: "With Spaces",
-    matchDrawerTitle: "Select Match (Sorted by Shortest Skip)"
+    matchDrawerTitle: "Select Match (Sorted by Shortest Skip)",
+    selectAllBooks: "Select All Books",
+    clearAll: "Clear All",
+    done: "Done",
+    noBooksSelected: "No books selected",
+    allBooksSummary: (bCount, cCount) => `All Books (${bCount}) · ${cCount} Chs`,
+    multiBooksSummary: (bCount, cCount) => `${bCount} Books · ${cCount} Chs`,
+    singleBookSummary: (name, sel, max) => `${name} (${sel}/${max} Chs)`
   },
   he: {
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
@@ -122,7 +129,7 @@ export const translations = {
     jumps: "קפיצות:",
     jumpSize: "גודל קפיצה",
     jumpCount: "מספר קפיצות",
-    errorSelectChapter: "אנא בחר לפחות פרק אחד עבור כל הטווחים.",
+    errorSelectChapter: "אנא בחר לפחות ספר ופרק אחד לפני הפעלת הניתוח.",
     errorSelectLetter: "אנא לחץ על אות התחלה בחלונית הפסוק לפני הפעלת החיפוש.",
     errorEmptyInput: "אנא הזן מונח לחיפוש לפני הפעלת הניתוח.",
     errStartNotFound: "נקודת ההתחלה לא נמצאה. אנא ודא בחירה תקינה.",
@@ -131,7 +138,14 @@ export const translations = {
       `אי-התאמה בעוגן: אות העוגן שנבחרה היא '${actual}', אך מונח החיפוש '${term}' מתחיל באות '${expected}'.`,
     includeSpaces: "כלול רווחים בדילוגים",
     includeSpacesShort: "כולל רווחים",
-    matchDrawerTitle: "בחר התאמה (ממוין לפי דילוג קצר)"
+    matchDrawerTitle: "בחר התאמה (ממוין לפי דילוג קצר)",
+    selectAllBooks: "בחר את כל הספרים",
+    clearAll: "נקה הכל",
+    done: "סיום",
+    noBooksSelected: "לא נבחרו ספרים",
+    allBooksSummary: (bCount, cCount) => `כל הספרים (${bCount}) · ${cCount} פרקים`,
+    multiBooksSummary: (bCount, cCount) => `${bCount} ספרים · ${cCount} פרקים`,
+    singleBookSummary: (name, sel, max) => `${name} (${sel}/${max} פרקים)`
   },
   fa: {
     readyToAnalyze: "آماده تحلیل متن عبری",
@@ -189,7 +203,7 @@ export const translations = {
     jumps: "پرش‌ها:",
     jumpSize: "اندازه پرش",
     jumpCount: "تعداد پرش",
-    errorSelectChapter: "لطفاً حداقل یک فصل برای همه دامنه‌ها انتخاب کنید.",
+    errorSelectChapter: "لطفاً حداقل یک کتاب و فصل را قبل از اجرا انتخاب کنید.",
     errorSelectLetter: "لطفاً قبل از اجرا روی یک حرف شروع در نمایشگر آیه کلیک کنید.",
     errorEmptyInput: "لطفاً قبل از اجرای تحلیل یک عبارت جستجو وارد کنید.",
     errStartNotFound: "مختصات شروع یافت نشد. لطفاً از انتخاب معتبر اطمینان حاصل کنید.",
@@ -198,6 +212,13 @@ export const translations = {
       `عدم تطابق لنگر: حرف لنگر انتخاب‌شده '${actual}' است، اما عبارت جستجوی '${term}' با حرف '${expected}' شروع می‌شود.`,
     includeSpaces: "شامل فاصله ها در پرش ها",
     includeSpacesShort: "با فاصله",
-    matchDrawerTitle: "انتخاب تطابق (مرتب شده بر اساس کوتاه ترین پرش)"
+    matchDrawerTitle: "انتخاب تطابق (مرتب شده بر اساس کوتاه ترین پرش)",
+    selectAllBooks: "انتخاب همه کتاب‌ها",
+    clearAll: "پاک کردن همه",
+    done: "تایید",
+    noBooksSelected: "کتابی انتخاب نشده است",
+    allBooksSummary: (bCount, cCount) => `همه کتاب‌ها (${bCount}) · ${cCount} فصل`,
+    multiBooksSummary: (bCount, cCount) => `${bCount} کتاب · ${cCount} فصل`,
+    singleBookSummary: (name, sel, max) => `${name} (${sel}/${max} فصل)`
   }
 };

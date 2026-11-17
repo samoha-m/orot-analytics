@@ -8,6 +8,7 @@ import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
+import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
 
 function App() {
   const [lang, setLang] = useState('he');
@@ -18,6 +19,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [appError, setAppError] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [isScopeOpen, setIsScopeOpen] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +46,13 @@ function App() {
     setResultTotals(null);
     setActivePreview(null);
   };
+
+  // Close scope overlay automatically if user enters Manual or Anchored ELS modes
+  useEffect(() => {
+    if (searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) {
+      setIsScopeOpen(false);
+    }
+  }, [searchMode, elsSubMode]);
 
   useEffect(() => {
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
@@ -91,33 +100,9 @@ function App() {
     }
   };
 
-  const addRange = () => setRanges([...ranges, { id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
-  const removeRange = (id) => { if (ranges.length > 1) setRanges(ranges.filter(r => r.id !== id)); };
-
-  const updateBook = (id, newBookId) => {
-    const newBook = booksList.find(b => b.id === newBookId);
-    setRanges(ranges.map(r => r.id === id ? { ...r, bookId: newBookId, selectedChapters: Array.from({length: newBook.maxCh}, (_, i) => i + 1), isExpanded: false } : r));
-  };
-
-  const toggleAccordion = (id) => {
-    setRanges(ranges.map(r => r.id === id ? { ...r, isExpanded: !r.isExpanded } : { ...r, isExpanded: false }));
-  };
-
-  const handleChapterSelection = (id, maxCh, action, singleCh = null) => {
-    setRanges(ranges.map(r => {
-      if (r.id !== id) return r;
-      if (action === 'all') return { ...r, selectedChapters: Array.from({length: maxCh}, (_, i) => i + 1) };
-      if (action === 'none') return { ...r, selectedChapters: [] };
-      if (action === 'toggle' && singleCh) {
-        const exists = r.selectedChapters.includes(singleCh);
-        return { ...r, selectedChapters: exists ? r.selectedChapters.filter(ch => ch !== singleCh) : [...r.selectedChapters, singleCh] };
-      }
-      return r;
-    }));
-  };
-
   const handleSearch = () => {
     setAppError(null);
+    setIsScopeOpen(false);
     clearResults();
 
     if (searchMode === 'els' && elsSubMode === 'manual') {
@@ -147,7 +132,7 @@ function App() {
         setAppError({ code: 'ERR_EMPTY_INPUT' });
         return;
       }
-      if (elsSubMode === 'auto' && ranges.some(r => r.selectedChapters.length === 0)) {
+      if (elsSubMode === 'auto' && (ranges.length === 0 || ranges.some(r => r.selectedChapters.length === 0))) {
         setAppError({ code: 'ERR_SELECT_CHAPTER' });
         return;
       }
@@ -167,7 +152,7 @@ function App() {
       terms = terms.map(term => /^\d+$/.test(term) ? term : calculateGematria(term).toString());
     }
 
-    if (ranges.some(r => r.selectedChapters.length === 0)) {
+    if (ranges.length === 0 || ranges.some(r => r.selectedChapters.length === 0)) {
        setAppError({ code: 'ERR_SELECT_CHAPTER' });
        return;
     }
@@ -240,7 +225,16 @@ function App() {
       </header>
 
       <div className="app-layout">
-        <main className="main-canvas">
+        <main className="main-canvas" style={{ position: 'relative' }}>
+          <ScopeSelectorOverlay
+            isOpen={isScopeOpen}
+            onClose={() => setIsScopeOpen(false)}
+            ranges={ranges}
+            setRanges={setRanges}
+            t={t}
+            lang={lang}
+          />
+
           {appError && (
             <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <span style={{ fontWeight: 'bold' }}>{renderErrorText(appError)}</span>
@@ -263,7 +257,8 @@ function App() {
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           searchMode={searchMode} setSearchMode={setSearchMode}
           ranges={ranges} loading={loading}
-          updateBook={updateBook} removeRange={removeRange} toggleAccordion={toggleAccordion} handleChapterSelection={handleChapterSelection} addRange={addRange} handleSearch={handleSearch}
+          isScopeOpen={isScopeOpen} setIsScopeOpen={setIsScopeOpen}
+          handleSearch={handleSearch}
           t={t} lang={lang}
           elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
           manualConfig={manualConfig} setManualConfig={setManualConfig}
