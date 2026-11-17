@@ -15,7 +15,10 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
 
   const totalBars = renderChartData.length * activeTerms.length;
   const showBarLabels = totalBars <= 20;
-  const tiltXLabels = renderChartData.length > 4;
+
+  // Ensure each book/scope column gets at least 135px so multi-word labels never collide
+  const perCategoryWidth = Math.max(135, activeTerms.length * 52);
+  const effectiveMinWidth = Math.max(minComfortableWidth || 0, 80 + renderChartData.length * perCategoryWidth);
 
   const formatValue = (val) => {
     if (val === null || val === undefined) return '';
@@ -184,12 +187,12 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
           </span>
         </div>
 
-        <div style={{ minWidth: `${minComfortableWidth}px`, width: '100%', height: '360px' }}>
+        <div dir="ltr" style={{ minWidth: `${effectiveMinWidth}px`, width: '100%', height: '355px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={renderChartData}
-              margin={{ top: 22, right: 24, left: 8, bottom: tiltXLabels ? 36 : 16 }}
-              barCategoryGap="22%"
+              margin={{ top: 22, right: 24, left: 8, bottom: 16 }}
+              barCategoryGap="24%"
               barGap={6}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -198,11 +201,11 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                 axisLine={{ stroke: '#cbd5e1' }}
                 tickLine={false}
                 interval={0}
-                angle={tiltXLabels ? -20 : 0}
-                textAnchor={tiltXLabels ? 'end' : 'middle'}
-                height={tiltXLabels ? 64 : 38}
+                angle={0}
+                textAnchor="middle"
+                height={42}
                 tick={{ fontSize: 12, fontWeight: 500, fill: '#334155' }}
-                dy={6}
+                dy={8}
               />
               <YAxis
                 axisLine={false}
@@ -232,8 +235,8 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                       color: '#1e293b',
                       fontWeight: '600',
                       fontSize: '13px',
-                      marginInlineStart: '6px',
-                      marginInlineEnd: '14px'
+                      marginLeft: '6px',
+                      marginRight: '14px'
                     }}
                   >
                     {value}

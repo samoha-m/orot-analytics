@@ -10,13 +10,22 @@ import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
 import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
 
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: 'https://flagcdn.com/us.svg' },
+  { code: 'he', label: 'עברית', flag: 'https://flagcdn.com/il.svg' },
+  { code: 'fa', label: 'فارسی', flag: 'https://flagcdn.com/ir.svg' }
+];
+
 function App() {
   const [lang, setLang] = useState('he');
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
 
   const workerRef = useRef(null);
   const previewRef = useRef(null);
+  const langMenuRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [appError, setAppError] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
@@ -41,6 +50,23 @@ function App() {
 
   const [isElsMode, setIsElsMode] = useState(false);
   const [elsData, setElsData] = useState(null);
+
+  const currentLanguage = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   const clearResults = () => {
     setElsData(null);
@@ -233,21 +259,147 @@ function App() {
 
   return (
     <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
-      <header className="top-navbar">
-        <div className="top-navbar-brand">
+      <header
+        className="top-navbar"
+        dir="ltr"
+        style={{
+          direction: 'ltr',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        {/* Always Left-Aligned Brand */}
+        <div
+          className="top-navbar-brand"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            direction: 'ltr'
+          }}
+        >
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
-          <h1 className="top-navbar-title" style={{ textAlign: isRTL ? 'right' : 'left' }}>OROT</h1>
+          <h1 className="top-navbar-title" style={{ textAlign: 'left', margin: 0 }}>OROT</h1>
         </div>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <button onClick={() => setLang('en')} title="English" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'en' ? 1 : 0.4, transform: lang === 'en' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'en' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
-            <img src="https://flagcdn.com/us.svg" alt="English" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
+
+        {/* Single-Flag Language Switcher Dropdown */}
+        <div ref={langMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            type="button"
+            onClick={() => setIsLangMenuOpen(prev => !prev)}
+            aria-label="Select language"
+            aria-expanded={isLangMenuOpen}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '6px 10px',
+              backgroundColor: isLangMenuOpen ? '#e7f1ff' : '#f8fafc',
+              border: isLangMenuOpen ? '1px solid #0056b3' : '1px solid #e2e8f0',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <img
+              src={currentLanguage.flag}
+              alt={currentLanguage.label}
+              style={{
+                width: '24px',
+                height: '17px',
+                objectFit: 'cover',
+                borderRadius: '3px',
+                border: '1px solid rgba(0, 0, 0, 0.15)',
+                display: 'block'
+              }}
+            />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#475569"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: isLangMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.15s ease'
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </button>
-          <button onClick={() => setLang('he')} title="עברית" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'he' ? 1 : 0.4, transform: lang === 'he' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'he' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
-            <img src="https://flagcdn.com/il.svg" alt="Hebrew" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
-          </button>
-          <button onClick={() => setLang('fa')} title="فارسی" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: lang === 'fa' ? 1 : 0.4, transform: lang === 'fa' ? 'scale(1.15)' : 'scale(1)', transition: 'all 0.2s', filter: lang === 'fa' ? 'drop-shadow(0 3px 5px rgba(0,0,0,0.3))' : 'none' }}>
-            <img src="https://flagcdn.com/ir.svg" alt="Farsi" style={{ width: '28px', height: '20px', objectFit: 'cover', borderRadius: '3px', border: '1px solid rgba(0,0,0,0.15)' }} />
-          </button>
+
+          {isLangMenuOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                minWidth: '148px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px rgba(15, 23, 42, 0.14)',
+                padding: '5px',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px'
+              }}
+            >
+              {LANGUAGES.map((item) => {
+                const isSelected = item.code === lang;
+                return (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => {
+                      setLang(item.code);
+                      setIsLangMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: 'none',
+                      borderRadius: '7px',
+                      backgroundColor: isSelected ? '#e7f1ff' : 'transparent',
+                      color: isSelected ? '#0056b3' : '#1e293b',
+                      fontSize: '13px',
+                      fontWeight: isSelected ? '700' : '500',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background-color 0.12s'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                      <img
+                        src={item.flag}
+                        alt={item.label}
+                        style={{
+                          width: '22px',
+                          height: '15px',
+                          objectFit: 'cover',
+                          borderRadius: '2px',
+                          border: '1px solid rgba(0, 0, 0, 0.15)',
+                          flexShrink: 0
+                        }}
+                      />
+                      <span>{item.label}</span>
+                    </span>
+                    {isSelected && (
+                      <span style={{ fontSize: '12px', color: '#0056b3', fontWeight: 'bold' }}>✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 

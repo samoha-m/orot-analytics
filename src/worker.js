@@ -7,6 +7,16 @@ const gematriaMap = {
   'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
 };
 
+const finalLettersMap = {
+  'ך': 'כ',
+  'ם': 'מ',
+  'ן': 'נ',
+  'ף': 'פ',
+  'ץ': 'צ'
+};
+
+const normalizeHebrewChar = (ch) => finalLettersMap[ch] || ch;
+
 const calculateGematria = (word) => {
   let sum = 0;
   for (let i = 0; i < word.length; i++) { sum += gematriaMap[word[i]] || 0; }
@@ -77,12 +87,12 @@ self.onmessage = async (e) => {
             let letterCounterInVerse = 0;
             versesList.forEach(vObj => {
                 const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
-                const rawVerseWords = [...vObj.words];
-                const verseString = rawVerseWords.join(' ');
+                const verseString = vObj.words.join(' ');
 
                 for (let i = 0; i < verseString.length; i++) {
                     const char = verseString[i];
-                    const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
+                    const isHebrewLetter = /[\u0590-\u05FF]/.test(char);
+                    const isValidChar = includeSpaces ? (isHebrewLetter || char === ' ') : isHebrewLetter;
 
                     if (isValidChar) {
                         const currentGlobalIdx = letterSequence.length;
@@ -91,7 +101,7 @@ self.onmessage = async (e) => {
                             bookId: bookInfo.id, c: vObj.c, v: vObj.v
                         });
 
-                        if (globalStart === -1 && bookInfo.id === bookId && vObj.c === chapter && vObj.v === verse) {
+                        if (globalStart === -1 && bookInfo.id === bookId && vObj.c === chapter && vObj.v === verse && isHebrewLetter) {
                             if (letterCounterInVerse === letterIdx) { globalStart = currentGlobalIdx; }
                             letterCounterInVerse++;
                         }
@@ -157,6 +167,7 @@ self.onmessage = async (e) => {
       // --- AUTO-DISCOVER & ANCHORED SEARCH LOGIC ---
       const targetTerm = (terms[0] || 'אור').replace(/\s+/g, '');
       const termLetters = targetTerm.split('');
+      const normalizedTermLetters = termLetters.map(normalizeHebrewChar);
       const termLen = termLetters.length;
 
       let matches = [];
@@ -194,36 +205,28 @@ self.onmessage = async (e) => {
         versesList.forEach(vObj => {
             const ref = `${localBookName} ${vObj.c}:${vObj.v}`;
             const verseString = vObj.words.join(' ');
+            const isTargetAnchorVerse = isAnchored &&
+                anchorGlobalIndex === -1 &&
+                range.bookId === anchorConfig.bookId &&
+                vObj.c === anchorConfig.chapter &&
+                vObj.v === anchorConfig.verse;
+
+            let anchorVerseHebrewCount = 0;
 
             for (let i = 0; i < verseString.length; i++) {
                 const char = verseString[i];
-                const isValidChar = includeSpaces ? (/[\u0590-\u05FF]/.test(char) || char === ' ') : /[\u0590-\u05FF]/.test(char);
+                const isHebrewLetter = /[\u0590-\u05FF]/.test(char);
+                const isValidChar = includeSpaces ? (isHebrewLetter || char === ' ') : isHebrewLetter;
 
                 if (isValidChar) {
                     const currentIdx = letterSequence.length;
                     letterSequence.push({ char, ref, verseString, charIndexInString: i, globalIndex: currentIdx });
 
-                    if (isAnchored && anchorGlobalIndex === -1 &&
-                        range.bookId === anchorConfig.bookId &&
-                        vObj.c === anchorConfig.chapter &&
-                        vObj.v === anchorConfig.verse) {
-
-                        let localLetterCount = 0;
-                        let matchedIndex = false;
-                        for (let k = 0; k <= i; k++) {
-                            const subChar = verseString[k];
-                            const subValid = includeSpaces ? (/[\u0590-\u05FF]/.test(subChar) || subChar === ' ') : /[\u0590-\u05FF]/.test(subChar);
-                            if (subValid) {
-                                if (localLetterCount === anchorConfig.letterIdx) {
-                                    if (k === i) matchedIndex = true;
-                                    break;
-                                }
-                                localLetterCount++;
-                            }
-                        }
-                        if (matchedIndex) {
+                    if (isTargetAnchorVerse && isHebrewLetter) {
+                        if (anchorVerseHebrewCount === anchorConfig.letterIdx) {
                             anchorGlobalIndex = currentIdx;
                         }
+                        anchorVerseHebrewCount++;
                     }
                 }
             }
@@ -240,7 +243,7 @@ self.onmessage = async (e) => {
             }
             const actualAnchorChar = letterSequence[anchorGlobalIndex].char;
             const expectedFirstChar = termLetters[0];
-            if (actualAnchorChar !== expectedFirstChar) {
+            if (normalizeHebrewChar(actualAnchorChar) !== normalizeHebrewChar(expectedFirstChar)) {
                 self.postMessage({
                     status: 'error',
                     errorCode: 'ERR_ANCHOR_MISMATCH',
@@ -263,7 +266,7 @@ self.onmessage = async (e) => {
             let matchIndices = [];
             for (let k = 0; k < termLen; k++) {
               const idx = start + k * skip;
-              if (letterSequence[idx].char !== termLetters[k]) { matched = false; break; }
+              if (normalizeHebrewChar(letterSequence[idx].char) !== normalizedTermLetters[k]) { matched = false; break; }
               matchIndices.push(idx);
             }
 
