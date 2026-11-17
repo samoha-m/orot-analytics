@@ -1,8 +1,8 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { COLORS } from '../data/constants';
 
-function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, setActivePreview, t }) {
+function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, activePreview, setActivePreview, t }) {
   if (loading) return <h3 style={{ color: '#0056b3' }}>{t('analyzingDataset')}</h3>;
 
   if (!resultTotals) {
@@ -24,6 +24,15 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
 
   return (
     <>
+      <style>{`
+        .orot-bar-chart .recharts-bar-rectangle {
+          transition: opacity 0.15s ease, filter 0.15s ease;
+        }
+        .orot-bar-chart .recharts-bar-rectangle:hover {
+          filter: brightness(0.92);
+        }
+      `}</style>
+
       {/* Top Summary & Controls Header */}
       <div
         style={{
@@ -35,7 +44,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
           marginBottom: '16px'
         }}
       >
-        {/* Term Result Pills (Clean, Bidi-Safe, No Gematria Clutter) */}
+        {/* Term Result Pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           {activeTerms.map((term, index) => {
             const color = COLORS[index % COLORS.length];
@@ -155,7 +164,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
 
       {/* Elevated Chart Card */}
       <div
-        className="chart-container"
+        className="chart-container orot-bar-chart"
         style={{
           width: '100%',
           overflowX: 'auto',
@@ -164,15 +173,22 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
           borderRadius: '12px',
           border: '1px solid #e2e8f0',
           boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-          padding: '18px 16px 8px 16px',
+          padding: '14px 16px 8px 16px',
           boxSizing: 'border-box'
         }}
       >
-        <div style={{ minWidth: `${minComfortableWidth}px`, width: '100%', height: '370px' }}>
+        {/* Subtle Helper Caption */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+            {t('clickBarHint')}
+          </span>
+        </div>
+
+        <div style={{ minWidth: `${minComfortableWidth}px`, width: '100%', height: '360px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={renderChartData}
-              margin={{ top: 24, right: 24, left: 8, bottom: tiltXLabels ? 36 : 16 }}
+              margin={{ top: 22, right: 24, left: 8, bottom: tiltXLabels ? 36 : 16 }}
               barCategoryGap="22%"
               barGap={6}
             >
@@ -205,21 +221,6 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                   }
                 ]}
               />
-              <Tooltip
-                cursor={{ fill: 'rgba(241, 245, 249, 0.7)' }}
-                contentStyle={{
-                  borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.1)',
-                  padding: '10px 14px',
-                  fontSize: '13px'
-                }}
-                labelStyle={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}
-                formatter={(value, name) => [
-                  viewMode === 'relative' ? `${value}%` : `${Number(value).toLocaleString()} ${t('hits')}`,
-                  name
-                ]}
-              />
               <Legend
                 verticalAlign="top"
                 height={38}
@@ -239,26 +240,46 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                   </span>
                 )}
               />
-              {activeTerms.map((term, index) => (
-                <Bar
-                  key={term}
-                  dataKey={term}
-                  fill={COLORS[index % COLORS.length]}
-                  radius={[6, 6, 0, 0]}
-                  onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
-                  cursor="pointer"
-                  maxBarSize={52}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={term}
-                      position="top"
-                      formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
-                      style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
-                    />
-                  )}
-                </Bar>
-              ))}
+              {activeTerms.map((term, index) => {
+                const baseColor = COLORS[index % COLORS.length];
+                return (
+                  <Bar
+                    key={term}
+                    dataKey={term}
+                    fill={baseColor}
+                    radius={[6, 6, 0, 0]}
+                    onClick={(data) => setActivePreview({ name: data.name, verses: data.verses, term })}
+                    cursor="pointer"
+                    maxBarSize={52}
+                  >
+                    {renderChartData.map((entry, idx) => {
+                      const isSelected = Boolean(
+                        activePreview &&
+                        activePreview.name === entry.name &&
+                        (!activePreview.term || activePreview.term === term)
+                      );
+                      const hasSelection = Boolean(activePreview);
+                      return (
+                        <Cell
+                          key={`cell-${term}-${idx}`}
+                          fill={baseColor}
+                          fillOpacity={hasSelection && !isSelected ? 0.45 : 1}
+                          stroke={isSelected ? '#0f172a' : 'none'}
+                          strokeWidth={isSelected ? 2 : 0}
+                        />
+                      );
+                    })}
+                    {showBarLabels && (
+                      <LabelList
+                        dataKey={term}
+                        position="top"
+                        formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
+                        style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
+                      />
+                    )}
+                  </Bar>
+                );
+              })}
             </BarChart>
           </ResponsiveContainer>
         </div>

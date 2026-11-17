@@ -16,6 +16,7 @@ function App() {
   const isRTL = lang === 'he' || lang === 'fa';
 
   const workerRef = useRef(null);
+  const previewRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [appError, setAppError] = useState(null);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
@@ -47,6 +48,13 @@ function App() {
     setResultTotals(null);
     setActivePreview(null);
   };
+
+  // Smoothly scroll to the verse preview panel whenever a bar is clicked
+  useEffect(() => {
+    if (activePreview && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activePreview]);
 
   const handleOpenScope = () => {
     if (showMobilePanel) {
@@ -265,8 +273,23 @@ function App() {
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
             <>
-              <ChartDisplay resultTotals={resultTotals} loading={loading} activeTerms={activeTerms} searchMode={searchMode} viewMode={viewMode} setViewMode={setViewMode} handleExportCSV={handleExportCSV} minComfortableWidth={minComfortableWidth} renderChartData={renderChartData} setActivePreview={setActivePreview} t={t} />
-              <VersePreview activePreview={activePreview} setActivePreview={setActivePreview} activeTerms={activeTerms} COLORS={COLORS} t={t} />
+              <ChartDisplay
+                resultTotals={resultTotals}
+                loading={loading}
+                activeTerms={activeTerms}
+                searchMode={searchMode}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                handleExportCSV={handleExportCSV}
+                minComfortableWidth={minComfortableWidth}
+                renderChartData={renderChartData}
+                activePreview={activePreview}
+                setActivePreview={setActivePreview}
+                t={t}
+              />
+              <div ref={previewRef}>
+                <VersePreview activePreview={activePreview} setActivePreview={setActivePreview} activeTerms={activeTerms} COLORS={COLORS} t={t} />
+              </div>
             </>
           )}
         </main>
