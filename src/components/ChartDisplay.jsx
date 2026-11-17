@@ -1,8 +1,8 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, LabelList, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { COLORS } from '../data/constants';
 
-function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, activePreview, setActivePreview, t }) {
+function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, setActivePreview, t }) {
   if (loading) return <h3 style={{ color: '#0056b3' }}>{t('analyzingDataset')}</h3>;
 
   if (!resultTotals) {
@@ -26,7 +26,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
     <>
       <style>{`
         .orot-bar-chart .recharts-bar-rectangle {
-          transition: opacity 0.15s ease, filter 0.15s ease;
+          transition: filter 0.15s ease;
         }
         .orot-bar-chart .recharts-bar-rectangle:hover {
           filter: brightness(0.92);
@@ -240,46 +240,26 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                   </span>
                 )}
               />
-              {activeTerms.map((term, index) => {
-                const baseColor = COLORS[index % COLORS.length];
-                return (
-                  <Bar
-                    key={term}
-                    dataKey={term}
-                    fill={baseColor}
-                    radius={[6, 6, 0, 0]}
-                    onClick={(data) => setActivePreview({ name: data.name, verses: data.verses, term })}
-                    cursor="pointer"
-                    maxBarSize={52}
-                  >
-                    {renderChartData.map((entry, idx) => {
-                      const isSelected = Boolean(
-                        activePreview &&
-                        activePreview.name === entry.name &&
-                        (!activePreview.term || activePreview.term === term)
-                      );
-                      const hasSelection = Boolean(activePreview);
-                      return (
-                        <Cell
-                          key={`cell-${term}-${idx}`}
-                          fill={baseColor}
-                          fillOpacity={hasSelection && !isSelected ? 0.45 : 1}
-                          stroke={isSelected ? '#0f172a' : 'none'}
-                          strokeWidth={isSelected ? 2 : 0}
-                        />
-                      );
-                    })}
-                    {showBarLabels && (
-                      <LabelList
-                        dataKey={term}
-                        position="top"
-                        formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
-                        style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
-                      />
-                    )}
-                  </Bar>
-                );
-              })}
+              {activeTerms.map((term, index) => (
+                <Bar
+                  key={term}
+                  dataKey={term}
+                  fill={COLORS[index % COLORS.length]}
+                  radius={[6, 6, 0, 0]}
+                  onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
+                  cursor="pointer"
+                  maxBarSize={52}
+                >
+                  {showBarLabels && (
+                    <LabelList
+                      dataKey={term}
+                      position="top"
+                      formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
+                      style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
+                    />
+                  )}
+                </Bar>
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
