@@ -28,13 +28,13 @@ function App() {
 
   const [loading, setLoading] = useState(false);
   const [appError, setAppError] = useState(null);
-  const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [mobileView, setMobileView] = useState('search'); // 'search' | 'results'
   const [isScopeOpen, setIsScopeOpen] = useState(false);
-  const [returnToMobileSearch, setReturnToMobileSearch] = useState(false);
 
   const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchMode, setSearchMode] = useState('exact');
+  const [acronymPosition, setAcronymPosition] = useState('first'); // 'first' | 'last'
   const [viewMode, setViewMode] = useState('absolute');
 
   // elsSubMode supports: 'auto' | 'anchor' | 'manual'
@@ -83,26 +83,17 @@ function App() {
   }, [activePreview]);
 
   const handleOpenScope = () => {
-    if (showMobilePanel) {
-      setReturnToMobileSearch(true);
-      setShowMobilePanel(false);
-    }
     setIsScopeOpen(true);
   };
 
   const handleCloseScope = () => {
     setIsScopeOpen(false);
-    if (returnToMobileSearch) {
-      setShowMobilePanel(true);
-      setReturnToMobileSearch(false);
-    }
   };
 
   // Close scope overlay automatically if user enters Manual or Anchored ELS modes
   useEffect(() => {
     if (searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) {
       setIsScopeOpen(false);
-      setReturnToMobileSearch(false);
     }
   }, [searchMode, elsSubMode]);
 
@@ -155,7 +146,6 @@ function App() {
   const handleSearch = () => {
     setAppError(null);
     setIsScopeOpen(false);
-    setReturnToMobileSearch(false);
     clearResults();
 
     if (searchMode === 'els' && elsSubMode === 'manual') {
@@ -164,7 +154,7 @@ function App() {
         return;
       }
       setLoading(true);
-      setShowMobilePanel(false);
+      setMobileView('results');
       workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig, includeSpaces });
       return;
     }
@@ -190,7 +180,7 @@ function App() {
         return;
       }
       setLoading(true);
-      setShowMobilePanel(false);
+      setMobileView('results');
       workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, anchorConfig });
       return;
     }
@@ -212,8 +202,8 @@ function App() {
 
     setLoading(true);
     setActiveTerms(terms);
-    setShowMobilePanel(false);
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces });
+    setMobileView('results');
+    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, acronymPosition });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -403,22 +393,73 @@ function App() {
       </header>
 
       <div className="app-layout">
-        <main className="main-canvas" style={{ position: 'relative' }}>
-          <ScopeSelectorOverlay
-            isOpen={isScopeOpen}
-            onClose={handleCloseScope}
-            ranges={ranges}
-            setRanges={setRanges}
-            t={t}
-            lang={lang}
-          />
+        {/* Shared Error Toast Banner (visible across both Search & Results views on mobile) */}
+        {appError && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '16px',
+              right: '16px',
+              zIndex: 35,
+              backgroundColor: '#fff3cd',
+              color: '#856404',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '1px solid #ffeeba',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '10px',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.1)'
+            }}
+          >
+            <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{renderErrorText(appError)}</span>
+            <button onClick={() => setAppError(null)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: '#856404', flexShrink: 0 }}>✖</button>
+          </div>
+        )}
 
-          {appError && (
-            <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '15px 20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeeba', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <span style={{ fontWeight: 'bold' }}>{renderErrorText(appError)}</span>
-              <button onClick={() => setAppError(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#856404' }}>✖</button>
-            </div>
-          )}
+        {/* Full-Screen Scope Selector Overlay (covers both Desktop and Mobile views) */}
+        <ScopeSelectorOverlay
+          isOpen={isScopeOpen}
+          onClose={handleCloseScope}
+          ranges={ranges}
+          setRanges={setRanges}
+          t={t}
+          lang={lang}
+        />
+
+        <main
+          className={`main-canvas ${mobileView === 'results' ? 'mobile-active' : 'mobile-hidden'}`}
+          style={{ position: 'relative' }}
+        >
+          {/* Mobile Back-to-Search Header Strip */}
+          <div className="mobile-back-bar">
+            <button
+              type="button"
+              className="mobile-back-btn"
+              onClick={() => {
+                setAppError(null);
+                setMobileView('search');
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>{t('backToSearch') || "Back to Search"}</span>
+            </button>
+          </div>
 
           {searchMode === 'els' || isElsMode ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
@@ -439,16 +480,25 @@ function App() {
                 t={t}
               />
               <div ref={previewRef}>
-                <VersePreview activePreview={activePreview} setActivePreview={setActivePreview} activeTerms={activeTerms} COLORS={COLORS} t={t} />
+                <VersePreview
+                  activePreview={activePreview}
+                  setActivePreview={setActivePreview}
+                  activeTerms={activeTerms}
+                  COLORS={COLORS}
+                  searchMode={searchMode}
+                  acronymPosition={acronymPosition}
+                  t={t}
+                />
               </div>
             </>
           )}
         </main>
 
         <ControlSidebar
-          showMobilePanel={showMobilePanel} setShowMobilePanel={setShowMobilePanel}
+          mobileView={mobileView}
           searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           searchMode={searchMode} setSearchMode={setSearchMode}
+          acronymPosition={acronymPosition} setAcronymPosition={setAcronymPosition}
           ranges={ranges} loading={loading}
           isScopeOpen={isScopeOpen}
           onOpenScope={handleOpenScope}

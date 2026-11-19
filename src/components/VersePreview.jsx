@@ -1,14 +1,41 @@
 import React from 'react';
 
-const renderHighlightedText = (text, highlights) => {
-  if (!highlights || highlights.length === 0) return { __html: text };
-  const pattern = new RegExp(
-    `(${[...new Set(highlights)].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g'
-  );
-  return { __html: text.replace(pattern, '<mark class="highlight-match">$1</mark>') };
+const emphasizeAcronymLetters = (phrase, acronymPosition) => {
+  return phrase
+    .split(' ')
+    .map((word) => {
+      if (!word) return word;
+      if (acronymPosition === 'last') {
+        const match = word.match(/([\u0590-\u05FF])([^\u0590-\u05FF]*)$/);
+        if (!match) return word;
+        const idx = match.index;
+        return `${word.slice(0, idx)}<span class="acronym-letter">${match[1]}</span>${match[2]}`;
+      }
+      const match = word.match(/^([^\u0590-\u05FF]*)([\u0590-\u05FF])/);
+      if (!match) return word;
+      const idx = match[1].length;
+      return `${match[1]}<span class="acronym-letter">${match[2]}</span>${word.slice(idx + 1)}`;
+    })
+    .join(' ');
 };
 
-function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, t }) {
+const renderHighlightedText = (text, highlights, searchMode, acronymPosition) => {
+  if (!highlights || highlights.length === 0) return { __html: text };
+  const pattern = new RegExp(
+    `(${[...new Set(highlights)].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
+    'g'
+  );
+  return {
+    __html: text.replace(pattern, (matched) => {
+      const inner = searchMode === 'acronym'
+        ? emphasizeAcronymLetters(matched, acronymPosition)
+        : matched;
+      return `<mark class="highlight-match">${inner}</mark>`;
+    })
+  };
+};
+
+function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, searchMode, acronymPosition, t }) {
   if (!activePreview) return null;
 
   return (
@@ -29,7 +56,10 @@ function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, t 
             {verses.map((v, i) => (
               <div key={i} className="verse-item" style={{ borderRightColor: COLORS[idx % COLORS.length] }}>
                 <div className="verse-ref">{v.ref}</div>
-                <div className="verse-text" dangerouslySetInnerHTML={renderHighlightedText(v.text, v.highlights)} />
+                <div
+                  className="verse-text"
+                  dangerouslySetInnerHTML={renderHighlightedText(v.text, v.highlights, searchMode, acronymPosition)}
+                />
               </div>
             ))}
           </div>

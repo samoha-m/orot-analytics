@@ -24,7 +24,7 @@ const calculateGematria = (word) => {
 };
 
 self.onmessage = async (e) => {
-  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig, includeSpaces, anchorConfig } = e.data;
+  const { ranges, terms, searchMode, booksList, lang, chsStr, elsSubMode, manualConfig, includeSpaces, anchorConfig, acronymPosition } = e.data;
 
   const getBookName = (bookInfo) => {
     if (lang === 'he') return bookInfo.he;
@@ -301,7 +301,7 @@ self.onmessage = async (e) => {
     }
 
     // ==========================================
-    // STANDARD SEARCH LOGIC
+    // STANDARD & ACRONYM SEARCH LOGIC
     // ==========================================
     const totals = {};
     terms.forEach(term => totals[term] = 0);
@@ -309,6 +309,7 @@ self.onmessage = async (e) => {
     const parsedTerms = terms.map(t => ({
         original: t,
         words: t.split(' ').filter(w => w),
+        acronymLetters: t.replace(/[^\u0590-\u05FF]/g, '').split('').map(normalizeHebrewChar),
         isNumber: !isNaN(Number(t)) && t.trim() !== ''
     }));
 
@@ -349,6 +350,36 @@ self.onmessage = async (e) => {
           else if (searchMode === 'letter') {
             const hitsInWord = item.w.split(pt.original).length - 1;
             if (hitsInWord > 0) { isMatch = true; matchedStrings.push(pt.original); }
+          }
+          else if (searchMode === 'acronym') {
+            const len = pt.acronymLetters.length;
+            if (len > 0 && i + len <= filteredData.length) {
+              isMatch = true;
+              const matchedWords = [];
+              for (let j = 0; j < len; j++) {
+                const wObj = filteredData[i + j];
+                if (!wObj || wObj.c !== item.c || wObj.v !== item.v) {
+                  isMatch = false;
+                  break;
+                }
+                const cleanWord = wObj.w.replace(/[^\u0590-\u05FF]/g, '');
+                if (!cleanWord) {
+                  isMatch = false;
+                  break;
+                }
+                const targetChar = acronymPosition === 'last'
+                  ? cleanWord[cleanWord.length - 1]
+                  : cleanWord[0];
+                if (normalizeHebrewChar(targetChar) !== pt.acronymLetters[j]) {
+                  isMatch = false;
+                  break;
+                }
+                matchedWords.push(wObj.w);
+              }
+              if (isMatch) {
+                matchedStrings.push(matchedWords.join(' '));
+              }
+            }
           }
           else if (searchMode === 'gematria') {
             if (pt.isNumber && calculateGematria(item.w) === Number(pt.original)) { isMatch = true; matchedStrings.push(item.w); }
