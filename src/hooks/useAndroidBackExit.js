@@ -17,7 +17,6 @@ export function useAndroidBackExit({
   const toastTimerRef = useRef(null);
   const guardArmedRef = useRef(false);
 
-  // Keep latest navigation state accessible inside popstate without re-binding listeners
   useEffect(() => {
     latestStateRef.current = { isInfoOpen, isScopeOpen, mobileView };
   }, [isInfoOpen, isScopeOpen, mobileView]);
@@ -31,7 +30,6 @@ export function useAndroidBackExit({
   useEffect(() => {
     armGuard();
 
-    // Ensure Chrome/Android registers user activation for history interception
     const armOnFirstGesture = () => armGuard();
     window.addEventListener('pointerdown', armOnFirstGesture, { once: true, passive: true });
     window.addEventListener('keydown', armOnFirstGesture, { once: true, passive: true });
@@ -100,31 +98,33 @@ export function useAndroidBackExit({
     };
   }, [armGuard, setIsInfoOpen, setIsScopeOpen, setMobileView]);
 
-  const ExitToast = showExitToast ? (
-    <div
-      role="status"
-      aria-live="polite"
-      dir={isRTL ? 'rtl' : 'ltr'}
-      style={{
-        position: 'fixed',
-        bottom: '24px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        color: '#ffffff',
-        padding: '10px 18px',
-        borderRadius: '999px',
-        fontSize: '13px',
-        fontWeight: '600',
-        boxShadow: '0 6px 20px rgba(15, 23, 42, 0.28)',
-        zIndex: 9999,
-        pointerEvents: 'none',
-        whiteSpace: 'nowrap'
-      }}
-    >
-      {exitMessage}
-    </div>
-  ) : null;
+  const ExitToast = showExitToast
+    ? React.createElement(
+        'div',
+        {
+          role: 'status',
+          'aria-live': 'polite',
+          dir: isRTL ? 'rtl' : 'ltr',
+          style: {
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+            color: '#ffffff',
+            padding: '10px 18px',
+            borderRadius: '999px',
+            fontSize: '13px',
+            fontWeight: '600',
+            boxShadow: '0 6px 20px rgba(15, 23, 42, 0.28)',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap'
+          }
+        },
+        exitMessage
+      )
+    : null;
 
   return { ExitToast };
 }
