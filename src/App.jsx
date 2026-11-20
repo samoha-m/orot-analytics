@@ -1,159 +1,60 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import logoIcon from './assets/OROT_ICON.png';
 import './App.css';
+
 import { translations } from './translations';
-import { booksList, COLORS } from './data/constants';
-import ControlSidebar from './components/ControlSidebar';
+import { booksList, calculateGematria, COLORS } from './data/constants';
+import VersePreview from './components/VersePreview';
 import ChartDisplay from './components/ChartDisplay';
+import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
-import { useAndroidBackExit } from './hooks/useAndroidBackExit.jsx';
+import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
+import InfoModal from './components/InfoModal';
+import { useAndroidBackExit } from './hooks/useAndroidBackExit';
 
-const FINAL_LETTER_MAP = {
-  'ך': 'כ',
-  'ם': 'מ',
-  'ן': 'נ',
-  'ף': 'פ',
-  'ץ': 'צ'
-};
-
-const GEMATRIA_VALUES = {
-  'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
-  'י': 10, 'כ': 20, 'ך': 20, 'ל': 30, 'מ': 40, 'ם': 40, 'נ': 50, 'ן': 50,
-  'ס': 60, 'ע': 70, 'פ': 80, 'ף': 80, 'צ': 90, 'ץ': 90,
-  'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
-};
-
-const HEBREW_PREFIXES = ['ו', 'ה', 'ב', 'כ', 'ל', 'מ', 'ש', 'וה', 'וב', 'וכ', 'ול', 'ומ', 'וש', 'מה', 'שה', 'כש', 'לכ'];
-const HEBREW_SUFFIXES = ['ים', 'ות', 'ה', 'י', 'ך', 'ו', 'הם', 'הן', 'נו', 'תי', 'תם', 'תן', 'כם', 'כן'];
-
-function stripNiqqud(str = '') {
-  return String(str).replace(/[\u0591-\u05C7]/g, '');
-}
-
-function normalizeHebrew(str = '') {
-  return stripNiqqud(str)
-    .replace(/[^\u05D0-\u05EA\s]/g, '')
-    .split('')
-    .map((ch) => FINAL_LETTER_MAP[ch] || ch)
-    .join('')
-    .trim();
-}
-
-function extractHebrewLetters(str = '') {
-  return stripNiqqud(str)
-    .replace(/[^\u05D0-\u05EA]/g, '')
-    .split('')
-    .map((ch) => FINAL_LETTER_MAP[ch] || ch)
-    .join('');
-}
-
-function calculateGematria(str = '') {
-  const clean = stripNiqqud(str);
-  let sum = 0;
-  for (let i = 0; i < clean.length; i++) {
-    sum += GEMATRIA_VALUES[clean[i]] || 0;
-  }
-  return sum;
-}
-
-function matchesHebrewRoot(wordNorm, rootNorm) {
-  if (!wordNorm || !rootNorm) return false;
-  if (wordNorm === rootNorm) return true;
-  if (rootNorm.length < 2 || wordNorm.length < rootNorm.length) return false;
-
-  const candidates = [wordNorm];
-  for (const pref of HEBREW_PREFIXES) {
-    if (wordNorm.startsWith(pref) && wordNorm.length - pref.length >= rootNorm.length) {
-      candidates.push(wordNorm.slice(pref.length));
-    }
-  }
-
-  for (const cand of candidates) {
-    if (cand === rootNorm) return true;
-    for (const suf of HEBREW_SUFFIXES) {
-      if (cand.endsWith(suf) && cand.slice(0, -suf.length) === rootNorm) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function buildInitialRanges() {
-  return booksList.map((b) => ({
-    bookId: b.id,
-    selectedChapters: Array.from({ length: b.maxCh || 1 }, (_, i) => i + 1)
-  }));
-}
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: 'https://flagcdn.com/us.svg' },
+  { code: 'he', label: 'עברית', flag: 'https://flagcdn.com/il.svg' },
+  { code: 'fa', label: 'فارسی', flag: 'https://flagcdn.com/ir.svg' }
+];
 
 function App() {
   const [lang, setLang] = useState('he');
-  const [mobileView, setMobileView] = useState('search');
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const t = (key) => (translations[lang] && translations[lang][key]) || key;
+  const isRTL = lang === 'he' || lang === 'fa';
 
-  // Search State
+  const workerRef = useRef(null);
+  const previewRef = useRef(null);
+  const langMenuRef = useRef(null);
+
+  const [loading, setLoading] = useState(false);
+  const [appError, setAppError] = useState(null);
+  const [mobileView, setMobileView] = useState('search'); // 'search' | 'results'
+  const [isScopeOpen, setIsScopeOpen] = useState(false);
+
+  const [ranges, setRanges] = useState([{ id: Date.now(), bookId: '01', selectedChapters: Array.from({length: 50}, (_, i) => i + 1), isExpanded: false }]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchMode, setSearchMode] = useState('exact');
-  const [acronymPosition, setAcronymPosition] = useState('first');
+  const [acronymPosition, setAcronymPosition] = useState('first'); // 'first' | 'last'
+  const [viewMode, setViewMode] = useState('absolute');
+
+  // elsSubMode supports: 'auto' | 'anchor' | 'manual'
   const [elsSubMode, setElsSubMode] = useState('auto');
   const [includeSpaces, setIncludeSpaces] = useState(false);
+  const [manualConfig, setManualConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null, skip: 50, count: 10 });
+  const [anchorConfig, setAnchorConfig] = useState({ bookId: '01', chapter: 1, verse: 1, letterIdx: null });
 
-  const [manualConfig, setManualConfig] = useState({
-    bookId: '01',
-    chapter: 1,
-    verse: 1,
-    letterIdx: null,
-    skip: 50,
-    count: 5
-  });
-
-  const [anchorConfig, setAnchorConfig] = useState({
-    bookId: '01',
-    chapter: 1,
-    verse: 1,
-    letterIdx: null
-  });
-
-  // Scopes & UI Overlays
-  const [ranges, setRanges] = useState(buildInitialRanges);
-  const [isScopeOpen, setIsScopeOpen] = useState(false);
-  const [expandedBookId, setExpandedBookId] = useState('01');
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
-
-  // Results State
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [resultTotals, setResultTotals] = useState(null);
   const [rawChartData, setRawChartData] = useState([]);
   const [activeTerms, setActiveTerms] = useState([]);
-  const [viewMode, setViewMode] = useState('absolute');
   const [activePreview, setActivePreview] = useState(null);
+
+  const [isElsMode, setIsElsMode] = useState(false);
   const [elsData, setElsData] = useState(null);
 
-  const bookCacheRef = useRef({});
-  const isRTL = lang === 'he' || lang === 'fa';
-
-  const t = useCallback(
-    (key) => {
-      const dict = translations[lang] || translations.en;
-      return dict[key] !== undefined ? dict[key] : translations.en[key] || key;
-    },
-    [lang]
-  );
-
-  const getBookLabel = useCallback(
-    (book) => {
-      if (!book) return '';
-      if (lang === 'he') return book.he;
-      if (lang === 'fa') return book.fa;
-      return book.name.replace('_', ' ');
-    },
-    [lang]
-  );
-
-  // Sync document direction with selected language
-  useEffect(() => {
-    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = lang;
-  }, [isRTL, lang]);
+  const currentLanguage = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
 
   // Android Back Button & Two-Tap Exit Handler
   const { ExitToast } = useAndroidBackExit({
@@ -161,824 +62,502 @@ function App() {
     setIsInfoOpen,
     isScopeOpen,
     setIsScopeOpen,
+    isLangMenuOpen,
+    setIsLangMenuOpen,
     mobileView,
     setMobileView,
-    exitMessage: t('pressBackAgainToExit') || 'Press back again to exit',
+    exitMessage: (translations[lang] && translations[lang].pressBackAgainToExit) || 'Press back again to exit',
     isRTL
   });
 
-  const fetchBookData = useCallback(async (bookId) => {
-    if (bookCacheRef.current[bookId]) {
-      return bookCacheRef.current[bookId];
-    }
-    const bookInfo = booksList.find((b) => b.id === bookId);
-    if (!bookInfo) return [];
-    const res = await fetch(`/data/${bookInfo.id}_${bookInfo.name.toLowerCase()}.json`);
-    const data = await res.json();
-    bookCacheRef.current[bookId] = data;
-    return data;
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
-  const handleResetApp = () => {
-    setSearchTerm('');
-    setResultTotals(null);
-    setRawChartData([]);
-    setActiveTerms([]);
-    setActivePreview(null);
+  const clearResults = () => {
     setElsData(null);
-    setErrorMsg('');
+    setRawChartData([]);
+    setResultTotals(null);
+    setActivePreview(null);
+  };
+
+  // Logo click resets workspace back to the initial screen while preserving language
+  const handleLogoReset = () => {
+    setAppError(null);
     setIsScopeOpen(false);
     setIsInfoOpen(false);
+    setIsLangMenuOpen(false);
+    setIsElsMode(false);
+    setSearchMode('exact');
+    setElsSubMode('auto');
+    setSearchTerm('');
+    setActiveTerms([]);
+    clearResults();
     setMobileView('search');
   };
 
-  // Scope Selection Helpers
-  const handleSelectAllBooks = () => {
-    setRanges(buildInitialRanges());
-  };
-
-  const handleClearAllBooks = () => {
-    setRanges(booksList.map((b) => ({ bookId: b.id, selectedChapters: [] })));
-  };
-
-  const toggleBookAllChapters = (book) => {
-    setRanges((prev) =>
-      prev.map((r) => {
-        if (r.bookId !== book.id) return r;
-        const allSelected = r.selectedChapters.length === book.maxCh;
-        return {
-          ...r,
-          selectedChapters: allSelected
-            ? []
-            : Array.from({ length: book.maxCh }, (_, i) => i + 1)
-        };
-      })
-    );
-  };
-
-  const toggleSingleChapter = (bookId, chapterNum) => {
-    setRanges((prev) =>
-      prev.map((r) => {
-        if (r.bookId !== bookId) return r;
-        const exists = r.selectedChapters.includes(chapterNum);
-        const nextChapters = exists
-          ? r.selectedChapters.filter((c) => c !== chapterNum)
-          : [...r.selectedChapters, chapterNum].sort((a, b) => a - b);
-        return { ...r, selectedChapters: nextChapters };
-      })
-    );
-  };
-
-  // Build Continuous Character Stream for Skip / ELS Analysis
-  const buildBookStream = (bookWords, selectedChapterSet, withSpaces) => {
-    const verseMap = new Map();
-    for (let i = 0; i < bookWords.length; i++) {
-      const item = bookWords[i];
-      if (selectedChapterSet && !selectedChapterSet.has(item.c)) continue;
-      const key = `${item.c}:${item.v}`;
-      if (!verseMap.has(key)) {
-        verseMap.set(key, { c: item.c, v: item.v, words: [] });
-      }
-      verseMap.get(key).words.push(item.w);
+  // Smoothly scroll to the verse preview panel whenever a bar is clicked
+  useEffect(() => {
+    if (activePreview && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+  }, [activePreview]);
 
-    const verses = Array.from(verseMap.values()).map((vObj) => ({
-      c: vObj.c,
-      v: vObj.v,
-      text: vObj.words.join(' ')
-    }));
-
-    const stream = [];
-    for (let vIdx = 0; vIdx < verses.length; vIdx++) {
-      const vText = verses[vIdx].text;
-      let letterOrdinalInVerse = 0;
-
-      for (let cIdx = 0; cIdx < vText.length; cIdx++) {
-        const rawChar = vText[cIdx];
-        if (/[\u0590-\u05FF]/.test(rawChar)) {
-          if (/[\u05D0-\u05EA]/.test(rawChar)) {
-            stream.push({
-              normChar: FINAL_LETTER_MAP[rawChar] || rawChar,
-              rawChar,
-              verseIdx: vIdx,
-              charIdx: cIdx,
-              letterOrdinal: letterOrdinalInVerse++
-            });
-          }
-        } else if (withSpaces && rawChar === ' ') {
-          stream.push({
-            normChar: ' ',
-            rawChar: ' ',
-            verseIdx: vIdx,
-            charIdx: cIdx,
-            letterOrdinal: -1
-          });
-        }
-      }
-
-      if (withSpaces && vIdx < verses.length - 1) {
-        stream.push({
-          normChar: ' ',
-          rawChar: ' ',
-          verseIdx: vIdx,
-          charIdx: vText.length,
-          letterOrdinal: -1
-        });
-      }
-    }
-
-    return { verses, stream };
+  const handleOpenScope = () => {
+    setIsScopeOpen(true);
   };
 
-  const buildFeedNodesFromIndices = (bookLabel, verses, stream, matchedIndices) => {
-    const byVerse = new Map();
-    for (const sIdx of matchedIndices) {
-      const node = stream[sIdx];
-      if (!node) continue;
-      if (!byVerse.has(node.verseIdx)) {
-        byVerse.set(node.verseIdx, []);
-      }
-      byVerse.get(node.verseIdx).push(node.charIdx);
-    }
-
-    const orderedVerseIndices = Array.from(byVerse.keys()).sort((a, b) => a - b);
-    return orderedVerseIndices.map((vIdx) => {
-      const vObj = verses[vIdx];
-      return {
-        ref: `${bookLabel} ${vObj.c}:${vObj.v}`,
-        text: vObj.text,
-        highlights: byVerse.get(vIdx)
-      };
-    });
-  };
-
-  // Main Analysis Execution
-  const handleSearch = async (overrides = {}) => {
-    const effectiveAcronymPos = overrides.acronymPosition || acronymPosition;
-    setErrorMsg('');
+  const handleCloseScope = () => {
     setIsScopeOpen(false);
+  };
 
-    // 1. SKIP / LETTER-SEQUENCE MODES
-    if (searchMode === 'els') {
-      if (elsSubMode === 'manual') {
-        if (manualConfig.letterIdx === null || manualConfig.letterIdx === undefined) {
-          setErrorMsg(t('errorSelectLetter'));
-          return;
+  // Close scope overlay automatically if user enters Manual or Anchored ELS modes
+  useEffect(() => {
+    if (searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor')) {
+      setIsScopeOpen(false);
+    }
+  }, [searchMode, elsSubMode]);
+
+  useEffect(() => {
+    workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+    workerRef.current.onmessage = (e) => {
+      const { status, isEls, chartData, totals, elsData: resEls, errorCode, errorParams, error } = e.data;
+      if (status === 'success') {
+        if (isEls) {
+          setIsElsMode(true);
+          setElsData(resEls);
+        } else {
+          setIsElsMode(false);
+          setRawChartData(chartData);
+          setResultTotals(totals);
         }
-        setLoading(true);
-        if (window.innerWidth <= 768) setMobileView('results');
+      } else {
+        clearResults();
+        setAppError({ code: errorCode || 'ERR_GENERIC', params: errorParams || {}, raw: error });
+        console.error("Worker failed:", error);
+      }
+      setLoading(false);
+    };
+    return () => workerRef.current.terminate();
+  }, []);
 
-        try {
-          const bookInfo = booksList.find((b) => b.id === manualConfig.bookId);
-          const bookLabel = getBookLabel(bookInfo);
-          const rawWords = await fetchBookData(bookInfo.id);
-          const { verses, stream } = buildBookStream(rawWords, null, includeSpaces);
+  const renderErrorText = (errObj) => {
+    if (!errObj) return null;
+    const dict = translations[lang] || translations.en;
+    switch (errObj.code) {
+      case 'ERR_SELECT_CHAPTER':
+        return dict.errorSelectChapter;
+      case 'ERR_SELECT_LETTER':
+        return dict.errorSelectLetter;
+      case 'ERR_EMPTY_INPUT':
+        return dict.errorEmptyInput;
+      case 'ERR_START_NOT_FOUND':
+        return dict.errStartNotFound;
+      case 'ERR_ANCHOR_NOT_FOUND':
+        return dict.errAnchorNotFound;
+      case 'ERR_ANCHOR_MISMATCH':
+        return typeof dict.errAnchorMismatch === 'function'
+          ? dict.errAnchorMismatch(errObj.params.actual, errObj.params.term, errObj.params.expected)
+          : errObj.raw;
+      default:
+        return errObj.raw || "An error occurred.";
+    }
+  };
 
-          const startStreamIdx = stream.findIndex(
-            (s) =>
-              verses[s.verseIdx].c === manualConfig.chapter &&
-              verses[s.verseIdx].v === manualConfig.verse &&
-              s.letterOrdinal === manualConfig.letterIdx
-          );
+  const handleSearch = (overrides = {}) => {
+    const effectiveAcronymPos = overrides.acronymPosition ?? acronymPosition;
 
-          if (startStreamIdx === -1) {
-            setErrorMsg(t('errStartNotFound'));
-            setLoading(false);
-            return;
-          }
+    // Dismiss mobile virtual keyboard cleanly
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
 
-          const step = Number(manualConfig.skip) || 1;
-          const count = Math.max(1, Math.min(100, Number(manualConfig.count) || 1));
-          const indices = [];
-          let collectedChars = '';
+    setAppError(null);
+    setIsScopeOpen(false);
+    clearResults();
 
-          for (let k = 0; k < count; k++) {
-            const targetIdx = startStreamIdx + k * step;
-            if (targetIdx < 0 || targetIdx >= stream.length) break;
-            indices.push(targetIdx);
-            collectedChars += stream[targetIdx].rawChar;
-          }
-
-          const feedNodes = buildFeedNodesFromIndices(bookLabel, verses, stream, indices);
-          setElsData({
-            matches: [
-              {
-                isManual: true,
-                term: collectedChars,
-                bookName: `${bookLabel} ${manualConfig.chapter}:${manualConfig.verse}`,
-                startChar: stream[startStreamIdx].rawChar,
-                skip: step,
-                jumpCount: indices.length,
-                feedNodes
-              }
-            ]
-          });
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
+    if (searchMode === 'els' && elsSubMode === 'manual') {
+      if (manualConfig.letterIdx === null) {
+        setAppError({ code: 'ERR_SELECT_LETTER' });
         return;
       }
-
-      const rawTarget = searchTerm.split(',')[0]?.trim() || '';
-      const targetSeq = includeSpaces
-        ? normalizeHebrew(rawTarget).replace(/\s+/g, ' ')
-        : extractHebrewLetters(rawTarget);
-
-      if (!targetSeq) {
-        setErrorMsg(t('errorEmptyInput'));
-        return;
-      }
-
-      if (elsSubMode === 'anchor') {
-        if (anchorConfig.letterIdx === null || anchorConfig.letterIdx === undefined) {
-          setErrorMsg(t('errorSelectLetter'));
-          return;
-        }
-
-        setLoading(true);
-        if (window.innerWidth <= 768) setMobileView('results');
-
-        try {
-          const bookInfo = booksList.find((b) => b.id === anchorConfig.bookId);
-          const bookLabel = getBookLabel(bookInfo);
-          const rawWords = await fetchBookData(bookInfo.id);
-          const { verses, stream } = buildBookStream(rawWords, null, includeSpaces);
-
-          const anchorStreamIdx = stream.findIndex(
-            (s) =>
-              verses[s.verseIdx].c === anchorConfig.chapter &&
-              verses[s.verseIdx].v === anchorConfig.verse &&
-              s.letterOrdinal === anchorConfig.letterIdx
-          );
-
-          if (anchorStreamIdx === -1) {
-            setErrorMsg(t('errAnchorNotFound'));
-            setLoading(false);
-            return;
-          }
-
-          const actualAnchor = stream[anchorStreamIdx].normChar;
-          if (actualAnchor !== targetSeq[0]) {
-            const mismatchFn = t('errAnchorMismatch');
-            setErrorMsg(
-              typeof mismatchFn === 'function'
-                ? mismatchFn(stream[anchorStreamIdx].rawChar, rawTarget, rawTarget[0])
-                : `Anchor letter mismatch`
-            );
-            setLoading(false);
-            return;
-          }
-
-          const len = targetSeq.length;
-          const found = [];
-
-          if (len === 1) {
-            found.push({
-              term: rawTarget,
-              bookName: bookLabel,
-              skip: 1,
-              feedNodes: buildFeedNodesFromIndices(bookLabel, verses, stream, [anchorStreamIdx])
-            });
-          } else {
-            const maxForward = Math.floor((stream.length - 1 - anchorStreamIdx) / (len - 1));
-            const maxBackward = Math.floor(anchorStreamIdx / (len - 1));
-            const maxAbsSkip = Math.min(2500, Math.max(maxForward, maxBackward));
-
-            for (let absSkip = 1; absSkip <= maxAbsSkip; absSkip++) {
-              for (const dir of [1, -1]) {
-                const skip = absSkip * dir;
-                const endIdx = anchorStreamIdx + (len - 1) * skip;
-                if (endIdx < 0 || endIdx >= stream.length) continue;
-
-                let ok = true;
-                for (let k = 1; k < len; k++) {
-                  if (stream[anchorStreamIdx + k * skip].normChar !== targetSeq[k]) {
-                    ok = false;
-                    break;
-                  }
-                }
-
-                if (ok) {
-                  const indices = Array.from({ length: len }, (_, k) => anchorStreamIdx + k * skip);
-                  found.push({
-                    term: rawTarget,
-                    bookName: bookLabel,
-                    skip,
-                    feedNodes: buildFeedNodesFromIndices(bookLabel, verses, stream, indices)
-                  });
-                }
-              }
-              if (found.length >= 150) break;
-            }
-          }
-
-          setElsData({ matches: found });
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Auto-Discover across selected ranges
-      const activeRanges = ranges.filter((r) => r.selectedChapters.length > 0);
-      if (activeRanges.length === 0) {
-        setErrorMsg(t('errorSelectChapter'));
-        return;
-      }
-
       setLoading(true);
-      if (window.innerWidth <= 768) setMobileView('results');
+      setMobileView('results');
+      workerRef.current.postMessage({ ranges, terms: [], searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, manualConfig, includeSpaces });
+      return;
+    }
 
-      try {
-        const allMatches = [];
-        const len = targetSeq.length;
-        const maxSkipBound = activeRanges.length > 5 ? 300 : 800;
-
-        for (const r of activeRanges) {
-          const bookInfo = booksList.find((b) => b.id === r.bookId);
-          const bookLabel = getBookLabel(bookInfo);
-          const rawWords = await fetchBookData(bookInfo.id);
-          const chSet = new Set(r.selectedChapters);
-          const { verses, stream } = buildBookStream(rawWords, chSet, includeSpaces);
-
-          if (stream.length === 0) continue;
-
-          if (len === 1) {
-            for (let i = 0; i < stream.length && allMatches.length < 150; i++) {
-              if (stream[i].normChar === targetSeq[0]) {
-                allMatches.push({
-                  term: rawTarget,
-                  bookName: bookLabel,
-                  skip: 1,
-                  absSkip: 1,
-                  feedNodes: buildFeedNodesFromIndices(bookLabel, verses, stream, [i])
-                });
-              }
-            }
-            continue;
-          }
-
-          const firstChar = targetSeq[0];
-          const lastChar = targetSeq[len - 1];
-
-          for (let i = 0; i < stream.length; i++) {
-            if (stream[i].normChar !== firstChar) continue;
-
-            const maxFwd = Math.min(maxSkipBound, Math.floor((stream.length - 1 - i) / (len - 1)));
-            for (let skip = 1; skip <= maxFwd; skip++) {
-              if (stream[i + (len - 1) * skip].normChar !== lastChar) continue;
-              let ok = true;
-              for (let k = 1; k < len - 1; k++) {
-                if (stream[i + k * skip].normChar !== targetSeq[k]) {
-                  ok = false;
-                  break;
-                }
-              }
-              if (ok) {
-                const indices = Array.from({ length: len }, (_, k) => i + k * skip);
-                allMatches.push({
-                  term: rawTarget,
-                  bookName: bookLabel,
-                  skip,
-                  absSkip: skip,
-                  feedNodes: buildFeedNodesFromIndices(bookLabel, verses, stream, indices)
-                });
-              }
-            }
-
-            const maxBwd = Math.min(maxSkipBound, Math.floor(i / (len - 1)));
-            for (let absSkip = 1; absSkip <= maxBwd; absSkip++) {
-              const skip = -absSkip;
-              if (stream[i + (len - 1) * skip].normChar !== lastChar) continue;
-              let ok = true;
-              for (let k = 1; k < len - 1; k++) {
-                if (stream[i + k * skip].normChar !== targetSeq[k]) {
-                  ok = false;
-                  break;
-                }
-              }
-              if (ok) {
-                const indices = Array.from({ length: len }, (_, k) => i + k * skip);
-                allMatches.push({
-                  term: rawTarget,
-                  bookName: bookLabel,
-                  skip,
-                  absSkip,
-                  feedNodes: buildFeedNodesFromIndices(bookLabel, verses, stream, indices)
-                });
-              }
-            }
-
-            if (allMatches.length >= 250) break;
-          }
-        }
-
-        allMatches.sort((a, b) => a.absSkip - b.absSkip);
-        setElsData({ matches: allMatches.slice(0, 150) });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+    if (searchMode === 'els' && elsSubMode === 'anchor') {
+      if (anchorConfig.letterIdx === null) {
+        setAppError({ code: 'ERR_SELECT_LETTER' });
+        return;
       }
+    }
+
+    let rawTerms = searchTerm.split(',').map(term => term.trim()).filter(term => term.length > 0);
+    let terms = [...new Set(rawTerms)];
+
+    if (searchMode === 'els') {
+      if (terms.length === 0) {
+        setIsElsMode(false);
+        setAppError({ code: 'ERR_EMPTY_INPUT' });
+        return;
+      }
+      if (elsSubMode === 'auto' && (ranges.length === 0 || ranges.some(r => r.selectedChapters.length === 0))) {
+        setAppError({ code: 'ERR_SELECT_CHAPTER' });
+        return;
+      }
+      setLoading(true);
+      setMobileView('results');
+      workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, anchorConfig });
       return;
     }
 
-    // 2. CHART MODES (Exact, Root, Letter, Acronym, Gematria)
-    const parsedTerms = searchTerm
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (parsedTerms.length === 0) {
-      setErrorMsg(t('errorEmptyInput'));
+    if (terms.length === 0) {
+      setActiveTerms([]);
+      setAppError({ code: 'ERR_EMPTY_INPUT' });
       return;
     }
 
-    const activeRanges = ranges.filter((r) => r.selectedChapters.length > 0);
-    if (activeRanges.length === 0) {
-      setErrorMsg(t('errorSelectChapter'));
-      return;
+    if (searchMode === 'gematria') {
+      terms = terms.map(term => /^\d+$/.test(term) ? term : calculateGematria(term).toString());
+    }
+
+    if (ranges.length === 0 || ranges.some(r => r.selectedChapters.length === 0)) {
+       setAppError({ code: 'ERR_SELECT_CHAPTER' });
+       return;
     }
 
     setLoading(true);
-    setActivePreview(null);
-    if (window.innerWidth <= 768) setMobileView('results');
-
-    try {
-      const totals = {};
-      parsedTerms.forEach((term) => {
-        totals[term] = 0;
-      });
-
-      const preparedTerms = parsedTerms.map((raw) => {
-        const norm = normalizeHebrew(raw);
-        const letters = extractHebrewLetters(raw);
-        const words = norm.split(/\s+/).filter(Boolean);
-        const gemTarget = /^\d+$/.test(raw) ? Number(raw) : calculateGematria(raw);
-        return { raw, norm, letters, words, gemTarget };
-      });
-
-      const rows = [];
-
-      for (const r of activeRanges) {
-        const bookInfo = booksList.find((b) => b.id === r.bookId);
-        const bookLabel = getBookLabel(bookInfo);
-        const rawWords = await fetchBookData(bookInfo.id);
-        const chSet = new Set(r.selectedChapters);
-
-        const verseMap = new Map();
-        let totalWordsInScope = 0;
-
-        for (let i = 0; i < rawWords.length; i++) {
-          const item = rawWords[i];
-          if (!chSet.has(item.c)) continue;
-          totalWordsInScope++;
-          const key = `${item.c}:${item.v}`;
-          if (!verseMap.has(key)) {
-            verseMap.set(key, { c: item.c, v: item.v, items: [] });
-          }
-          verseMap.get(key).items.push(item);
-        }
-
-        const row = {
-          name: bookLabel,
-          totalWords: totalWordsInScope,
-          verses: []
-        };
-
-        preparedTerms.forEach((pt) => {
-          row[pt.raw] = 0;
-        });
-
-        for (const vObj of verseMap.values()) {
-          const normWords = vObj.items.map((it) => normalizeHebrew(it.w));
-          const verseText = vObj.items.map((it) => it.w).join(' ');
-          const matchedWordIndices = new Set();
-          const acronymLetterMap = new Map();
-          let targetLetterChar = '';
-          let verseMatched = false;
-
-          for (const pt of preparedTerms) {
-            let hitsInVerse = 0;
-
-            if (searchMode === 'exact') {
-              const pLen = pt.words.length;
-              if (pLen === 1) {
-                normWords.forEach((nw, idx) => {
-                  if (nw === pt.words[0]) {
-                    hitsInVerse++;
-                    matchedWordIndices.add(idx);
-                  }
-                });
-              } else if (pLen > 1) {
-                for (let idx = 0; idx <= normWords.length - pLen; idx++) {
-                  let seqMatch = true;
-                  for (let k = 0; k < pLen; k++) {
-                    if (normWords[idx + k] !== pt.words[k]) {
-                      seqMatch = false;
-                      break;
-                    }
-                  }
-                  if (seqMatch) {
-                    hitsInVerse++;
-                    for (let k = 0; k < pLen; k++) matchedWordIndices.add(idx + k);
-                  }
-                }
-              }
-            } else if (searchMode === 'root') {
-              normWords.forEach((nw, idx) => {
-                const rawRoot = vObj.items[idx].r ? normalizeHebrew(vObj.items[idx].r) : '';
-                const isHit = rawRoot
-                  ? rawRoot === pt.norm
-                  : matchesHebrewRoot(nw, pt.norm);
-                if (isHit) {
-                  hitsInVerse++;
-                  matchedWordIndices.add(idx);
-                }
-              });
-            } else if (searchMode === 'letter') {
-              const targetChar = pt.letters[0];
-              if (targetChar) {
-                targetLetterChar = targetChar;
-                vObj.items.forEach((it, idx) => {
-                  const wLetters = extractHebrewLetters(it.w);
-                  let cCount = 0;
-                  for (let c = 0; c < wLetters.length; c++) {
-                    if (wLetters[c] === targetChar) cCount++;
-                  }
-                  if (cCount > 0) {
-                    hitsInVerse += cCount;
-                    matchedWordIndices.add(idx);
-                  }
-                });
-              }
-            } else if (searchMode === 'acronym') {
-              const seq = pt.letters;
-              const sLen = seq.length;
-              if (sLen > 0 && normWords.length >= sLen) {
-                for (let idx = 0; idx <= normWords.length - sLen; idx++) {
-                  let ok = true;
-                  for (let k = 0; k < sLen; k++) {
-                    const wLetters = extractHebrewLetters(vObj.items[idx + k].w);
-                    const edgeLetter =
-                      effectiveAcronymPos === 'last'
-                        ? wLetters[wLetters.length - 1]
-                        : wLetters[0];
-                    if (edgeLetter !== seq[k]) {
-                      ok = false;
-                      break;
-                    }
-                  }
-                  if (ok) {
-                    hitsInVerse++;
-                    for (let k = 0; k < sLen; k++) {
-                      matchedWordIndices.add(idx + k);
-                      acronymLetterMap.set(idx + k, effectiveAcronymPos);
-                    }
-                  }
-                }
-              }
-            } else if (searchMode === 'gematria') {
-              if (pt.gemTarget > 0) {
-                vObj.items.forEach((it, idx) => {
-                  if (calculateGematria(it.w) === pt.gemTarget) {
-                    hitsInVerse++;
-                    matchedWordIndices.add(idx);
-                  }
-                });
-              }
-            }
-
-            if (hitsInVerse > 0) {
-              row[pt.raw] += hitsInVerse;
-              totals[pt.raw] += hitsInVerse;
-              verseMatched = true;
-            }
-          }
-
-          if (verseMatched && row.verses.length < 100) {
-            row.verses.push({
-              ref: `${bookLabel} ${vObj.c}:${vObj.v}`,
-              text: verseText,
-              words: vObj.items.map((it) => it.w),
-              matchedWordIndices: Array.from(matchedWordIndices),
-              acronymLetterMap: Object.fromEntries(acronymLetterMap),
-              targetLetterChar
-            });
-          }
-        }
-
-        rows.push(row);
-      }
-
-      setActiveTerms(parsedTerms);
-      setRawChartData(rows);
-      setResultTotals(totals);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    setActiveTerms(terms);
+    setMobileView('results');
+    workerRef.current.postMessage({
+      ranges,
+      terms,
+      searchMode,
+      booksList,
+      lang,
+      chsStr: t('chsAbbr') || 'Chs',
+      elsSubMode,
+      includeSpaces,
+      acronymPosition: effectiveAcronymPos
+    });
   };
 
-  // Compute Absolute or Relative % Chart Data
-  const renderChartData = useMemo(() => {
-    if (!rawChartData || rawChartData.length === 0) return [];
-    if (viewMode === 'absolute') return rawChartData;
-
-    return rawChartData.map((row) => {
-      const nextRow = { ...row };
-      const denom = row.totalWords || 1;
-      activeTerms.forEach((term) => {
-        const rawVal = row[term] || 0;
-        nextRow[term] = Number(((rawVal / denom) * 100).toFixed(3));
-      });
-      return nextRow;
-    });
-  }, [rawChartData, viewMode, activeTerms]);
-
-  const minComfortableWidth = useMemo(() => {
-    return Math.max(480, renderChartData.length * Math.max(95, activeTerms.length * 44));
-  }, [renderChartData.length, activeTerms.length]);
+  const formatChapterRanges = (chapters, maxCh) => {
+    if (!chapters || chapters.length === 0) return "None";
+    if (maxCh && chapters.length === maxCh) return `1-${maxCh} (All)`;
+    const sorted = [...chapters].sort((a, b) => a - b);
+    const rangesArr = [];
+    let start = sorted[0], prev = sorted[0];
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === prev + 1) { prev = sorted[i]; }
+      else { rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`); start = sorted[i]; prev = sorted[i]; }
+    }
+    rangesArr.push(start === prev ? `${start}` : `${start}-${prev}`);
+    return rangesArr.join(', ');
+  };
 
   const handleExportCSV = () => {
-    if (!renderChartData || renderChartData.length === 0) return;
+    if (!rawChartData || rawChartData.length === 0) return;
     const BOM = '\uFEFF';
-    const headers = ['Book', ...activeTerms.map((term) => (viewMode === 'relative' ? `${term} (%)` : term))];
-    const lines = [headers.map((h) => `"${String(h).replace(/"/g, '""')}"`).join(',')];
-
-    renderChartData.forEach((row) => {
-      const vals = [
-        `"${String(row.name).replace(/"/g, '""')}"`,
-        ...activeTerms.map((term) => row[term] ?? 0)
-      ];
-      lines.push(vals.join(','));
+    let csvString = ["Scope", "Chapters", "Total Words", ...activeTerms].join(",") + "\n";
+    rawChartData.forEach((row, index) => {
+      const rangeObj = ranges[index];
+      const bookObj = rangeObj ? booksList.find(b => b.id === rangeObj.bookId) : null;
+      const chaptersFormatted = rangeObj ? formatChapterRanges(rangeObj.selectedChapters, bookObj?.maxCh) : "";
+      csvString += [ `"${row.name}"`, `"${chaptersFormatted}"`, row.rangeTotalWords, ...activeTerms.map(t => row[t] || 0) ].join(",") + "\n";
     });
-
-    const blob = new Blob([BOM + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `orot_analysis_${searchMode}.csv`;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([BOM + csvString], { type: 'text/csv;charset=utf-8;' }));
+    link.download = "hebrew_stats.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const renderHighlightedVerseWords = (verseObj) => {
-    const matchedSet = new Set(verseObj.matchedWordIndices || []);
-    return (verseObj.words || []).map((word, idx) => {
-      const isMatched = matchedSet.has(idx);
-      if (!isMatched) {
-        return <span key={idx}>{word} </span>;
-      }
-
-      if (searchMode === 'acronym' && verseObj.acronymLetterMap?.[idx]) {
-        const pos = verseObj.acronymLetterMap[idx];
-        const chars = word.split('');
-        const targetCharIdx = pos === 'last' ? chars.length - 1 : 0;
-        return (
-          <span key={idx} className="highlight-match">
-            {chars.map((ch, cIdx) =>
-              cIdx === targetCharIdx ? (
-                <span key={cIdx} className="acronym-letter">
-                  {ch}
-                </span>
-              ) : (
-                <span key={cIdx}>{ch}</span>
-              )
-            )}{' '}
-          </span>
-        );
-      }
-
-      if (searchMode === 'letter' && verseObj.targetLetterChar) {
-        return (
-          <span key={idx}>
-            {word.split('').map((ch, cIdx) => {
-              const normCh = FINAL_LETTER_MAP[ch] || ch;
-              return normCh === verseObj.targetLetterChar ? (
-                <span key={cIdx} className="highlight-match">
-                  {ch}
-                </span>
-              ) : (
-                <span key={cIdx}>{ch}</span>
-              );
-            })}{' '}
-          </span>
-        );
-      }
-
-      return (
-        <span key={idx} className="highlight-match">
-          {word}{' '}
-        </span>
-      );
-    });
-  };
+  const renderChartData = rawChartData.map(data => {
+    if (viewMode === 'absolute') return data;
+    const denominator = searchMode === 'letter' ? data.rangeTotalChars : data.rangeTotalWords;
+    const mappedData = { name: data.name, verses: data.verses };
+    activeTerms.forEach(term => { mappedData[term] = denominator > 0 ? Number(((data[term] / denominator) * 100).toFixed(3)) : 0; });
+    return mappedData;
+  });
+  const minComfortableWidth = 100 + (renderChartData.length * activeTerms.length * 40);
 
   return (
     <div className="app-container" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Top Navigation Header */}
-      <header className="top-navbar">
+      <header
+        className="top-navbar"
+        dir="ltr"
+        style={{
+          direction: 'ltr',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        {/* Always Left-Aligned Logo Icon (Click to Reset to Initial Screen) */}
         <div
           className="top-navbar-brand"
-          onClick={handleResetApp}
           role="button"
           tabIndex={0}
+          onClick={handleLogoReset}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') handleResetApp();
+            if (e.key === 'Enter' || e.key === ' ') handleLogoReset();
+          }}
+          title="OROT - Reset"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            direction: 'ltr'
           }}
         >
-          <img src="/logo192.png" alt="OROT" className="top-navbar-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <span style={{ fontSize: '20px', fontWeight: '800', color: '#1e3a8a', letterSpacing: '0.5px' }}>
-              OROT
-            </span>
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
-              אורות
-            </span>
-          </div>
+          <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
         </div>
 
-        {/* Language Switcher & Info Trigger */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              backgroundColor: '#f1f5f9',
-              padding: '3px',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0'
-            }}
-          >
-            {[
-              { code: 'he', label: 'עב' },
-              { code: 'en', label: 'EN' },
-              { code: 'fa', label: 'فا' }
-            ].map((item) => (
-              <button
-                key={item.code}
-                type="button"
-                onClick={() => setLang(item.code)}
-                style={{
-                  border: 'none',
-                  padding: '5px 9px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: lang === item.code ? '700' : '500',
-                  backgroundColor: lang === item.code ? '#ffffff' : 'transparent',
-                  color: lang === item.code ? '#1d4ed8' : '#64748b',
-                  boxShadow: lang === item.code ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
+        {/* Right Controls: Info (i) Button + Single-Flag Language Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             type="button"
             onClick={() => setIsInfoOpen(true)}
-            aria-label={t('infoTitle')}
-            title={t('infoTitle')}
+            aria-label={t('infoTitle') || "About OROT"}
+            title={t('infoTitle') || "About OROT"}
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              border: '1px solid #cbd5e1',
-              backgroundColor: '#ffffff',
-              color: '#1e3a8a',
-              fontWeight: '800',
-              fontSize: '14px',
-              cursor: 'pointer',
+              width: '34px',
+              height: '33px',
               display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              backgroundColor: isInfoOpen ? '#eff6ff' : '#f8fafc',
+              border: isInfoOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
+              borderRadius: '8px',
+              color: '#1e3a8a',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
           >
-            i
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
           </button>
+
+          <div ref={langMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              type="button"
+              onClick={() => setIsLangMenuOpen(prev => !prev)}
+              aria-label="Select language"
+              aria-expanded={isLangMenuOpen}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                padding: '6px 10px',
+                backgroundColor: isLangMenuOpen ? '#eff6ff' : '#f8fafc',
+                border: isLangMenuOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <img
+                src={currentLanguage.flag}
+                alt={currentLanguage.label}
+                style={{
+                  width: '24px',
+                  height: '17px',
+                  objectFit: 'cover',
+                  borderRadius: '3px',
+                  border: '1px solid rgba(0, 0, 0, 0.15)',
+                  display: 'block'
+                }}
+              />
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#475569"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transform: isLangMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease'
+                }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {isLangMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  minWidth: '148px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.14)',
+                  padding: '5px',
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                {LANGUAGES.map((item) => {
+                  const isSelected = item.code === lang;
+                  return (
+                    <button
+                      key={item.code}
+                      type="button"
+                      onClick={() => {
+                        setLang(item.code);
+                        setIsLangMenuOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        borderRadius: '7px',
+                        backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                        color: isSelected ? '#1d4ed8' : '#1e293b',
+                        fontSize: '13px',
+                        fontWeight: isSelected ? '700' : '500',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background-color 0.12s'
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                        <img
+                          src={item.flag}
+                          alt={item.label}
+                          style={{
+                            width: '22px',
+                            height: '15px',
+                            objectFit: 'cover',
+                            borderRadius: '2px',
+                            border: '1px solid rgba(0, 0, 0, 0.15)',
+                            flexShrink: 0
+                          }}
+                        />
+                        <span>{item.label}</span>
+                      </span>
+                      {isSelected && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Main Split / Mobile Full-Screen Workspace */}
       <div className="app-layout">
-        <main className={`main-canvas ${mobileView === 'results' ? 'mobile-active' : 'mobile-hidden'}`}>
-          {/* Mobile Back-to-Search Header */}
+        {/* Shared Error Toast Banner */}
+        {appError && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '16px',
+              right: '16px',
+              zIndex: 35,
+              backgroundColor: '#fef3c7',
+              color: '#92400e',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '1px solid #f59e0b',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '10px',
+              boxShadow: '0 6px 18px rgba(15, 23, 42, 0.1)'
+            }}
+          >
+            <span style={{ fontWeight: '700', fontSize: '13px' }}>{renderErrorText(appError)}</span>
+            <button
+              onClick={() => setAppError(null)}
+              aria-label="Dismiss error"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px',
+                flexShrink: 0
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Full-Screen Scope Selector Overlay */}
+        <ScopeSelectorOverlay
+          isOpen={isScopeOpen}
+          onClose={handleCloseScope}
+          ranges={ranges}
+          setRanges={setRanges}
+          t={t}
+          lang={lang}
+        />
+
+        {/* Info Guide Modal */}
+        <InfoModal
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
+          t={t}
+          lang={lang}
+        />
+
+        <main
+          className={`main-canvas ${mobileView === 'results' ? 'mobile-active' : 'mobile-hidden'}`}
+          style={{ position: 'relative' }}
+        >
+          {/* Mobile Back-to-Search Header Strip */}
           <div className="mobile-back-bar">
             <button
               type="button"
               className="mobile-back-btn"
-              onClick={() => setMobileView('search')}
+              onClick={() => {
+                setAppError(null);
+                setMobileView('search');
+              }}
             >
               <svg
-                width="15"
-                height="15"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -987,31 +566,14 @@ function App() {
                 strokeLinejoin="round"
                 style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}
               >
-                <polyline points="15 18 9 12 15 6" />
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
               </svg>
-              <span>{t('backToSearch') || t('editSearch')}</span>
+              <span>{t('backToSearch') || "Back to Search"}</span>
             </button>
           </div>
 
-          {/* Validation Error Banner */}
-          {errorMsg && (
-            <div
-              style={{
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                color: '#b91c1c',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: '600',
-                marginBottom: '16px'
-              }}
-            >
-              {errorMsg}
-            </div>
-          )}
-
-          {searchMode === 'els' ? (
+          {searchMode === 'els' || isElsMode ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
             <>
@@ -1030,319 +592,37 @@ function App() {
                 t={t}
                 lang={lang}
               />
-
-              {/* Verse Preview Drawer Below Chart */}
-              {activePreview && activePreview.verses && activePreview.verses.length > 0 && (
-                <section className="preview-container">
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '12px'
-                    }}
-                  >
-                    <h3 style={{ margin: 0, fontSize: '16px', color: '#1e3a8a' }}>
-                      {t('matchesFor')} <bdi>{activePreview.name}</bdi>{' '}
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-                        {activePreview.verses.length >= 100 ? t('first100') : `(${activePreview.verses.length})`}
-                      </span>
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setActivePreview(null)}
-                      aria-label="Close preview"
-                      style={{
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
-                        color: '#475569',
-                        borderRadius: '6px',
-                        width: '28px',
-                        height: '28px',
-                        cursor: 'pointer',
-                        fontWeight: '700'
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {activePreview.verses.map((vObj, idx) => (
-                    <div key={idx} className="verse-item">
-                      <div className="verse-ref">{vObj.ref}</div>
-                      <div className="verse-text">{renderHighlightedVerseWords(vObj)}</div>
-                    </div>
-                  ))}
-                </section>
-              )}
+              <div ref={previewRef}>
+                <VersePreview
+                  activePreview={activePreview}
+                  setActivePreview={setActivePreview}
+                  activeTerms={activeTerms}
+                  COLORS={COLORS}
+                  searchMode={searchMode}
+                  acronymPosition={acronymPosition}
+                  t={t}
+                />
+              </div>
             </>
           )}
         </main>
 
-        {/* Control Sidebar */}
         <ControlSidebar
           mobileView={mobileView}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchMode={searchMode}
-          setSearchMode={setSearchMode}
-          acronymPosition={acronymPosition}
-          setAcronymPosition={setAcronymPosition}
-          ranges={ranges}
-          loading={loading}
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+          searchMode={searchMode} setSearchMode={setSearchMode}
+          acronymPosition={acronymPosition} setAcronymPosition={setAcronymPosition}
+          ranges={ranges} loading={loading}
           isScopeOpen={isScopeOpen}
-          onOpenScope={() => setIsScopeOpen(true)}
-          onCloseScope={() => setIsScopeOpen(false)}
+          onOpenScope={handleOpenScope}
+          onCloseScope={handleCloseScope}
           handleSearch={handleSearch}
-          t={t}
-          lang={lang}
-          elsSubMode={elsSubMode}
-          setElsSubMode={setElsSubMode}
-          manualConfig={manualConfig}
-          setManualConfig={setManualConfig}
-          includeSpaces={includeSpaces}
-          setIncludeSpaces={setIncludeSpaces}
-          anchorConfig={anchorConfig}
-          setAnchorConfig={setAnchorConfig}
+          t={t} lang={lang}
+          elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
+          manualConfig={manualConfig} setManualConfig={setManualConfig}
+          includeSpaces={includeSpaces} setIncludeSpaces={setIncludeSpaces}
+          anchorConfig={anchorConfig} setAnchorConfig={setAnchorConfig}
         />
-
-        {/* Comparison Scopes Overlay */}
-        {isScopeOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(15, 23, 42, 0.45)',
-              zIndex: 50,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px'
-            }}
-            onClick={() => setIsScopeOpen(false)}
-          >
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                width: '100%',
-                maxWidth: '540px',
-                maxHeight: '85dvh',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Scope Modal Header */}
-              <div
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid #e2e8f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '10px'
-                }}
-              >
-                <h3 style={{ margin: 0, fontSize: '16px', color: '#1e3a8a' }}>
-                  {t('comparisonScopes')}
-                </h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={handleSelectAllBooks}
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#1d4ed8',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {t('selectAllBooks')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClearAllBooks}
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#f8fafc',
-                      color: '#64748b',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {t('clearAll')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Book & Chapter List */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
-                {booksList.map((book) => {
-                  const rangeObj = ranges.find((r) => r.bookId === book.id);
-                  const selCount = rangeObj ? rangeObj.selectedChapters.length : 0;
-                  const isExpanded = expandedBookId === book.id;
-
-                  return (
-                    <div
-                      key={book.id}
-                      style={{
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        marginBottom: '8px',
-                        padding: '10px 12px',
-                        backgroundColor: selCount > 0 ? '#ffffff' : '#f8fafc'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flex: 1 }}>
-                          <input
-                            type="checkbox"
-                            checked={selCount === book.maxCh}
-                            ref={(el) => {
-                              if (el) el.indeterminate = selCount > 0 && selCount < book.maxCh;
-                            }}
-                            onChange={() => toggleBookAllChapters(book)}
-                            style={{ accentColor: '#1d4ed8', width: '16px', height: '16px', cursor: 'pointer' }}
-                          />
-                          <span style={{ fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>
-                            {getBookLabel(book)}
-                          </span>
-                          <span style={{ fontSize: '12px', color: '#64748b' }}>
-                            ({selCount}/{book.maxCh})
-                          </span>
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => setExpandedBookId(isExpanded ? null : book.id)}
-                          style={{
-                            border: '1px solid #cbd5e1',
-                            backgroundColor: '#f8fafc',
-                            color: '#1d4ed8',
-                            borderRadius: '6px',
-                            padding: '4px 10px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t('chapters')} {isExpanded ? '▲' : '▼'}
-                        </button>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="chapter-grid">
-                          {Array.from({ length: book.maxCh }, (_, i) => i + 1).map((ch) => {
-                            const selected = rangeObj?.selectedChapters.includes(ch);
-                            return (
-                              <button
-                                key={ch}
-                                type="button"
-                                className={`chapter-btn ${selected ? 'selected' : ''}`}
-                                onClick={() => toggleSingleChapter(book.id, ch)}
-                              >
-                                {ch}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Scope Modal Footer */}
-              <div style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsScopeOpen(false)}
-                  className="btn btn-run"
-                >
-                  {t('done')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* About / Info Modal */}
-        {isInfoOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(15, 23, 42, 0.45)',
-              zIndex: 60,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px'
-            }}
-            onClick={() => setIsInfoOpen(false)}
-          >
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                width: '100%',
-                maxWidth: '500px',
-                maxHeight: '85dvh',
-                overflowY: 'auto',
-                padding: '22px',
-                boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', color: '#1e3a8a' }}>{t('infoTitle')}</h2>
-                <button
-                  type="button"
-                  onClick={() => setIsInfoOpen(false)}
-                  style={{
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f8fafc',
-                    color: '#475569',
-                    borderRadius: '6px',
-                    width: '30px',
-                    height: '30px',
-                    cursor: 'pointer',
-                    fontWeight: '700'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-              <p style={{ fontSize: '14px', lineHeight: '1.6', color: '#334155', marginTop: 0 }}>
-                {t('infoIntro')}
-              </p>
-              <h4 style={{ margin: '14px 0 8px 0', fontSize: '13px', color: '#1e3a8a', textTransform: 'uppercase' }}>
-                {t('infoModesTitle')}
-              </h4>
-              <ul style={{ margin: 0, paddingInlineStart: '18px', fontSize: '13px', lineHeight: '1.65', color: '#334155' }}>
-                <li><strong>{t('exact')}:</strong> {t('infoExactDesc')}</li>
-                <li><strong>{t('root')}:</strong> {t('infoRootDesc')}</li>
-                <li><strong>{t('letter')}:</strong> {t('infoLetterDesc')}</li>
-                <li><strong>{t('acronym')}:</strong> {t('infoAcronymDesc')}</li>
-                <li><strong>{t('gematria')}:</strong> {t('infoGematriaDesc')}</li>
-                <li><strong>{t('els')}:</strong> {t('infoElsDesc')}</li>
-              </ul>
-              <p style={{ marginTop: '14px', marginBottom: 0, fontSize: '12px', color: '#64748b', backgroundColor: '#f8fafc', padding: '10px 12px', borderRadius: '8px' }}>
-                {t('infoTip')}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Two-Tap Android Exit Toast */}
