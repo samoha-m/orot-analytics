@@ -575,6 +575,7 @@ function App() {
                 activePreview={activePreview}
                 setActivePreview={setActivePreview}
                 t={t}
+                lang={lang}
               />
               <div ref={previewRef}>
                 <VersePreview

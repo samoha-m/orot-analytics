@@ -35,6 +35,12 @@ function ControlSidebar({
     return t('placeholderText');
   };
 
+  const getBookLabel = (book) => {
+    if (lang === 'he') return book.he;
+    if (lang === 'fa') return book.fa;
+    return book.name.replace('_', ' ');
+  };
+
   const getScopeSummary = () => {
     const activeRanges = (ranges || []).filter(r => r.selectedChapters.length > 0);
     if (activeRanges.length === 0) {
@@ -43,7 +49,7 @@ function ControlSidebar({
     if (activeRanges.length === 1) {
       const r = activeRanges[0];
       const book = booksList.find(b => b.id === r.bookId);
-      const bookName = book ? (lang === 'he' ? book.he : (lang === 'fa' ? book.fa : book.name.replace('_', ' '))) : '';
+      const bookName = book ? getBookLabel(book) : '';
       const maxCh = book?.maxCh || r.selectedChapters.length;
       const fn = t('singleBookSummary');
       return typeof fn === 'function' ? fn(bookName, r.selectedChapters.length, maxCh) : `${bookName} (${r.selectedChapters.length}/${maxCh})`;
@@ -152,6 +158,18 @@ function ControlSidebar({
     });
   };
 
+  const selectStyle = {
+    width: '100%',
+    padding: '8px 10px',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#1e293b',
+    borderRadius: '6px',
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#f8fafc',
+    boxSizing: 'border-box'
+  };
+
   return (
     <aside
       className={`control-sidebar ${mobileView === 'search' ? 'mobile-active' : 'mobile-hidden'}`}
@@ -189,7 +207,7 @@ function ControlSidebar({
               onClick={() => setSearchMode('els')}
               style={{ flex: 1, border: 'none', padding: '9px 2px', fontSize: '12px', fontWeight: currentGroup === 'els' ? '700' : '500', backgroundColor: currentGroup === 'els' ? '#1d4ed8' : 'transparent', color: currentGroup === 'els' ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
             >
-              {t('els') || "ELS"}
+              {t('els') || "Skip"}
             </button>
           </div>
 
@@ -227,7 +245,7 @@ function ControlSidebar({
             </div>
           )}
 
-          {/* 3-Way ELS Sub-Mode Switcher */}
+          {/* 3-Way Skip Sub-Mode Switcher */}
           {currentGroup === 'els' && (
             <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '4px', gap: '3px', border: '1px solid #e2e8f0' }}>
                {[
@@ -267,22 +285,54 @@ function ControlSidebar({
             <div>
               <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
-              <div style={{ display: 'flex', gap: '5px', marginBottom: '3px' }}>
-                 <div style={{ flex: 2, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
-                 <div style={{ flex: 1, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('chapter') || 'Chapter'}</div>
-                 <div style={{ flex: 1, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('verse') || 'Verse'}</div>
+              {/* Row 1: Full-width Book Selector */}
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                  {t('book') ? t('book').replace(':', '') : 'Book'}
+                </label>
+                <select
+                  value={manualConfig.bookId}
+                  onChange={e => setManualConfig({ ...manualConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
+                  style={selectStyle}
+                >
+                  {booksList.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {getBookLabel(b)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
-                 <select value={manualConfig.bookId} onChange={e => setManualConfig({...manualConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                   {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
-                 </select>
-                 <select value={manualConfig.chapter} onChange={e => setManualConfig({...manualConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                   {Array.from({length: chaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
-                 </select>
-                 <select value={manualConfig.verse} onChange={e => setManualConfig({...manualConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                   {versesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
-                 </select>
+              {/* Row 2: Chapter & Verse Side-by-Side */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                    {t('chapter') || 'Chapter'}
+                  </label>
+                  <select
+                    value={manualConfig.chapter}
+                    onChange={e => setManualConfig({ ...manualConfig, chapter: Number(e.target.value), letterIdx: null })}
+                    style={selectStyle}
+                  >
+                    {Array.from({ length: chaptersInBook }, (_, i) => i + 1).map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                    {t('verse') || 'Verse'}
+                  </label>
+                  <select
+                    value={manualConfig.verse}
+                    onChange={e => setManualConfig({ ...manualConfig, verse: Number(e.target.value), letterIdx: null })}
+                    style={selectStyle}
+                  >
+                    {versesInChapter.map(v => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto' }}>
@@ -301,7 +351,7 @@ function ControlSidebar({
                     value={manualConfig.skip}
                     onKeyDown={handleInputKeyDown}
                     onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div style={{ flex: '0 0 76px' }}>
@@ -314,7 +364,7 @@ function ControlSidebar({
                     value={manualConfig.count}
                     onKeyDown={handleInputKeyDown}
                     onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
                   />
                 </div>
                 <label
@@ -372,6 +422,7 @@ function ControlSidebar({
                     borderRadius: '8px',
                     border: '1px solid #cbd5e1',
                     fontSize: '13px',
+                    color: '#1e293b',
                     textAlign: isRTL ? 'right' : 'left',
                     outline: 'none',
                     boxSizing: 'border-box'
@@ -486,22 +537,54 @@ function ControlSidebar({
                 <div>
                   <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
-                  <div style={{ display: 'flex', gap: '5px', marginBottom: '3px' }}>
-                     <div style={{ flex: 2, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('book') ? t('book').replace(':','') : 'Book'}</div>
-                     <div style={{ flex: 1, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('chapter') || 'Chapter'}</div>
-                     <div style={{ flex: 1, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>{t('verse') || 'Verse'}</div>
+                  {/* Row 1: Full-width Book Selector */}
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                      {t('book') ? t('book').replace(':', '') : 'Book'}
+                    </label>
+                    <select
+                      value={anchorConfig.bookId}
+                      onChange={e => setAnchorConfig({ ...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
+                      style={selectStyle}
+                    >
+                      {booksList.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {getBookLabel(b)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
-                     <select value={anchorConfig.bookId} onChange={e => setAnchorConfig({...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null})} style={{ flex: 2, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                       {booksList.map(b => <option key={b.id} value={b.id}>{lang === 'he' ? b.he : (lang === 'fa' ? b.fa : b.name)}</option>)}
-                     </select>
-                     <select value={anchorConfig.chapter} onChange={e => setAnchorConfig({...anchorConfig, chapter: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                       {Array.from({length: anchorChaptersInBook}, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
-                     </select>
-                     <select value={anchorConfig.verse} onChange={e => setAnchorConfig({...anchorConfig, verse: Number(e.target.value), letterIdx: null})} style={{ flex: 1, padding: '7px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}>
-                       {anchorVersesInChapter.map(v => <option key={v} value={v}>{v}</option>)}
-                     </select>
+                  {/* Row 2: Chapter & Verse Side-by-Side */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                        {t('chapter') || 'Chapter'}
+                      </label>
+                      <select
+                        value={anchorConfig.chapter}
+                        onChange={e => setAnchorConfig({ ...anchorConfig, chapter: Number(e.target.value), letterIdx: null })}
+                        style={selectStyle}
+                      >
+                        {Array.from({ length: anchorChaptersInBook }, (_, i) => i + 1).map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                        {t('verse') || 'Verse'}
+                      </label>
+                      <select
+                        value={anchorConfig.verse}
+                        onChange={e => setAnchorConfig({ ...anchorConfig, verse: Number(e.target.value), letterIdx: null })}
+                        style={selectStyle}
+                      >
+                        {anchorVersesInChapter.map(v => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto' }}>

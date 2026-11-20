@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import HebrewMatrixLoader from './HebrewMatrixLoader';
 
-function ELSFeedView({ elsData, loading, t }) {
+function ELSFeedView({ elsData, loading, t, lang }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const isRTL = lang === 'he' || lang === 'fa';
 
   useEffect(() => {
     setSelectedIdx(0);
   }, [elsData]);
 
   if (loading) {
-    return <HebrewMatrixLoader message={t('autoDiscovering') || "Scanning Equidistant Letter Sequences..."} />;
+    return <HebrewMatrixLoader message={t('autoDiscovering') || "Scanning letter skip sequences..."} />;
   }
 
   if (!elsData || !elsData.matches) {
@@ -39,7 +40,7 @@ function ELSFeedView({ elsData, loading, t }) {
   if (matches.length === 0) {
     return (
       <div style={{ textAlign: 'center', marginTop: '80px', color: '#64748b', padding: '0 16px' }}>
-        <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a' }}>{t('noEls') || "No ELS patterns discovered"}</h3>
+        <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a' }}>{t('noEls') || "No letter skip patterns discovered"}</h3>
         <p style={{ margin: 0, fontSize: '14px' }}>{t('noLetterSkip') || "No letter skip occurrences found for this term in the selected scopes."}</p>
       </div>
     );
@@ -88,7 +89,7 @@ function ELSFeedView({ elsData, loading, t }) {
     const blob = new Blob([BOM + csvLines.join("\n")], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = activeMatch.isManual ? "orot_els_manual.csv" : `orot_els_${activeMatch.term}.csv`;
+    link.download = activeMatch.isManual ? "orot_skip_manual.csv" : `orot_skip_${activeMatch.term}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -123,73 +124,24 @@ function ELSFeedView({ elsData, loading, t }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Header Card */}
-      <div style={{ backgroundColor: '#ffffff', padding: '16px 20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)', border: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {!activeMatch.isManual && matches.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
-                type="button"
-                aria-label="Previous match"
-                onClick={() => setSelectedIdx(prev => (prev > 0 ? prev - 1 : matches.length - 1))}
-                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                aria-label="Next match"
-                onClick={() => setSelectedIdx(prev => (prev < matches.length - 1 ? prev + 1 : 0))}
-                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-              <select
-                value={selectedIdx}
-                onChange={(e) => setSelectedIdx(Number(e.target.value))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '600', color: '#1e293b', backgroundColor: '#ffffff' }}
-              >
-                {matches.map((m, i) => (
-                  <option key={i} value={i}>
-                    #{i + 1} — Skip: {m.skip} ({m.feedNodes[0]?.ref || m.bookName})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleExportElsCSV}
-            className="btn"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 14px',
-              fontSize: '12px',
-              fontWeight: '600',
-              backgroundColor: '#1d4ed8',
-              color: '#ffffff',
-              border: '1px solid #1e3a8a',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span>{t('csv') || "Export"}</span>
-          </button>
-        </div>
-
-        <div style={{ textAlign: 'end' }}>
+      {/* Header Card (Title Aligned to Language Reading Direction) */}
+      <div
+        dir={isRTL ? 'rtl' : 'ltr'}
+        style={{
+          backgroundColor: '#ffffff',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px'
+        }}
+      >
+        {/* Title Block (Right-aligned in Hebrew/Farsi, Left-aligned in English) */}
+        <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
           <h2 style={{ margin: 0, fontSize: '19px', color: '#1e3a8a' }}>
             {t('elsContextFeed')} "{activeMatch.term}"
           </h2>
@@ -204,6 +156,72 @@ function ELSFeedView({ elsData, loading, t }) {
               </>
             )}
           </div>
+        </div>
+
+        {/* Navigation & Icon-Only Download Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {!activeMatch.isManual && matches.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                type="button"
+                aria-label="Previous match"
+                onClick={() => setSelectedIdx(prev => (prev > 0 ? prev - 1 : matches.length - 1))}
+                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}>
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Next match"
+                onClick={() => setSelectedIdx(prev => (prev < matches.length - 1 ? prev + 1 : 0))}
+                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <select
+                value={selectedIdx}
+                onChange={(e) => setSelectedIdx(Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '600', color: '#1e293b', backgroundColor: '#ffffff' }}
+              >
+                {matches.map((m, i) => (
+                  <option key={i} value={i}>
+                    #{i + 1} — {t('skipPattern')} {m.skip} ({m.feedNodes[0]?.ref || m.bookName})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleExportElsCSV}
+            aria-label={t('csv') || "Download CSV"}
+            title={t('csv') || "Download CSV"}
+            style={{
+              width: '34px',
+              height: '34px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1d4ed8',
+              color: '#ffffff',
+              border: '1px solid #1e3a8a',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(29, 78, 216, 0.25)',
+              flexShrink: 0
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
         </div>
       </div>
 
