@@ -5,7 +5,7 @@ import { booksList, COLORS } from './data/constants';
 import ControlSidebar from './components/ControlSidebar';
 import ChartDisplay from './components/ChartDisplay';
 import ELSFeedView from './components/ELSFeedView';
-import { useAndroidBackExit } from './hooks/useAndroidBackExit';
+import { useAndroidBackExit } from './hooks/useAndroidBackExit.jsx';
 
 const FINAL_LETTER_MAP = {
   'ך': 'כ',
