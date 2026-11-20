@@ -41,8 +41,29 @@ function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, se
   return (
     <div className="preview-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, color: '#0056b3' }}>{t('preview')} {activePreview.name}</h3>
-        <button onClick={() => setActivePreview(null)} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>✖</button>
+        <h3 style={{ margin: 0, color: '#1e3a8a', fontSize: '17px' }}>{t('preview')} {activePreview.name}</h3>
+        <button
+          type="button"
+          onClick={() => setActivePreview(null)}
+          aria-label="Close preview"
+          style={{
+            width: '30px',
+            height: '30px',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            background: '#ffffff',
+            color: '#475569',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
 
       {activeTerms.map((term, idx) => {
@@ -50,7 +71,7 @@ function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, se
         if (verses.length === 0) return null;
         return (
           <div key={term}>
-            <h4 style={{ color: COLORS[idx % COLORS.length], direction: 'rtl' }}>
+            <h4 style={{ color: COLORS[idx % COLORS.length], direction: 'rtl', margin: '14px 0 8px 0' }}>
               {t('matchesFor')} {term} {verses.length === 100 && t('first100')}
             </h4>
             {verses.map((v, i) => (

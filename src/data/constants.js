@@ -66,4 +66,5 @@ export const numberToHebrew = (num) => {
   return hebrew;
 };
 
-export const COLORS = ['#0056b3', '#dc3545', '#28a745', '#ffc107', '#6f42c1'];
+// Cohesive Royal Blue & Warm Gold series palette
+export const COLORS = ['#1d4ed8', '#d97706', '#059669', '#7c3aed', '#dc2626'];

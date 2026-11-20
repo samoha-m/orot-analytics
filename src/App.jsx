@@ -9,6 +9,7 @@ import ChartDisplay from './components/ChartDisplay';
 import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
 import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
+import InfoModal from './components/InfoModal';
 
 const LANGUAGES = [
   { code: 'en', label: 'English', flag: 'https://flagcdn.com/us.svg' },
@@ -19,6 +20,7 @@ const LANGUAGES = [
 function App() {
   const [lang, setLang] = useState('he');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
 
@@ -73,6 +75,21 @@ function App() {
     setRawChartData([]);
     setResultTotals(null);
     setActivePreview(null);
+  };
+
+  // Logo click resets workspace back to the initial screen while preserving language
+  const handleLogoReset = () => {
+    setAppError(null);
+    setIsScopeOpen(false);
+    setIsInfoOpen(false);
+    setIsLangMenuOpen(false);
+    setIsElsMode(false);
+    setSearchMode('exact');
+    setElsSubMode('auto');
+    setSearchTerm('');
+    setActiveTerms([]);
+    clearResults();
+    setMobileView('search');
   };
 
   // Smoothly scroll to the verse preview panel whenever a bar is clicked
@@ -143,7 +160,14 @@ function App() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = (overrides = {}) => {
+    const effectiveAcronymPos = overrides.acronymPosition ?? acronymPosition;
+
+    // Dismiss mobile virtual keyboard cleanly
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     setAppError(null);
     setIsScopeOpen(false);
     clearResults();
@@ -203,7 +227,17 @@ function App() {
     setLoading(true);
     setActiveTerms(terms);
     setMobileView('results');
-    workerRef.current.postMessage({ ranges, terms, searchMode, booksList, lang, chsStr: t('chsAbbr') || 'Chs', elsSubMode, includeSpaces, acronymPosition });
+    workerRef.current.postMessage({
+      ranges,
+      terms,
+      searchMode,
+      booksList,
+      lang,
+      chsStr: t('chsAbbr') || 'Chs',
+      elsSubMode,
+      includeSpaces,
+      acronymPosition: effectiveAcronymPos
+    });
   };
 
   const formatChapterRanges = (chapters, maxCh) => {
@@ -259,9 +293,16 @@ function App() {
           alignItems: 'center'
         }}
       >
-        {/* Always Left-Aligned Logo Icon Only */}
+        {/* Always Left-Aligned Logo Icon (Click to Reset to Initial Screen) */}
         <div
           className="top-navbar-brand"
+          role="button"
+          tabIndex={0}
+          onClick={handleLogoReset}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleLogoReset();
+          }}
+          title="OROT - Reset"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -271,129 +312,159 @@ function App() {
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
         </div>
 
-        {/* Single-Flag Language Switcher Dropdown */}
-        <div ref={langMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+        {/* Right Controls: Info (i) Button + Single-Flag Language Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             type="button"
-            onClick={() => setIsLangMenuOpen(prev => !prev)}
-            aria-label="Select language"
-            aria-expanded={isLangMenuOpen}
+            onClick={() => setIsInfoOpen(true)}
+            aria-label={t('infoTitle') || "About OROT"}
+            title={t('infoTitle') || "About OROT"}
             style={{
+              width: '34px',
+              height: '33px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '7px',
-              padding: '6px 10px',
-              backgroundColor: isLangMenuOpen ? '#e7f1ff' : '#f8fafc',
-              border: isLangMenuOpen ? '1px solid #0056b3' : '1px solid #e2e8f0',
+              justifyContent: 'center',
+              backgroundColor: isInfoOpen ? '#eff6ff' : '#f8fafc',
+              border: isInfoOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
               borderRadius: '8px',
+              color: '#1e3a8a',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
           >
-            <img
-              src={currentLanguage.flag}
-              alt={currentLanguage.label}
-              style={{
-                width: '24px',
-                height: '17px',
-                objectFit: 'cover',
-                borderRadius: '3px',
-                border: '1px solid rgba(0, 0, 0, 0.15)',
-                display: 'block'
-              }}
-            />
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#475569"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                transform: isLangMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.15s ease'
-              }}
-            >
-              <polyline points="6 9 12 15 18 9" />
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
           </button>
 
-          {isLangMenuOpen && (
-            <div
+          <div ref={langMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              type="button"
+              onClick={() => setIsLangMenuOpen(prev => !prev)}
+              aria-label="Select language"
+              aria-expanded={isLangMenuOpen}
               style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                right: 0,
-                minWidth: '148px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-                boxShadow: '0 10px 25px rgba(15, 23, 42, 0.14)',
-                padding: '5px',
-                zIndex: 100,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                padding: '6px 10px',
+                backgroundColor: isLangMenuOpen ? '#eff6ff' : '#f8fafc',
+                border: isLangMenuOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
-              {LANGUAGES.map((item) => {
-                const isSelected = item.code === lang;
-                return (
-                  <button
-                    key={item.code}
-                    type="button"
-                    onClick={() => {
-                      setLang(item.code);
-                      setIsLangMenuOpen(false);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '10px',
-                      width: '100%',
-                      padding: '8px 10px',
-                      border: 'none',
-                      borderRadius: '7px',
-                      backgroundColor: isSelected ? '#e7f1ff' : 'transparent',
-                      color: isSelected ? '#0056b3' : '#1e293b',
-                      fontSize: '13px',
-                      fontWeight: isSelected ? '700' : '500',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background-color 0.12s'
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                      <img
-                        src={item.flag}
-                        alt={item.label}
-                        style={{
-                          width: '22px',
-                          height: '15px',
-                          objectFit: 'cover',
-                          borderRadius: '2px',
-                          border: '1px solid rgba(0, 0, 0, 0.15)',
-                          flexShrink: 0
-                        }}
-                      />
-                      <span>{item.label}</span>
-                    </span>
-                    {isSelected && (
-                      <span style={{ fontSize: '12px', color: '#0056b3', fontWeight: 'bold' }}>✓</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+              <img
+                src={currentLanguage.flag}
+                alt={currentLanguage.label}
+                style={{
+                  width: '24px',
+                  height: '17px',
+                  objectFit: 'cover',
+                  borderRadius: '3px',
+                  border: '1px solid rgba(0, 0, 0, 0.15)',
+                  display: 'block'
+                }}
+              />
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#475569"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transform: isLangMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease'
+                }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {isLangMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  minWidth: '148px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.14)',
+                  padding: '5px',
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px'
+                }}
+              >
+                {LANGUAGES.map((item) => {
+                  const isSelected = item.code === lang;
+                  return (
+                    <button
+                      key={item.code}
+                      type="button"
+                      onClick={() => {
+                        setLang(item.code);
+                        setIsLangMenuOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: 'none',
+                        borderRadius: '7px',
+                        backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                        color: isSelected ? '#1d4ed8' : '#1e293b',
+                        fontSize: '13px',
+                        fontWeight: isSelected ? '700' : '500',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'background-color 0.12s'
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                        <img
+                          src={item.flag}
+                          alt={item.label}
+                          style={{
+                            width: '22px',
+                            height: '15px',
+                            objectFit: 'cover',
+                            borderRadius: '2px',
+                            border: '1px solid rgba(0, 0, 0, 0.15)',
+                            flexShrink: 0
+                          }}
+                        />
+                        <span>{item.label}</span>
+                      </span>
+                      {isSelected && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <div className="app-layout">
-        {/* Shared Error Toast Banner (visible across both Search & Results views on mobile) */}
+        {/* Shared Error Toast Banner */}
         {appError && (
           <div
             style={{
@@ -402,29 +473,55 @@ function App() {
               left: '16px',
               right: '16px',
               zIndex: 35,
-              backgroundColor: '#fff3cd',
-              color: '#856404',
+              backgroundColor: '#fef3c7',
+              color: '#92400e',
               padding: '12px 16px',
               borderRadius: '10px',
-              border: '1px solid #ffeeba',
+              border: '1px solid #f59e0b',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               gap: '10px',
-              boxShadow: '0 6px 18px rgba(0,0,0,0.1)'
+              boxShadow: '0 6px 18px rgba(15, 23, 42, 0.1)'
             }}
           >
-            <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{renderErrorText(appError)}</span>
-            <button onClick={() => setAppError(null)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer', color: '#856404', flexShrink: 0 }}>✖</button>
+            <span style={{ fontWeight: '700', fontSize: '13px' }}>{renderErrorText(appError)}</span>
+            <button
+              onClick={() => setAppError(null)}
+              aria-label="Dismiss error"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px',
+                flexShrink: 0
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
         )}
 
-        {/* Full-Screen Scope Selector Overlay (covers both Desktop and Mobile views) */}
+        {/* Full-Screen Scope Selector Overlay */}
         <ScopeSelectorOverlay
           isOpen={isScopeOpen}
           onClose={handleCloseScope}
           ranges={ranges}
           setRanges={setRanges}
+          t={t}
+          lang={lang}
+        />
+
+        {/* Info Guide Modal */}
+        <InfoModal
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
           t={t}
           lang={lang}
         />

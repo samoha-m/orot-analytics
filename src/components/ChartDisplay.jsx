@@ -1,43 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { COLORS } from '../data/constants';
+import HebrewMatrixLoader from './HebrewMatrixLoader';
 
 function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMode, handleExportCSV, minComfortableWidth, renderChartData, setActivePreview, t }) {
-  if (loading) return <h3 style={{ color: '#0056b3' }}>{t('analyzingDataset')}</h3>;
+  const [hideEmpty, setHideEmpty] = useState(false);
+
+  // Auto-enable "Matches Only" when searching more than 5 books with at least one hit
+  useEffect(() => {
+    if (renderChartData && renderChartData.length > 5) {
+      const hasAnyHits = renderChartData.some((row) =>
+        activeTerms.some((term) => (row[term] || 0) > 0)
+      );
+      setHideEmpty(hasAnyHits);
+    } else {
+      setHideEmpty(false);
+    }
+  }, [resultTotals]);
+
+  if (loading) {
+    return <HebrewMatrixLoader message={t('analyzingDataset')} />;
+  }
 
   if (!resultTotals) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd', padding: '0 16px' }}>
+      <div style={{ textAlign: 'center', marginTop: '100px', color: '#94a3b8', padding: '0 16px' }}>
         <div
           dir="ltr"
           style={{
             fontSize: '20px',
-            fontWeight: '600',
+            fontWeight: '700',
             letterSpacing: '0.3px',
-            color: '#adb5bd',
+            color: '#94a3b8',
             marginBottom: '8px'
           }}
         >
           OROT - Hebrew Bible Analytics Engine
         </div>
-        <p style={{ fontSize: '14px', margin: 0, color: '#adb5bd' }}>
+        <p style={{ fontSize: '14px', margin: 0, color: '#94a3b8' }}>
           {t('useControlPanel')}
         </p>
       </div>
     );
   }
 
-  const totalBars = renderChartData.length * activeTerms.length;
+  const displayedChartData = hideEmpty
+    ? renderChartData.filter((row) => activeTerms.some((term) => (row[term] || 0) > 0))
+    : renderChartData;
+
+  const totalBars = displayedChartData.length * activeTerms.length;
   const showBarLabels = totalBars <= 20;
 
   // Ensure each book/scope column gets at least 135px so multi-word labels never collide
   const perCategoryWidth = Math.max(135, activeTerms.length * 52);
-  const effectiveMinWidth = Math.max(minComfortableWidth || 0, 80 + renderChartData.length * perCategoryWidth);
+  const effectiveMinWidth = Math.max(
+    displayedChartData.length === renderChartData.length ? (minComfortableWidth || 0) : 0,
+    80 + displayedChartData.length * perCategoryWidth
+  );
 
   const formatValue = (val) => {
     if (val === null || val === undefined) return '';
     return viewMode === 'relative' ? `${val}%` : Number(val).toLocaleString();
   };
+
+  const showingBooksText = typeof t('showingBooks') === 'function'
+    ? t('showingBooks')(displayedChartData.length, renderChartData.length)
+    : `${displayedChartData.length} of ${renderChartData.length}`;
 
   return (
     <>
@@ -101,7 +129,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
           })}
         </div>
 
-        {/* Mode Toggle & Compact Export Action */}
+        {/* Mode Toggle, Matches-Only Pill, & Compact Export Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div
             style={{
@@ -123,7 +151,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                 fontWeight: '600',
                 cursor: 'pointer',
                 backgroundColor: viewMode === 'absolute' ? '#ffffff' : 'transparent',
-                color: viewMode === 'absolute' ? '#0056b3' : '#64748b',
+                color: viewMode === 'absolute' ? '#1d4ed8' : '#64748b',
                 boxShadow: viewMode === 'absolute' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.15s'
               }}
@@ -141,7 +169,7 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
                 fontWeight: '600',
                 cursor: 'pointer',
                 backgroundColor: viewMode === 'relative' ? '#ffffff' : 'transparent',
-                color: viewMode === 'relative' ? '#0056b3' : '#64748b',
+                color: viewMode === 'relative' ? '#1d4ed8' : '#64748b',
                 boxShadow: viewMode === 'relative' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.15s'
               }}
@@ -149,6 +177,39 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
               {t('relative')}
             </button>
           </div>
+
+          {/* Hide Empty ("Matches Only") Filter Pill */}
+          {renderChartData.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setHideEmpty((prev) => !prev)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                border: hideEmpty ? '1px solid #f59e0b' : '1px solid #cbd5e1',
+                backgroundColor: hideEmpty ? '#fef3c7' : '#ffffff',
+                color: hideEmpty ? '#92400e' : '#475569',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+                transition: 'all 0.15s'
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              <span>{t('hideEmpty') || "Matches Only"}</span>
+              {hideEmpty && (
+                <span style={{ fontSize: '11px', fontWeight: '600', opacity: 0.85 }}>
+                  ({showingBooksText})
+                </span>
+              )}
+            </button>
+          )}
 
           <button
             type="button"
@@ -159,13 +220,13 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
               gap: '6px',
               padding: '7px 14px',
               borderRadius: '8px',
-              border: '1px solid #15803d',
-              backgroundColor: '#16a34a',
+              border: '1px solid #1e3a8a',
+              backgroundColor: '#1d4ed8',
               color: '#ffffff',
               fontSize: '12px',
               fontWeight: '600',
               cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(22, 163, 74, 0.2)',
+              boxShadow: '0 1px 3px rgba(29, 78, 216, 0.25)',
               transition: 'background-color 0.15s'
             }}
           >
@@ -180,107 +241,140 @@ function ChartDisplay({ resultTotals, loading, activeTerms, viewMode, setViewMod
       </div>
 
       {/* Elevated Chart Card */}
-      <div
-        className="chart-container orot-bar-chart"
-        style={{
-          width: '100%',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-          padding: '14px 16px 8px 16px',
-          boxSizing: 'border-box'
-        }}
-      >
-        {/* Subtle Helper Caption */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-            {t('clickBarHint')}
-          </span>
+      {displayedChartData.length === 0 ? (
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            padding: '44px 20px',
+            textAlign: 'center',
+            color: '#64748b'
+          }}
+        >
+          <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>
+            {t('noMatchesInScope') || "No matches found in the selected books."}
+          </p>
+          <button
+            type="button"
+            onClick={() => setHideEmpty(false)}
+            style={{
+              padding: '7px 14px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              backgroundColor: '#f8fafc',
+              color: '#1d4ed8',
+              fontSize: '12px',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            {t('showAllBooksBtn') || "Show All Selected Books"}
+          </button>
         </div>
+      ) : (
+        <div
+          className="chart-container orot-bar-chart"
+          style={{
+            width: '100%',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+            padding: '14px 16px 8px 16px',
+            boxSizing: 'border-box'
+          }}
+        >
+          {/* Subtle Helper Caption */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
+            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+              {t('clickBarHint')}
+            </span>
+          </div>
 
-        <div dir="ltr" style={{ minWidth: `${effectiveMinWidth}px`, width: '100%', height: '355px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={renderChartData}
-              margin={{ top: 22, right: 24, left: 8, bottom: 16 }}
-              barCategoryGap="24%"
-              barGap={6}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis
-                dataKey="name"
-                axisLine={{ stroke: '#cbd5e1' }}
-                tickLine={false}
-                interval={0}
-                angle={0}
-                textAnchor="middle"
-                height={42}
-                tick={{ fontSize: 12, fontWeight: 500, fill: '#334155' }}
-                dy={8}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                allowDecimals={viewMode !== 'absolute'}
-                tickFormatter={(val) => (viewMode === 'relative' ? `${val}%` : Number(val).toLocaleString())}
-                tick={{ fontSize: 12, fill: '#64748b' }}
-                width={viewMode === 'relative' ? 58 : 48}
-                domain={[
-                  0,
-                  (dataMax) => {
-                    if (!dataMax || dataMax <= 0) return viewMode === 'relative' ? 1 : 5;
-                    return viewMode === 'relative'
-                      ? Number((dataMax * 1.18).toFixed(3))
-                      : Math.ceil(dataMax * 1.15);
-                  }
-                ]}
-              />
-              <Legend
-                verticalAlign="top"
-                height={38}
-                iconType="circle"
-                iconSize={10}
-                formatter={(value) => (
-                  <span
-                    style={{
-                      color: '#1e293b',
-                      fontWeight: '600',
-                      fontSize: '13px',
-                      marginLeft: '6px',
-                      marginRight: '14px'
-                    }}
-                  >
-                    {value}
-                  </span>
-                )}
-              />
-              {activeTerms.map((term, index) => (
-                <Bar
-                  key={term}
-                  dataKey={term}
-                  fill={COLORS[index % COLORS.length]}
-                  radius={[6, 6, 0, 0]}
-                  onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
-                  cursor="pointer"
-                  maxBarSize={52}
-                >
-                  {showBarLabels && (
-                    <LabelList
-                      dataKey={term}
-                      position="top"
-                      formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
-                      style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
-                    />
+          <div dir="ltr" style={{ minWidth: `${effectiveMinWidth}px`, width: '100%', height: '355px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={displayedChartData}
+                margin={{ top: 22, right: 24, left: 8, bottom: 16 }}
+                barCategoryGap="24%"
+                barGap={6}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  tickLine={false}
+                  interval={0}
+                  angle={0}
+                  textAnchor="middle"
+                  height={42}
+                  tick={{ fontSize: 12, fontWeight: 500, fill: '#334155' }}
+                  dy={8}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={viewMode !== 'absolute'}
+                  tickFormatter={(val) => (viewMode === 'relative' ? `${val}%` : Number(val).toLocaleString())}
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  width={viewMode === 'relative' ? 58 : 48}
+                  domain={[
+                    0,
+                    (dataMax) => {
+                      if (!dataMax || dataMax <= 0) return viewMode === 'relative' ? 1 : 5;
+                      return viewMode === 'relative'
+                        ? Number((dataMax * 1.18).toFixed(3))
+                        : Math.ceil(dataMax * 1.15);
+                    }
+                  ]}
+                />
+                <Legend
+                  verticalAlign="top"
+                  height={38}
+                  iconType="circle"
+                  iconSize={10}
+                  formatter={(value) => (
+                    <span
+                      style={{
+                        color: '#1e293b',
+                        fontWeight: '600',
+                        fontSize: '13px',
+                        marginLeft: '6px',
+                        marginRight: '14px'
+                      }}
+                    >
+                      {value}
+                    </span>
                   )}
-                </Bar>
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+                />
+                {activeTerms.map((term, index) => (
+                  <Bar
+                    key={term}
+                    dataKey={term}
+                    fill={COLORS[index % COLORS.length]}
+                    radius={[6, 6, 0, 0]}
+                    onClick={(data) => setActivePreview({ name: data.name, verses: data.verses })}
+                    cursor="pointer"
+                    maxBarSize={52}
+                  >
+                    {showBarLabels && (
+                      <LabelList
+                        dataKey={term}
+                        position="top"
+                        formatter={(val) => (val && val > 0 ? formatValue(val) : '')}
+                        style={{ fill: '#334155', fontSize: '11px', fontWeight: '600' }}
+                      />
+                    )}
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import HebrewMatrixLoader from './HebrewMatrixLoader';
 
 function ELSFeedView({ elsData, loading, t }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -8,30 +9,25 @@ function ELSFeedView({ elsData, loading, t }) {
   }, [elsData]);
 
   if (loading) {
-    return (
-      <div className="empty-state">
-        <div className="spinner"></div>
-        <p>{t('autoDiscovering') || "Analyzing Equidistant Letter Sequences..."}</p>
-      </div>
-    );
+    return <HebrewMatrixLoader message={t('autoDiscovering') || "Scanning Equidistant Letter Sequences..."} />;
   }
 
   if (!elsData || !elsData.matches) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '100px', color: '#adb5bd', padding: '0 16px' }}>
+      <div style={{ textAlign: 'center', marginTop: '100px', color: '#94a3b8', padding: '0 16px' }}>
         <div
           dir="ltr"
           style={{
             fontSize: '20px',
-            fontWeight: '600',
+            fontWeight: '700',
             letterSpacing: '0.3px',
-            color: '#adb5bd',
+            color: '#94a3b8',
             marginBottom: '8px'
           }}
         >
           OROT - Hebrew Bible Analytics Engine
         </div>
-        <p style={{ fontSize: '14px', margin: 0, color: '#adb5bd' }}>
+        <p style={{ fontSize: '14px', margin: 0, color: '#94a3b8' }}>
           {t('useControlPanel') || "Use the control panel to start your search."}
         </p>
       </div>
@@ -42,9 +38,9 @@ function ELSFeedView({ elsData, loading, t }) {
 
   if (matches.length === 0) {
     return (
-      <div className="empty-state">
-        <h3>{t('noEls') || "No ELS patterns discovered"}</h3>
-        <p>{t('noLetterSkip') || "No letter skip occurrences found for this term in the selected scopes."}</p>
+      <div style={{ textAlign: 'center', marginTop: '80px', color: '#64748b', padding: '0 16px' }}>
+        <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a' }}>{t('noEls') || "No ELS patterns discovered"}</h3>
+        <p style={{ margin: 0, fontSize: '14px' }}>{t('noLetterSkip') || "No letter skip occurrences found for this term in the selected scopes."}</p>
       </div>
     );
   }
@@ -106,14 +102,15 @@ function ELSFeedView({ elsData, loading, t }) {
           <span
             key={idx}
             style={{
-              backgroundColor: '#4c1d95',
+              backgroundColor: '#1d4ed8',
               color: '#ffffff',
               fontWeight: 'bold',
               borderRadius: '4px',
-              padding: '0 4px',
+              padding: '0 5px',
               margin: '0 1px',
               display: 'inline-block',
-              boxShadow: '0 2px 4px rgba(76, 29, 149, 0.25)'
+              borderBottom: '2px solid #f59e0b',
+              boxShadow: '0 2px 5px rgba(29, 78, 216, 0.28)'
             }}
           >
             {char === ' ' ? '␣' : char}
@@ -127,26 +124,34 @@ function ELSFeedView({ elsData, loading, t }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header Card */}
-      <div style={{ backgroundColor: '#ffffff', padding: '18px 22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e9ecef', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+      <div style={{ backgroundColor: '#ffffff', padding: '16px 20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)', border: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {!activeMatch.isManual && matches.length > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button
+                type="button"
+                aria-label="Previous match"
                 onClick={() => setSelectedIdx(prev => (prev > 0 ? prev - 1 : matches.length - 1))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', backgroundColor: '#f8f9fa', cursor: 'pointer', fontWeight: 'bold', color: '#4c1d95' }}
+                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
               >
-                ◀
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </button>
               <button
+                type="button"
+                aria-label="Next match"
                 onClick={() => setSelectedIdx(prev => (prev < matches.length - 1 ? prev + 1 : 0))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', backgroundColor: '#f8f9fa', cursor: 'pointer', fontWeight: 'bold', color: '#4c1d95' }}
+                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
               >
-                ▶
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
               <select
                 value={selectedIdx}
                 onChange={(e) => setSelectedIdx(Number(e.target.value))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ced4da', fontSize: '13px', fontWeight: '600', color: '#343a40', backgroundColor: '#fff' }}
+                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '600', color: '#1e293b', backgroundColor: '#ffffff' }}
               >
                 {matches.map((m, i) => (
                   <option key={i} value={i}>
@@ -158,6 +163,7 @@ function ELSFeedView({ elsData, loading, t }) {
           )}
 
           <button
+            type="button"
             onClick={handleExportElsCSV}
             className="btn"
             style={{
@@ -167,9 +173,9 @@ function ELSFeedView({ elsData, loading, t }) {
               padding: '7px 14px',
               fontSize: '12px',
               fontWeight: '600',
-              backgroundColor: '#16a34a',
+              backgroundColor: '#1d4ed8',
               color: '#ffffff',
-              border: '1px solid #15803d',
+              border: '1px solid #1e3a8a',
               borderRadius: '8px',
               cursor: 'pointer'
             }}
@@ -184,17 +190,17 @@ function ELSFeedView({ elsData, loading, t }) {
         </div>
 
         <div style={{ textAlign: 'end' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#4c1d95' }}>
+          <h2 style={{ margin: 0, fontSize: '19px', color: '#1e3a8a' }}>
             {t('elsContextFeed')} "{activeMatch.term}"
           </h2>
-          <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '4px' }}>
+          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
             {activeMatch.isManual ? (
               <>
-                {t('start')} <strong>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong>{activeMatch.skip}</strong> | {t('jumps')} <strong>{activeMatch.jumpCount}</strong>
+                {t('start')} <strong style={{ color: '#1e293b' }}>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong style={{ color: '#d97706' }}>{activeMatch.skip}</strong> | {t('jumps')} <strong style={{ color: '#1e293b' }}>{activeMatch.jumpCount}</strong>
               </>
             ) : (
               <>
-                {t('book')} <strong>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong>{activeMatch.skip}</strong> ({selectedIdx + 1} / {matches.length})
+                {t('book')} <strong style={{ color: '#1e293b' }}>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong style={{ color: '#d97706' }}>{activeMatch.skip}</strong> ({selectedIdx + 1} / {matches.length})
               </>
             )}
           </div>
@@ -202,13 +208,13 @@ function ELSFeedView({ elsData, loading, t }) {
       </div>
 
       {/* Verse Nodes Card */}
-      <div style={{ backgroundColor: '#ffffff', padding: '22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+      <div style={{ backgroundColor: '#ffffff', padding: '22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {activeMatch.feedNodes.map((node, idx) => (
-          <div key={idx} style={{ paddingBottom: idx < activeMatch.feedNodes.length - 1 ? '16px' : '0', borderBottom: idx < activeMatch.feedNodes.length - 1 ? '1px dashed #dee2e6' : 'none' }}>
-            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#6c757d', marginBottom: '6px' }}>
+          <div key={idx} style={{ paddingBottom: idx < activeMatch.feedNodes.length - 1 ? '16px' : '0', borderBottom: idx < activeMatch.feedNodes.length - 1 ? '1px dashed #cbd5e1' : 'none' }}>
+            <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '6px' }}>
               {node.ref}
             </div>
-            <div dir="rtl" style={{ fontSize: '20px', lineHeight: '2', color: '#212529' }}>
+            <div dir="rtl" style={{ fontSize: '20px', lineHeight: '2.1', color: '#0f172a', fontFamily: '"Times New Roman", serif' }}>
               {renderHighlightedVerse(node.text, node.highlights)}
             </div>
           </div>
