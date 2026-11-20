@@ -1,5 +1,6 @@
 export const translations = {
   en: {
+    pressBackAgainToExit: "Press back again to exit",
     readyToAnalyze: "Ready to analyze Hebrew Text",
     useControlPanel: "Use the control panel to start your search.",
     processing: "Processing...",
@@ -94,6 +95,7 @@ export const translations = {
     infoTip: "Tip: Click any bar in the chart to read its matching verses below, or click the OROT emblem anytime to reset."
   },
   he: {
+    pressBackAgainToExit: "לחץ שוב על חזרה ליציאה",
     readyToAnalyze: "מוכן לניתוח טקסט עברי",
     useControlPanel: "השתמש בפאנל הניהול כדי להתחיל.",
     processing: "מעבד...",
@@ -188,6 +190,7 @@ export const translations = {
     infoTip: "טיפ: לחצו על כל עמודה בגרף לצפייה בפסוקים המלאים למטה, או על סמל OROT לחזרה למסך הפתיחה."
   },
   fa: {
+    pressBackAgainToExit: "برای خروج دوباره دکمه بازگشت را فشار دهید",
     readyToAnalyze: "آماده تحلیل متن عبری",
     useControlPanel: "از پنل کنترل برای شروع استفاده کنید.",
     processing: "در حال پردازش...",
