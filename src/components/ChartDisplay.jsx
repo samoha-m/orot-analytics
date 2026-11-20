@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LabelList } from 'recharts';
 import { COLORS } from '../data/constants';
 import HebrewMatrixLoader from './HebrewMatrixLoader';
@@ -17,6 +17,7 @@ function ChartDisplay({
   lang
 }) {
   const [hideEmpty, setHideEmpty] = useState(true);
+  const scrollContainerRef = useRef(null);
   const isRTL = lang === 'he' || lang === 'fa';
 
   // Default "Matches Only" to checked whenever multi-book results arrive
@@ -27,6 +28,18 @@ function ChartDisplay({
       setHideEmpty(false);
     }
   }, [resultTotals]);
+
+  // Always start horizontal scroll at the leftmost position (the first book)
+  useEffect(() => {
+    const resetScrollToStart = () => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollLeft = 0;
+      }
+    };
+    resetScrollToStart();
+    const frameId = requestAnimationFrame(resetScrollToStart);
+    return () => cancelAnimationFrame(frameId);
+  }, [resultTotals, hideEmpty, lang]);
 
   if (loading) {
     return <HebrewMatrixLoader message={t('analyzingDataset')} />;
@@ -329,14 +342,17 @@ function ChartDisplay({
             </span>
           </div>
 
-          {/* Horizontally Scrollable Bar Area */}
+          {/* Horizontally Scrollable Bar Area (Starts at First Book on Left, Scrolls Right) */}
           <div
+            ref={scrollContainerRef}
+            dir="ltr"
             style={{
               width: '100%',
               overflowX: 'auto',
               overflowY: 'hidden',
               padding: '10px 16px 8px 16px',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              direction: 'ltr'
             }}
           >
             <div dir="ltr" style={{ minWidth: `${effectiveMinWidth}px`, width: '100%', height: '335px' }}>
