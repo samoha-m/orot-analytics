@@ -26,7 +26,10 @@ function ControlSidebar({
   const [anchorVersesInChapter, setAnchorVersesInChapter] = useState([]);
 
   const currentGroup = ['exact', 'root', 'letter', 'acronym'].includes(searchMode) ? 'text' : searchMode;
+  const isManualSkipMode = searchMode === 'els' && elsSubMode === 'manual';
   const showComparisonScopes = !(searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor'));
+  // Every mode except Manual Explorer has the inline search button beside the text box on mobile
+  const hasInlineRunButton = !isManualSkipMode;
 
   const getInputPlaceholder = () => {
     if (searchMode === 'els') return t('placeholderEls');
@@ -158,16 +161,19 @@ function ControlSidebar({
     });
   };
 
-  const selectStyle = {
+  const singleRowSelectStyle = {
     width: '100%',
-    padding: '8px 10px',
-    fontSize: '13px',
+    minWidth: 0,
+    height: '36px',
+    padding: '6px 5px',
+    fontSize: '12px',
     fontWeight: '600',
     color: '#1e293b',
+    backgroundColor: '#ffffff',
     borderRadius: '6px',
     border: '1px solid #cbd5e1',
-    backgroundColor: '#f8fafc',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    textOverflow: 'ellipsis'
   };
 
   return (
@@ -281,52 +287,54 @@ function ControlSidebar({
           <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '14px 0' }} />
 
           {/* MANUAL EXPLORER MODE */}
-          {searchMode === 'els' && elsSubMode === 'manual' ? (
+          {isManualSkipMode ? (
             <div>
               <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
-              {/* Row 1: Full-width Book Selector */}
-              <div style={{ marginBottom: '8px' }}>
-                <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+              {/* Single-Row Book + Chapter + Verse Labels */}
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
                   {t('book') ? t('book').replace(':', '') : 'Book'}
-                </label>
-                <select
-                  value={manualConfig.bookId}
-                  onChange={e => setManualConfig({ ...manualConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
-                  style={selectStyle}
-                >
-                  {booksList.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {getBookLabel(b)}
-                    </option>
-                  ))}
-                </select>
+                </div>
+                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                  {t('chapter') || 'Chapter'}
+                </div>
+                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                  {t('verse') || 'Verse'}
+                </div>
               </div>
 
-              {/* Row 2: Chapter & Verse Side-by-Side */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
-                    {t('chapter') || 'Chapter'}
-                  </label>
+              {/* Single-Row Book + Chapter + Verse Selects */}
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                <div style={{ flex: '2.2 1 0', minWidth: 0 }}>
+                  <select
+                    value={manualConfig.bookId}
+                    onChange={e => setManualConfig({ ...manualConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
+                    style={singleRowSelectStyle}
+                  >
+                    {booksList.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {getBookLabel(b)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ flex: '1 1 0', minWidth: 0 }}>
                   <select
                     value={manualConfig.chapter}
                     onChange={e => setManualConfig({ ...manualConfig, chapter: Number(e.target.value), letterIdx: null })}
-                    style={selectStyle}
+                    style={singleRowSelectStyle}
                   >
                     {Array.from({ length: chaptersInBook }, (_, i) => i + 1).map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
-                    {t('verse') || 'Verse'}
-                  </label>
+                <div style={{ flex: '1 1 0', minWidth: 0 }}>
                   <select
                     value={manualConfig.verse}
                     onChange={e => setManualConfig({ ...manualConfig, verse: Number(e.target.value), letterIdx: null })}
-                    style={selectStyle}
+                    style={singleRowSelectStyle}
                   >
                     {versesInChapter.map(v => (
                       <option key={v} value={v}>{v}</option>
@@ -335,7 +343,7 @@ function ControlSidebar({
                 </div>
               </div>
 
-              <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto' }}>
+              <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto', color: '#0f172a' }}>
                  {verseText ? renderPickerVerse(verseText, manualConfig.letterIdx, (idx) => setManualConfig({...manualConfig, letterIdx: idx})) : "..."}
               </div>
 
@@ -351,7 +359,7 @@ function ControlSidebar({
                     value={manualConfig.skip}
                     onKeyDown={handleInputKeyDown}
                     onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#1e293b', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div style={{ flex: '0 0 76px' }}>
@@ -364,7 +372,7 @@ function ControlSidebar({
                     value={manualConfig.count}
                     onKeyDown={handleInputKeyDown}
                     onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#1e293b', boxSizing: 'border-box' }}
                   />
                 </div>
                 <label
@@ -406,8 +414,12 @@ function ControlSidebar({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: searchMode === 'els' && elsSubMode === 'anchor' ? '12px' : '0' }}>
                 <input
-                  type="search"
+                  type="text"
+                  inputMode="search"
                   enterKeyHint="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={searchTerm}
                   onKeyDown={handleInputKeyDown}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -421,7 +433,8 @@ function ControlSidebar({
                     padding: '8px 11px',
                     borderRadius: '8px',
                     border: '1px solid #cbd5e1',
-                    fontSize: '13px',
+                    fontSize: '14px',
+                    backgroundColor: '#ffffff',
                     color: '#1e293b',
                     textAlign: isRTL ? 'right' : 'left',
                     outline: 'none',
@@ -516,7 +529,7 @@ function ControlSidebar({
                   </label>
                 )}
 
-                {/* Inline Mobile Run Trigger (Always Visible Above Mobile Keyboard) */}
+                {/* Single Mobile Run Trigger (Always Visible Above Mobile Keyboard) */}
                 <button
                   type="button"
                   onClick={() => handleSearch()}
@@ -537,48 +550,50 @@ function ControlSidebar({
                 <div>
                   <label style={sectionLabelStyle}>{t('selectStartInstruction')}</label>
 
-                  {/* Row 1: Full-width Book Selector */}
-                  <div style={{ marginBottom: '8px' }}>
-                    <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
+                  {/* Single-Row Book + Chapter + Verse Labels */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                    <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
                       {t('book') ? t('book').replace(':', '') : 'Book'}
-                    </label>
-                    <select
-                      value={anchorConfig.bookId}
-                      onChange={e => setAnchorConfig({ ...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
-                      style={selectStyle}
-                    >
-                      {booksList.map(b => (
-                        <option key={b.id} value={b.id}>
-                          {getBookLabel(b)}
-                        </option>
-                      ))}
-                    </select>
+                    </div>
+                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                      {t('chapter') || 'Chapter'}
+                    </div>
+                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                      {t('verse') || 'Verse'}
+                    </div>
                   </div>
 
-                  {/* Row 2: Chapter & Verse Side-by-Side */}
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
-                        {t('chapter') || 'Chapter'}
-                      </label>
+                  {/* Single-Row Book + Chapter + Verse Selects */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+                    <div style={{ flex: '2.2 1 0', minWidth: 0 }}>
+                      <select
+                        value={anchorConfig.bookId}
+                        onChange={e => setAnchorConfig({ ...anchorConfig, bookId: e.target.value, chapter: 1, verse: 1, letterIdx: null })}
+                        style={singleRowSelectStyle}
+                      >
+                        {booksList.map(b => (
+                          <option key={b.id} value={b.id}>
+                            {getBookLabel(b)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ flex: '1 1 0', minWidth: 0 }}>
                       <select
                         value={anchorConfig.chapter}
                         onChange={e => setAnchorConfig({ ...anchorConfig, chapter: Number(e.target.value), letterIdx: null })}
-                        style={selectStyle}
+                        style={singleRowSelectStyle}
                       >
                         {Array.from({ length: anchorChaptersInBook }, (_, i) => i + 1).map(c => (
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: '700', marginBottom: '3px' }}>
-                        {t('verse') || 'Verse'}
-                      </label>
+                    <div style={{ flex: '1 1 0', minWidth: 0 }}>
                       <select
                         value={anchorConfig.verse}
                         onChange={e => setAnchorConfig({ ...anchorConfig, verse: Number(e.target.value), letterIdx: null })}
-                        style={selectStyle}
+                        style={singleRowSelectStyle}
                       >
                         {anchorVersesInChapter.map(v => (
                           <option key={v} value={v}>{v}</option>
@@ -587,7 +602,7 @@ function ControlSidebar({
                     </div>
                   </div>
 
-                  <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto' }}>
+                  <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto', color: '#0f172a' }}>
                      {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
                   </div>
                 </div>
@@ -655,9 +670,9 @@ function ControlSidebar({
         )}
       </div>
 
-      {/* Permanently Pinned Footer */}
+      {/* Desktop Footer (Hidden on Mobile Whenever Inline Search Button Is Active) */}
       <div
-        className="sidebar-footer"
+        className={`sidebar-footer ${hasInlineRunButton ? 'hide-on-mobile' : ''}`}
         style={{
           flexShrink: 0,
           marginTop: 'auto',

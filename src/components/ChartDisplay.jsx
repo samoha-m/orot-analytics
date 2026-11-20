@@ -188,7 +188,7 @@ function ChartDisplay({
             </button>
           </div>
 
-          {/* Hide Empty ("Matches Only") Filter Pill */}
+          {/* Single Matches-Only Filter Pill */}
           {renderChartData.length > 1 && (
             <button
               type="button"
@@ -264,25 +264,9 @@ function ChartDisplay({
             color: '#64748b'
           }}
         >
-          <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>
+          <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
             {t('noMatchesInScope') || "No matches found in the selected books."}
           </p>
-          <button
-            type="button"
-            onClick={() => setHideEmpty(false)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              backgroundColor: '#f8fafc',
-              color: '#1d4ed8',
-              fontSize: '12px',
-              fontWeight: '700',
-              cursor: 'pointer'
-            }}
-          >
-            {t('showAllBooksBtn') || "Show All Selected Books"}
-          </button>
         </div>
       ) : (
         <div
