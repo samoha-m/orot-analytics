@@ -48,6 +48,25 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* Custom Dark Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(8, 12, 22, 0.65);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.85);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.55);
+}
+
 /* Enforce consistent dark styling on mobile OS inputs & selects */
 input, select, textarea {
   background-color: #090e1a;
@@ -208,7 +227,7 @@ input::placeholder {
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
   z-index: 10;
 }
 
@@ -420,23 +439,23 @@ input::placeholder {
     transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
   }
 
-  [dir="ltr"] .control-sidebar.mobile-active {
+  .app-container[dir="ltr"] .control-sidebar.mobile-active {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
   }
-  [dir="ltr"] .control-sidebar.mobile-hidden {
+  .app-container[dir="ltr"] .control-sidebar.mobile-hidden {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;
   }
 
-  [dir="rtl"] .control-sidebar.mobile-active {
+  .app-container[dir="rtl"] .control-sidebar.mobile-active {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
   }
-  [dir="rtl"] .control-sidebar.mobile-hidden {
+  .app-container[dir="rtl"] .control-sidebar.mobile-hidden {
     transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
@@ -455,23 +474,23 @@ input::placeholder {
     transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
   }
 
-  [dir="ltr"] .main-canvas.mobile-active {
+  .app-container[dir="ltr"] .main-canvas.mobile-active {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
   }
-  [dir="ltr"] .main-canvas.mobile-hidden {
+  .app-container[dir="ltr"] .main-canvas.mobile-hidden {
     transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
   }
 
-  [dir="rtl"] .main-canvas.mobile-active {
+  .app-container[dir="rtl"] .main-canvas.mobile-active {
     transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
   }
-  [dir="rtl"] .main-canvas.mobile-hidden {
+  .app-container[dir="rtl"] .main-canvas.mobile-hidden {
     transform: translateX(-100%);
     opacity: 0;
     pointer-events: none;

@@ -10,6 +10,8 @@ import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
 import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
 import InfoModal from './components/InfoModal';
+import EmptyStateDashboard from './components/EmptyStateDashboard';
+import HebrewMatrixLoader from './components/HebrewMatrixLoader';
 import { useAndroidBackExit } from './hooks/useAndroidBackExit';
 
 const LANGUAGES = [
@@ -55,6 +57,8 @@ function App() {
   const [elsData, setElsData] = useState(null);
 
   const currentLanguage = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
+  const isSkipView = searchMode === 'els' || isElsMode;
+  const hasActiveResults = isSkipView ? Boolean(elsData) : Boolean(resultTotals);
 
   // Android Back Button & Two-Tap Exit Handler
   const { ExitToast } = useAndroidBackExit({
@@ -481,10 +485,12 @@ function App() {
         </div>
       </header>
 
-      <div className="app-layout">
+      {/* dir="ltr" keeps ControlSidebar permanently on the left on Desktop Web across all languages */}
+      <div className="app-layout" dir="ltr">
         {/* Shared Error Toast Banner */}
         {appError && (
           <div
+            dir={isRTL ? 'rtl' : 'ltr'}
             style={{
               position: 'absolute',
               top: '12px',
@@ -545,7 +551,27 @@ function App() {
           lang={lang}
         />
 
+        {/* Left-Pinned Search & Control Sidebar */}
+        <ControlSidebar
+          mobileView={mobileView}
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+          searchMode={searchMode} setSearchMode={setSearchMode}
+          acronymPosition={acronymPosition} setAcronymPosition={setAcronymPosition}
+          ranges={ranges} loading={loading}
+          isScopeOpen={isScopeOpen}
+          onOpenScope={handleOpenScope}
+          onCloseScope={handleCloseScope}
+          handleSearch={handleSearch}
+          t={t} lang={lang}
+          elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
+          manualConfig={manualConfig} setManualConfig={setManualConfig}
+          includeSpaces={includeSpaces} setIncludeSpaces={setIncludeSpaces}
+          anchorConfig={anchorConfig} setAnchorConfig={setAnchorConfig}
+        />
+
+        {/* Right-Side Workspace Canvas */}
         <main
+          dir={isRTL ? 'rtl' : 'ltr'}
           className={`main-canvas ${mobileView === 'results' ? 'mobile-active' : 'mobile-hidden'}`}
           style={{ position: 'relative' }}
         >
@@ -577,7 +603,11 @@ function App() {
             </button>
           </div>
 
-          {searchMode === 'els' || isElsMode ? (
+          {loading ? (
+            <HebrewMatrixLoader message={t('analyzingDataset')} />
+          ) : !hasActiveResults ? (
+            <EmptyStateDashboard t={t} lang={lang} />
+          ) : isSkipView ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
             <>
@@ -610,23 +640,6 @@ function App() {
             </>
           )}
         </main>
-
-        <ControlSidebar
-          mobileView={mobileView}
-          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-          searchMode={searchMode} setSearchMode={setSearchMode}
-          acronymPosition={acronymPosition} setAcronymPosition={setAcronymPosition}
-          ranges={ranges} loading={loading}
-          isScopeOpen={isScopeOpen}
-          onOpenScope={handleOpenScope}
-          onCloseScope={handleCloseScope}
-          handleSearch={handleSearch}
-          t={t} lang={lang}
-          elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
-          manualConfig={manualConfig} setManualConfig={setManualConfig}
-          includeSpaces={includeSpaces} setIncludeSpaces={setIncludeSpaces}
-          anchorConfig={anchorConfig} setAnchorConfig={setAnchorConfig}
-        />
       </div>
 
       {/* Two-Tap Android Exit Toast */}

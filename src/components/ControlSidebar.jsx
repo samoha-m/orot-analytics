@@ -184,6 +184,7 @@ function ControlSidebar({
 
   return (
     <aside
+      dir={isRTL ? 'rtl' : 'ltr'}
       className={`control-sidebar ${mobileView === 'search' ? 'mobile-active' : 'mobile-hidden'}`}
       style={{
         display: 'flex',
@@ -191,8 +192,8 @@ function ControlSidebar({
         height: '100%',
         maxHeight: '100%',
         overflow: 'hidden',
-        borderLeft: lang === 'en' ? '1px solid rgba(30, 41, 59, 0.95)' : 'none',
-        borderRight: lang !== 'en' ? '1px solid rgba(30, 41, 59, 0.95)' : 'none'
+        borderRight: '1px solid rgba(30, 41, 59, 0.95)',
+        borderLeft: 'none'
       }}
     >
       {/* Scrollable Upper Container */}
