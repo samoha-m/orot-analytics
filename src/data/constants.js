@@ -41,9 +41,9 @@ export const booksList = [
 ];
 
 export const gematriaMap = {
-  'א':1, 'ב':2, 'ג':3, 'ד':4, 'ה':5, 'ו':6, 'ז':7, 'ח':8, 'ט':9, 'י':10,
-  'כ':20, 'ך':20, 'ל':30, 'מ':40, 'ם':40, 'נ':50, 'ן':50, 'ס':60, 'ע':70,
-  'פ':80, 'ף':80, 'צ':90, 'ץ':90, 'ק':100, 'ר':200, 'ש':300, 'ת':400
+  'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9, 'י': 10,
+  'כ': 20, 'ך': 20, 'ל': 30, 'מ': 40, 'ם': 40, 'נ': 50, 'ן': 50, 'ס': 60, 'ע': 70,
+  'פ': 80, 'ף': 80, 'צ': 90, 'ץ': 90, 'ק': 100, 'ר': 200, 'ש': 300, 'ת': 400
 };
 
 export const calculateGematria = (word) => {
@@ -66,5 +66,14 @@ export const numberToHebrew = (num) => {
   return hebrew;
 };
 
-// Cohesive Royal Blue & Warm Gold series palette
-export const COLORS = ['#1d4ed8', '#d97706', '#059669', '#7c3aed', '#dc2626'];
+// High-contrast luminous palette tuned for Dark Obsidian surfaces
+export const COLORS = [
+  '#38bdf8', // Luminous Sky
+  '#fbbf24', // Warm Gold
+  '#34d399', // Emerald Mint
+  '#fb7185', // Coral Rose
+  '#a78bfa', // Electric Violet
+  '#fb923c', // Bright Tangerine
+  '#2dd4bf', // Aqua Teal
+  '#a3e635'  // Crisp Lime
+];

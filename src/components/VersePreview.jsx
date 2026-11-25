@@ -41,18 +41,20 @@ function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, se
   return (
     <div className="preview-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, color: '#1e3a8a', fontSize: '17px' }}>{t('preview')} {activePreview.name}</h3>
+        <h3 style={{ margin: 0, color: '#7dd3fc', fontSize: '17px', fontWeight: '700' }}>
+          {t('preview')} {activePreview.name}
+        </h3>
         <button
           type="button"
           onClick={() => setActivePreview(null)}
           aria-label="Close preview"
           style={{
-            width: '30px',
-            height: '30px',
+            width: '32px',
+            height: '32px',
             borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            background: '#ffffff',
-            color: '#475569',
+            border: '1px solid rgba(51, 65, 85, 0.85)',
+            background: '#0f172a',
+            color: '#94a3b8',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -69,14 +71,15 @@ function VersePreview({ activePreview, setActivePreview, activeTerms, COLORS, se
       {activeTerms.map((term, idx) => {
         const verses = activePreview.verses[term] || [];
         if (verses.length === 0) return null;
+        const termColor = COLORS[idx % COLORS.length];
         return (
           <div key={term}>
-            <h4 style={{ color: COLORS[idx % COLORS.length], direction: 'rtl', margin: '14px 0 8px 0' }}>
+            <h4 style={{ color: termColor, direction: 'rtl', margin: '14px 0 8px 0', fontSize: '15px', fontWeight: '700' }}>
               {t('matchesFor')} {term} {verses.length === 100 && t('first100')}
             </h4>
             {verses.map((v, i) => (
-              <div key={i} className="verse-item" style={{ borderRightColor: COLORS[idx % COLORS.length] }}>
-                <div className="verse-ref">{v.ref}</div>
+              <div key={i} className="verse-item" style={{ borderRightColor: termColor }}>
+                <div className="verse-ref" style={{ color: termColor }}>{v.ref}</div>
                 <div
                   className="verse-text"
                   dangerouslySetInnerHTML={renderHighlightedText(v.text, v.highlights, searchMode, acronymPosition)}

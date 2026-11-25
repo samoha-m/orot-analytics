@@ -308,7 +308,7 @@ function App() {
           alignItems: 'center'
         }}
       >
-        {/* Always Left-Aligned Logo Icon (Click to Reset to Initial Screen) */}
+        {/* Left-Aligned Logo Icon Only (Click to Reset to Initial Screen) */}
         <div
           className="top-navbar-brand"
           role="button"
@@ -328,27 +328,28 @@ function App() {
         </div>
 
         {/* Right Controls: Info (i) Button + Single-Flag Language Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             type="button"
             onClick={() => setIsInfoOpen(true)}
             aria-label={t('infoTitle') || "About OROT"}
             title={t('infoTitle') || "About OROT"}
+            className="hover-lift"
             style={{
               width: '34px',
-              height: '33px',
+              height: '34px',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: isInfoOpen ? '#eff6ff' : '#f8fafc',
-              border: isInfoOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
-              borderRadius: '8px',
-              color: '#1e3a8a',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
+              backgroundColor: isInfoOpen ? 'rgba(56, 189, 248, 0.16)' : 'rgba(15, 23, 42, 0.75)',
+              border: isInfoOpen ? '1px solid rgba(56, 189, 248, 0.75)' : '1px solid rgba(51, 65, 85, 0.85)',
+              borderRadius: '999px',
+              color: isInfoOpen ? '#7dd3fc' : '#94a3b8',
+              boxShadow: isInfoOpen ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+              cursor: 'pointer'
             }}
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -361,27 +362,29 @@ function App() {
               onClick={() => setIsLangMenuOpen(prev => !prev)}
               aria-label="Select language"
               aria-expanded={isLangMenuOpen}
+              className="hover-lift"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '7px',
-                padding: '6px 10px',
-                backgroundColor: isLangMenuOpen ? '#eff6ff' : '#f8fafc',
-                border: isLangMenuOpen ? '1px solid #1d4ed8' : '1px solid #e2e8f0',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                height: '34px',
+                padding: '0 10px',
+                backgroundColor: isLangMenuOpen ? 'rgba(56, 189, 248, 0.16)' : 'rgba(15, 23, 42, 0.75)',
+                border: isLangMenuOpen ? '1px solid rgba(56, 189, 248, 0.75)' : '1px solid rgba(51, 65, 85, 0.85)',
+                borderRadius: '999px',
+                boxShadow: isLangMenuOpen ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+                cursor: 'pointer'
               }}
             >
               <img
                 src={currentLanguage.flag}
                 alt={currentLanguage.label}
                 style={{
-                  width: '24px',
-                  height: '17px',
+                  width: '22px',
+                  height: '15px',
                   objectFit: 'cover',
                   borderRadius: '3px',
-                  border: '1px solid rgba(0, 0, 0, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.18)',
                   display: 'block'
                 }}
               />
@@ -390,8 +393,8 @@ function App() {
                 height="12"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#475569"
-                strokeWidth="2.5"
+                stroke="#94a3b8"
+                strokeWidth="2.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
@@ -407,13 +410,13 @@ function App() {
               <div
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 6px)',
+                  top: 'calc(100% + 8px)',
                   right: 0,
-                  minWidth: '148px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.14)',
+                  minWidth: '150px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  borderRadius: '12px',
+                  boxShadow: '0 14px 32px rgba(0, 0, 0, 0.65)',
                   padding: '5px',
                   zIndex: 100,
                   display: 'flex',
@@ -439,9 +442,9 @@ function App() {
                         width: '100%',
                         padding: '8px 10px',
                         border: 'none',
-                        borderRadius: '7px',
-                        backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-                        color: isSelected ? '#1d4ed8' : '#1e293b',
+                        borderRadius: '8px',
+                        backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.16)' : 'transparent',
+                        color: isSelected ? '#7dd3fc' : '#cbd5e1',
                         fontSize: '13px',
                         fontWeight: isSelected ? '700' : '500',
                         cursor: 'pointer',
@@ -458,14 +461,14 @@ function App() {
                             height: '15px',
                             objectFit: 'cover',
                             borderRadius: '2px',
-                            border: '1px solid rgba(0, 0, 0, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.18)',
                             flexShrink: 0
                           }}
                         />
                         <span>{item.label}</span>
                       </span>
                       {isSelected && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}
@@ -488,16 +491,17 @@ function App() {
               left: '16px',
               right: '16px',
               zIndex: 35,
-              backgroundColor: '#fef3c7',
-              color: '#92400e',
+              backgroundColor: 'rgba(120, 53, 15, 0.94)',
+              backdropFilter: 'blur(8px)',
+              color: '#fef3c7',
               padding: '12px 16px',
               borderRadius: '10px',
-              border: '1px solid #f59e0b',
+              border: '1px solid rgba(251, 191, 36, 0.65)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               gap: '10px',
-              boxShadow: '0 6px 18px rgba(15, 23, 42, 0.1)'
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)'
             }}
           >
             <span style={{ fontWeight: '700', fontSize: '13px' }}>{renderErrorText(appError)}</span>
@@ -508,7 +512,7 @@ function App() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: '#92400e',
+                color: '#fde68a',
                 display: 'flex',
                 alignItems: 'center',
                 padding: '2px',

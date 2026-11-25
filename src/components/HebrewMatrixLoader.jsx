@@ -59,9 +59,9 @@ function HebrewMatrixLoader({ message }) {
           gap: '6px',
           padding: '14px',
           borderRadius: '16px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 10px 28px rgba(30, 58, 138, 0.08)',
+          backgroundColor: '#0d1424',
+          border: '1px solid rgba(56, 189, 248, 0.3)',
+          boxShadow: '0 14px 36px rgba(0, 0, 0, 0.55)',
           marginBottom: '18px'
         }}
       >
@@ -82,20 +82,25 @@ function HebrewMatrixLoader({ message }) {
                 fontWeight: isGold || isBlue ? '800' : '500',
                 fontFamily: '"Times New Roman", serif',
                 backgroundColor: isGold
-                  ? '#fef3c7'
+                  ? 'rgba(251, 191, 36, 0.18)'
                   : isBlue
-                  ? '#1d4ed8'
-                  : '#f8fafc',
+                  ? '#0284c7'
+                  : '#090e1a',
                 color: isGold
-                  ? '#b45309'
+                  ? '#fde68a'
                   : isBlue
                   ? '#ffffff'
-                  : '#94a3b8',
+                  : '#64748b',
                 border: isGold
-                  ? '1px solid #f59e0b'
+                  ? '1px solid rgba(251, 191, 36, 0.65)'
                   : isBlue
-                  ? '1px solid #1e3a8a'
-                  : '1px solid #f1f5f9',
+                  ? '1px solid #38bdf8'
+                  : '1px solid rgba(30, 41, 59, 0.85)',
+                boxShadow: isBlue
+                  ? '0 0 12px rgba(56, 189, 248, 0.45)'
+                  : isGold
+                  ? '0 0 10px rgba(251, 191, 36, 0.25)'
+                  : 'none',
                 transform: isGold || isBlue ? 'scale(1.06)' : 'scale(1)',
                 transition: 'all 0.22s ease'
               }}
@@ -110,7 +115,7 @@ function HebrewMatrixLoader({ message }) {
         style={{
           fontSize: '14px',
           fontWeight: '600',
-          color: '#1e3a8a',
+          color: '#7dd3fc',
           letterSpacing: '0.2px'
         }}
       >

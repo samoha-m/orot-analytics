@@ -15,11 +15,19 @@ function ControlSidebar({
   anchorConfig, setAnchorConfig
 }) {
   const isRTL = lang === 'he' || lang === 'fa';
-  const sectionLabelStyle = { display: 'block', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b', fontWeight: '700', marginBottom: '8px' };
+  const sectionLabelStyle = {
+    display: 'block',
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: '#94a3b8',
+    fontWeight: '700',
+    marginBottom: '8px'
+  };
 
   const [manualData, setManualData] = useState([]);
-  const [verseText, setVerseText] = useState("");
-  const [anchorVerseText, setAnchorVerseText] = useState("");
+  const [verseText, setVerseText] = useState('');
+  const [anchorVerseText, setAnchorVerseText] = useState('');
   const [chaptersInBook, setChaptersInBook] = useState(50);
   const [anchorChaptersInBook, setAnchorChaptersInBook] = useState(50);
   const [versesInChapter, setVersesInChapter] = useState([]);
@@ -28,7 +36,6 @@ function ControlSidebar({
   const currentGroup = ['exact', 'root', 'letter', 'acronym'].includes(searchMode) ? 'text' : searchMode;
   const isManualSkipMode = searchMode === 'els' && elsSubMode === 'manual';
   const showComparisonScopes = !(searchMode === 'els' && (elsSubMode === 'manual' || elsSubMode === 'anchor'));
-  // Every mode except Manual Explorer has the inline search button beside the text box on mobile
   const hasInlineRunButton = !isManualSkipMode;
 
   const getInputPlaceholder = () => {
@@ -66,7 +73,6 @@ function ControlSidebar({
     return typeof fn === 'function' ? fn(activeRanges.length, totalChs) : `${activeRanges.length} Books · ${totalChs} Chs`;
   };
 
-  // Auto-refresh results immediately when toggling Acronym First / Last
   const handleAcronymToggle = (nextPos) => {
     if (nextPos === acronymPosition) return;
     setAcronymPosition(nextPos);
@@ -105,7 +111,7 @@ function ControlSidebar({
       const words = manualData.filter(d => d.c === manualConfig.chapter && d.v === manualConfig.verse).map(d => d.w);
       setVerseText(words.join(' '));
       if (words.length === 0 && vList.length > 0) {
-        setManualConfig({...manualConfig, verse: vList[0], letterIdx: null});
+        setManualConfig({ ...manualConfig, verse: vList[0], letterIdx: null });
       }
     }
   }, [manualConfig.chapter, manualConfig.verse, manualData, manualConfig, setManualConfig]);
@@ -124,7 +130,7 @@ function ControlSidebar({
           const words = data.filter(d => d.c === anchorConfig.chapter && d.v === anchorConfig.verse).map(d => d.w);
           setAnchorVerseText(words.join(' '));
           if (words.length === 0 && vList.length > 0) {
-            setAnchorConfig({...anchorConfig, verse: vList[0], letterIdx: null});
+            setAnchorConfig({ ...anchorConfig, verse: vList[0], letterIdx: null });
           }
         });
     }
@@ -133,31 +139,31 @@ function ControlSidebar({
   const renderPickerVerse = (text, currentIdx, onSelect) => {
     let letterCounter = 0;
     return text.split('').map((char, idx) => {
-        if (/[\u0590-\u05FF]/.test(char)) {
-            const currentLetterIdx = letterCounter++;
-            const isSelected = currentIdx === currentLetterIdx;
-            return (
-                <span
-                    key={idx}
-                    onClick={() => onSelect(currentLetterIdx)}
-                    style={{
-                        cursor: 'pointer',
-                        backgroundColor: isSelected ? '#1d4ed8' : 'transparent',
-                        color: isSelected ? '#ffffff' : 'inherit',
-                        borderRadius: '4px',
-                        padding: '0 3px',
-                        display: 'inline-block',
-                        transform: isSelected ? 'scale(1.18)' : 'none',
-                        fontWeight: isSelected ? '700' : 'normal',
-                        transition: 'all 0.1s'
-                    }}
-                >
-                    {char}
-                </span>
-            );
-        } else {
-            return <span key={idx}>{char}</span>;
-        }
+      if (/[\u0590-\u05FF]/.test(char)) {
+        const currentLetterIdx = letterCounter++;
+        const isSelected = currentIdx === currentLetterIdx;
+        return (
+          <span
+            key={idx}
+            onClick={() => onSelect(currentLetterIdx)}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: isSelected ? '#0284c7' : 'transparent',
+              color: isSelected ? '#ffffff' : 'inherit',
+              boxShadow: isSelected ? '0 0 10px rgba(56, 189, 248, 0.65)' : 'none',
+              borderRadius: '5px',
+              padding: '0 4px',
+              display: 'inline-block',
+              transform: isSelected ? 'scale(1.18)' : 'none',
+              fontWeight: isSelected ? '700' : 'normal',
+              transition: 'all 0.1s'
+            }}
+          >
+            {char}
+          </span>
+        );
+      }
+      return <span key={idx}>{char}</span>;
     });
   };
 
@@ -168,10 +174,10 @@ function ControlSidebar({
     padding: '6px 5px',
     fontSize: '12px',
     fontWeight: '600',
-    color: '#1e293b',
-    backgroundColor: '#ffffff',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
+    color: '#f1f5f9',
+    backgroundColor: '#090e1a',
+    borderRadius: '8px',
+    border: '1px solid rgba(51, 65, 85, 0.85)',
     boxSizing: 'border-box',
     textOverflow: 'ellipsis'
   };
@@ -185,106 +191,146 @@ function ControlSidebar({
         height: '100%',
         maxHeight: '100%',
         overflow: 'hidden',
-        borderLeft: lang === 'en' ? '1px solid #e2e8f0' : 'none',
-        borderRight: lang !== 'en' ? '1px solid #e2e8f0' : 'none'
+        borderLeft: lang === 'en' ? '1px solid rgba(30, 41, 59, 0.95)' : 'none',
+        borderRight: lang !== 'en' ? '1px solid rgba(30, 41, 59, 0.95)' : 'none'
       }}
     >
       {/* Scrollable Upper Container */}
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ backgroundColor: '#ffffff', padding: '16px 20px 10px 20px' }}>
-          {/* Primary Mode Switcher */}
-          <div style={{ display: 'flex', borderRadius: '8px', border: '1px solid #cbd5e1', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
-            <button
-              type="button"
-              onClick={() => { if (currentGroup !== 'text') setSearchMode('exact'); }}
-              style={{ flex: 1, border: 'none', padding: '9px 2px', fontSize: '12px', fontWeight: currentGroup === 'text' ? '700' : '500', backgroundColor: currentGroup === 'text' ? '#1d4ed8' : 'transparent', color: currentGroup === 'text' ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s', borderRight: lang === 'en' ? '1px solid #cbd5e1' : 'none', borderLeft: lang !== 'en' ? '1px solid #cbd5e1' : 'none' }}
-            >
-              {t('textSearch') || "Text Search"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSearchMode('gematria')}
-              style={{ flex: 1, border: 'none', padding: '9px 2px', fontSize: '12px', fontWeight: currentGroup === 'gematria' ? '700' : '500', backgroundColor: currentGroup === 'gematria' ? '#1d4ed8' : 'transparent', color: currentGroup === 'gematria' ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s', borderRight: lang === 'en' ? '1px solid #cbd5e1' : 'none', borderLeft: lang !== 'en' ? '1px solid #cbd5e1' : 'none' }}
-            >
-              {t('gematria') || "Gematria"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSearchMode('els')}
-              style={{ flex: 1, border: 'none', padding: '9px 2px', fontSize: '12px', fontWeight: currentGroup === 'els' ? '700' : '500', backgroundColor: currentGroup === 'els' ? '#1d4ed8' : 'transparent', color: currentGroup === 'els' ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
-            >
-              {t('els') || "Skip"}
-            </button>
+        <div style={{ padding: '16px 18px 10px 18px' }}>
+          {/* Primary Engine Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              borderRadius: '12px',
+              border: '1px solid rgba(30, 41, 59, 0.95)',
+              padding: '4px',
+              gap: '4px',
+              backgroundColor: '#080d18'
+            }}
+          >
+            {[
+              { id: 'text', label: t('textSearch') || 'Text Search', active: currentGroup === 'text', onClick: () => { if (currentGroup !== 'text') setSearchMode('exact'); } },
+              { id: 'gematria', label: t('gematria') || 'Gematria', active: currentGroup === 'gematria', onClick: () => setSearchMode('gematria') },
+              { id: 'els', label: t('els') || 'Skip', active: currentGroup === 'els', onClick: () => setSearchMode('els') }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={tab.onClick}
+                style={{
+                  flex: 1,
+                  border: tab.active ? '1px solid rgba(56, 189, 248, 0.65)' : '1px solid transparent',
+                  borderRadius: '8px',
+                  padding: '8px 4px',
+                  fontSize: '12px',
+                  fontWeight: tab.active ? '700' : '500',
+                  background: tab.active ? 'linear-gradient(90deg, #2563eb 0%, #4f46e5 100%)' : 'transparent',
+                  color: tab.active ? '#ffffff' : '#94a3b8',
+                  boxShadow: tab.active ? '0 0 14px -1px rgba(56, 189, 248, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.2)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* 4-Pill Text Sub-Mode Switcher */}
           {currentGroup === 'text' && (
-            <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '4px', gap: '3px', border: '1px solid #e2e8f0' }}>
+            <div
+              style={{
+                display: 'flex',
+                marginTop: '12px',
+                backgroundColor: 'rgba(8, 13, 24, 0.92)',
+                borderRadius: '11px',
+                padding: '4px',
+                gap: '3px',
+                border: '1px solid rgba(30, 41, 59, 0.9)'
+              }}
+            >
               {[
-                { val: 'exact', lbl: t('exact') || "Exact" },
-                { val: 'root', lbl: t('root') || "Root" },
-                { val: 'letter', lbl: t('letter') || "Letter" },
-                { val: 'acronym', lbl: t('acronym') || "Acronym" }
-              ].map(m => (
-                 <button
-                   type="button"
-                   key={m.val}
-                   onClick={() => setSearchMode(m.val)}
-                   style={{
-                     flex: m.val === 'acronym' ? 1.25 : 1,
-                     border: 'none',
-                     background: searchMode === m.val ? '#ffffff' : 'transparent',
-                     borderRadius: '6px',
-                     padding: '6px 3px',
-                     fontSize: '11px',
-                     fontWeight: searchMode === m.val ? '700' : '500',
-                     color: searchMode === m.val ? '#1d4ed8' : '#475569',
-                     boxShadow: searchMode === m.val ? '0 1px 3px rgba(15, 23, 42, 0.08)' : 'none',
-                     cursor: 'pointer',
-                     whiteSpace: 'nowrap',
-                     transition: 'all 0.15s'
-                   }}
-                 >
-                   {m.lbl}
-                 </button>
-              ))}
+                { val: 'exact', lbl: t('exact') || 'Exact' },
+                { val: 'root', lbl: t('root') || 'Root' },
+                { val: 'letter', lbl: t('letter') || 'Letter' },
+                { val: 'acronym', lbl: t('acronym') || 'Acronym' }
+              ].map((m) => {
+                const isActive = searchMode === m.val;
+                return (
+                  <button
+                    type="button"
+                    key={m.val}
+                    onClick={() => setSearchMode(m.val)}
+                    style={{
+                      flex: m.val === 'acronym' ? 1.25 : 1,
+                      border: isActive ? '1px solid rgba(56, 189, 248, 0.65)' : '1px solid transparent',
+                      background: isActive ? '#162238' : 'transparent',
+                      borderRadius: '8px',
+                      padding: '6px 3px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? '700' : '500',
+                      color: isActive ? '#7dd3fc' : '#94a3b8',
+                      boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.28)' : 'none',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.18s ease'
+                    }}
+                  >
+                    {m.lbl}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {/* 3-Way Skip Sub-Mode Switcher */}
           {currentGroup === 'els' && (
-            <div style={{ display: 'flex', marginTop: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '4px', gap: '3px', border: '1px solid #e2e8f0' }}>
-               {[
-                 { val: 'auto', lbl: t('autoDiscover') || "Auto-Discover" },
-                 { val: 'anchor', lbl: t('anchoredSearch') || "Anchored" },
-                 { val: 'manual', lbl: t('manualExplorer') || "Manual Explorer" }
-               ].map(sub => (
-                 <button
-                   type="button"
-                   key={sub.val}
-                   onClick={() => setElsSubMode(sub.val)}
-                   style={{
-                     flex: 1,
-                     border: 'none',
-                     background: elsSubMode === sub.val ? '#ffffff' : 'transparent',
-                     borderRadius: '6px',
-                     padding: '6px 4px',
-                     fontSize: '11px',
-                     fontWeight: elsSubMode === sub.val ? '700' : '500',
-                     color: elsSubMode === sub.val ? '#1d4ed8' : '#475569',
-                     boxShadow: elsSubMode === sub.val ? '0 1px 3px rgba(15, 23, 42, 0.08)' : 'none',
-                     cursor: 'pointer',
-                     whiteSpace: 'nowrap',
-                     transition: 'all 0.15s'
-                   }}
-                 >
-                   {sub.lbl}
-                 </button>
-               ))}
+            <div
+              style={{
+                display: 'flex',
+                marginTop: '12px',
+                backgroundColor: 'rgba(8, 13, 24, 0.92)',
+                borderRadius: '11px',
+                padding: '4px',
+                gap: '3px',
+                border: '1px solid rgba(30, 41, 59, 0.9)'
+              }}
+            >
+              {[
+                { val: 'auto', lbl: t('autoDiscover') || 'Auto-Discover' },
+                { val: 'anchor', lbl: t('anchoredSearch') || 'Anchored' },
+                { val: 'manual', lbl: t('manualExplorer') || 'Manual Explorer' }
+              ].map((sub) => {
+                const isActive = elsSubMode === sub.val;
+                return (
+                  <button
+                    type="button"
+                    key={sub.val}
+                    onClick={() => setElsSubMode(sub.val)}
+                    style={{
+                      flex: 1,
+                      border: isActive ? '1px solid rgba(56, 189, 248, 0.65)' : '1px solid transparent',
+                      background: isActive ? '#162238' : 'transparent',
+                      borderRadius: '8px',
+                      padding: '6px 4px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? '700' : '500',
+                      color: isActive ? '#7dd3fc' : '#94a3b8',
+                      boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.28)' : 'none',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.18s ease'
+                    }}
+                  >
+                    {sub.lbl}
+                  </button>
+                );
+              })}
             </div>
           )}
 
-          <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '14px 0' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid rgba(30, 41, 59, 0.9)', margin: '14px 0' }} />
 
           {/* MANUAL EXPLORER MODE */}
           {isManualSkipMode ? (
@@ -293,13 +339,13 @@ function ControlSidebar({
 
               {/* Single-Row Book + Chapter + Verse Labels */}
               <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
-                <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                   {t('book') ? t('book').replace(':', '') : 'Book'}
                 </div>
-                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                   {t('chapter') || 'Chapter'}
                 </div>
-                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                   {t('verse') || 'Verse'}
                 </div>
               </div>
@@ -343,36 +389,49 @@ function ControlSidebar({
                 </div>
               </div>
 
-              <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto', color: '#0f172a' }}>
-                 {verseText ? renderPickerVerse(verseText, manualConfig.letterIdx, (idx) => setManualConfig({...manualConfig, letterIdx: idx})) : "..."}
+              <div
+                style={{
+                  direction: 'rtl',
+                  fontSize: '18px',
+                  lineHeight: '1.85',
+                  padding: '10px 12px',
+                  border: '1px solid rgba(51, 65, 85, 0.85)',
+                  borderRadius: '10px',
+                  backgroundColor: '#090e1a',
+                  maxHeight: '120px',
+                  overflowY: 'auto',
+                  color: '#f1f5f9'
+                }}
+              >
+                {verseText ? renderPickerVerse(verseText, manualConfig.letterIdx, (idx) => setManualConfig({ ...manualConfig, letterIdx: idx })) : '...'}
               </div>
 
               {/* Single Compact Row: Jump Size + Jump Count + Include Spaces */}
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '12px' }}>
                 <div style={{ flex: '0 0 76px' }}>
-                  <label style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#475569', marginBottom: '4px', whiteSpace: 'nowrap' }}>
-                    {t('jumpSize') || "Jump Size"}
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#94a3b8', marginBottom: '4px', whiteSpace: 'nowrap' }}>
+                    {t('jumpSize') || 'Jump Size'}
                   </label>
                   <input
                     type="number"
                     enterKeyHint="search"
                     value={manualConfig.skip}
                     onKeyDown={handleInputKeyDown}
-                    onChange={e => setManualConfig({...manualConfig, skip: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#1e293b', boxSizing: 'border-box' }}
+                    onChange={e => setManualConfig({ ...manualConfig, skip: Number(e.target.value) })}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '8px', border: '1px solid rgba(51, 65, 85, 0.85)', fontSize: '13px', backgroundColor: '#090e1a', color: '#f1f5f9', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div style={{ flex: '0 0 76px' }}>
-                  <label style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#475569', marginBottom: '4px', whiteSpace: 'nowrap' }}>
-                    {t('jumpCount') || "Jump Count"}
+                  <label style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#94a3b8', marginBottom: '4px', whiteSpace: 'nowrap' }}>
+                    {t('jumpCount') || 'Jump Count'}
                   </label>
                   <input
                     type="number"
                     enterKeyHint="search"
                     value={manualConfig.count}
                     onKeyDown={handleInputKeyDown}
-                    onChange={e => setManualConfig({...manualConfig, count: Number(e.target.value)})}
-                    style={{ width: '100%', padding: '7px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#ffffff', color: '#1e293b', boxSizing: 'border-box' }}
+                    onChange={e => setManualConfig({ ...manualConfig, count: Number(e.target.value) })}
+                    style={{ width: '100%', padding: '7px 6px', borderRadius: '8px', border: '1px solid rgba(51, 65, 85, 0.85)', fontSize: '13px', backgroundColor: '#090e1a', color: '#f1f5f9', boxSizing: 'border-box' }}
                   />
                 </div>
                 <label
@@ -386,13 +445,13 @@ function ControlSidebar({
                     justifyContent: 'center',
                     gap: '5px',
                     fontSize: '11px',
-                    color: '#334155',
+                    color: '#cbd5e1',
                     fontWeight: '600',
                     cursor: 'pointer',
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: '#090e1a',
                     padding: '7px 6px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(51, 65, 85, 0.85)',
                     height: '34px',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap'
@@ -403,7 +462,7 @@ function ControlSidebar({
                     id="spacesManual"
                     checked={includeSpaces}
                     onChange={e => setIncludeSpaces(e.target.checked)}
-                    style={{ cursor: 'pointer', margin: 0, accentColor: '#1d4ed8' }}
+                    style={{ cursor: 'pointer', margin: 0, accentColor: '#38bdf8' }}
                   />
                   <span>{t('includeSpacesShort') || t('includeSpaces')}</span>
                 </label>
@@ -429,30 +488,30 @@ function ControlSidebar({
                   style={{
                     flex: 1,
                     minWidth: 0,
-                    height: '38px',
-                    padding: '8px 11px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    height: '40px',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(51, 65, 85, 0.9)',
                     fontSize: '14px',
-                    backgroundColor: '#ffffff',
-                    color: '#1e293b',
+                    backgroundColor: '#090e1a',
+                    color: '#f1f5f9',
                     textAlign: isRTL ? 'right' : 'left',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
                 />
 
-                {/* Inline First / Last Toggle for Acronym Mode (Auto-Refreshes Results) */}
+                {/* Inline First / Last Toggle for Acronym Mode */}
                 {searchMode === 'acronym' && (
                   <div
                     style={{
                       display: 'inline-flex',
-                      backgroundColor: '#f1f5f9',
-                      borderRadius: '8px',
+                      backgroundColor: '#080d18',
+                      borderRadius: '10px',
                       padding: '3px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid rgba(51, 65, 85, 0.85)',
                       flexShrink: 0,
-                      height: '38px',
+                      height: '40px',
                       alignItems: 'center'
                     }}
                   >
@@ -460,39 +519,37 @@ function ControlSidebar({
                       type="button"
                       onClick={() => handleAcronymToggle('first')}
                       style={{
-                        border: 'none',
-                        borderRadius: '5px',
+                        border: acronymPosition === 'first' ? '1px solid rgba(56, 189, 248, 0.55)' : '1px solid transparent',
+                        borderRadius: '7px',
                         padding: '5px 8px',
                         fontSize: '11px',
                         fontWeight: acronymPosition === 'first' ? '700' : '500',
-                        backgroundColor: acronymPosition === 'first' ? '#ffffff' : 'transparent',
-                        color: acronymPosition === 'first' ? '#1d4ed8' : '#475569',
-                        boxShadow: acronymPosition === 'first' ? '0 1px 2px rgba(15, 23, 42, 0.08)' : 'none',
+                        backgroundColor: acronymPosition === 'first' ? '#162238' : 'transparent',
+                        color: acronymPosition === 'first' ? '#7dd3fc' : '#94a3b8',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         transition: 'all 0.15s'
                       }}
                     >
-                      {t('acronymFirst') || "First"}
+                      {t('acronymFirst') || 'First'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleAcronymToggle('last')}
                       style={{
-                        border: 'none',
-                        borderRadius: '5px',
+                        border: acronymPosition === 'last' ? '1px solid rgba(56, 189, 248, 0.55)' : '1px solid transparent',
+                        borderRadius: '7px',
                         padding: '5px 8px',
                         fontSize: '11px',
                         fontWeight: acronymPosition === 'last' ? '700' : '500',
-                        backgroundColor: acronymPosition === 'last' ? '#ffffff' : 'transparent',
-                        color: acronymPosition === 'last' ? '#1d4ed8' : '#475569',
-                        boxShadow: acronymPosition === 'last' ? '0 1px 2px rgba(15, 23, 42, 0.08)' : 'none',
+                        backgroundColor: acronymPosition === 'last' ? '#162238' : 'transparent',
+                        color: acronymPosition === 'last' ? '#7dd3fc' : '#94a3b8',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         transition: 'all 0.15s'
                       }}
                     >
-                      {t('acronymLast') || "Last"}
+                      {t('acronymLast') || 'Last'}
                     </button>
                   </div>
                 )}
@@ -507,14 +564,14 @@ function ControlSidebar({
                       gap: '5px',
                       whiteSpace: 'nowrap',
                       fontSize: '11px',
-                      color: '#334155',
+                      color: '#cbd5e1',
                       fontWeight: '600',
                       cursor: 'pointer',
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: '#090e1a',
                       padding: '0 8px',
-                      height: '38px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      height: '40px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(51, 65, 85, 0.85)',
                       flexShrink: 0
                     }}
                   >
@@ -523,7 +580,7 @@ function ControlSidebar({
                       id="spacesEls"
                       checked={includeSpaces}
                       onChange={e => setIncludeSpaces(e.target.checked)}
-                      style={{ cursor: 'pointer', margin: 0, accentColor: '#1d4ed8' }}
+                      style={{ cursor: 'pointer', margin: 0, accentColor: '#38bdf8' }}
                     />
                     <span>{t('includeSpacesShort') || t('includeSpaces')}</span>
                   </label>
@@ -535,8 +592,8 @@ function ControlSidebar({
                   onClick={() => handleSearch()}
                   disabled={loading}
                   className="mobile-inline-run-btn"
-                  aria-label={t('runAnalysis') || "Run Analysis"}
-                  title={t('runAnalysis') || "Run Analysis"}
+                  aria-label={t('runAnalysis') || 'Run Analysis'}
+                  title={t('runAnalysis') || 'Run Analysis'}
                 >
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
@@ -552,13 +609,13 @@ function ControlSidebar({
 
                   {/* Single-Row Book + Chapter + Verse Labels */}
                   <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
-                    <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                    <div style={{ flex: '2.2 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                       {t('book') ? t('book').replace(':', '') : 'Book'}
                     </div>
-                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                       {t('chapter') || 'Chapter'}
                     </div>
-                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#64748b', fontWeight: '700' }}>
+                    <div style={{ flex: '1 1 0', minWidth: 0, fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>
                       {t('verse') || 'Verse'}
                     </div>
                   </div>
@@ -602,8 +659,21 @@ function ControlSidebar({
                     </div>
                   </div>
 
-                  <div style={{ direction: 'rtl', fontSize: '18px', lineHeight: '1.85', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', maxHeight: '120px', overflowY: 'auto', color: '#0f172a' }}>
-                     {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({...anchorConfig, letterIdx: idx})) : "..."}
+                  <div
+                    style={{
+                      direction: 'rtl',
+                      fontSize: '18px',
+                      lineHeight: '1.85',
+                      padding: '10px 12px',
+                      border: '1px solid rgba(51, 65, 85, 0.85)',
+                      borderRadius: '10px',
+                      backgroundColor: '#090e1a',
+                      maxHeight: '120px',
+                      overflowY: 'auto',
+                      color: '#f1f5f9'
+                    }}
+                  >
+                    {anchorVerseText ? renderPickerVerse(anchorVerseText, anchorConfig.letterIdx, (idx) => setAnchorConfig({ ...anchorConfig, letterIdx: idx })) : '...'}
                   </div>
                 </div>
               )}
@@ -611,12 +681,13 @@ function ControlSidebar({
           )}
         </div>
 
-        {/* COMPACT COMPARISON SCOPES TRIGGER BUTTON */}
+        {/* LUMINOUS COMPARISON SCOPES TRIGGER CARD */}
         {showComparisonScopes && (
-          <div style={{ padding: '10px 20px 16px 20px' }}>
-            <label style={sectionLabelStyle}>{t('comparisonScopes') || "Comparison Scopes"}</label>
+          <div style={{ padding: '10px 18px 16px 18px' }}>
+            <label style={sectionLabelStyle}>{t('comparisonScopes') || 'Comparison Scopes'}</label>
             <button
               type="button"
+              className="hover-lift"
               onClick={() => (isScopeOpen ? onCloseScope?.() : onOpenScope?.())}
               disabled={loading}
               style={{
@@ -625,27 +696,41 @@ function ControlSidebar({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: isScopeOpen ? '1.5px solid #1d4ed8' : '1px solid #cbd5e1',
-                backgroundColor: isScopeOpen ? '#eff6ff' : '#f8fafc',
-                color: isScopeOpen ? '#1e3a8a' : '#1e293b',
+                padding: '11px 13px',
+                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.55)',
+                background: 'linear-gradient(135deg, #10192e 0%, #14203a 100%)',
+                color: '#f1f5f9',
                 fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.15s'
+                boxShadow: '0 0 18px -3px rgba(56, 189, 248, 0.28), inset 0 0 10px rgba(56, 189, 248, 0.06)'
               }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '9px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(56, 189, 248, 0.14)',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    color: '#38bdf8',
+                    flexShrink: 0
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {getScopeSummary()}
                 </span>
               </span>
-              <span style={{ color: '#1d4ed8', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ color: '#7dd3fc', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                 {isScopeOpen ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -676,9 +761,6 @@ function ControlSidebar({
         style={{
           flexShrink: 0,
           marginTop: 'auto',
-          backgroundColor: '#ffffff',
-          padding: '14px 20px',
-          borderTop: '1px solid #e2e8f0',
           zIndex: 25
         }}
       >
@@ -687,7 +769,7 @@ function ControlSidebar({
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span>{loading ? (t('processing') || "Processing...") : (t('runAnalysis') || "Run Analysis")}</span>
+          <span>{loading ? (t('processing') || 'Processing...') : (t('runAnalysis') || 'Run Analysis')}</span>
         </button>
       </div>
     </aside>

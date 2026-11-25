@@ -6,12 +6,12 @@ function InfoModal({ isOpen, onClose, t, lang }) {
   const isRTL = lang === 'he' || lang === 'fa';
 
   const modes = [
-    { title: t('exact'), desc: t('infoExactDesc'), badgeColor: '#1d4ed8', badgeBg: '#eff6ff' },
-    { title: t('root'), desc: t('infoRootDesc'), badgeColor: '#1d4ed8', badgeBg: '#eff6ff' },
-    { title: t('letter'), desc: t('infoLetterDesc'), badgeColor: '#1d4ed8', badgeBg: '#eff6ff' },
-    { title: t('acronym'), desc: t('infoAcronymDesc'), badgeColor: '#b45309', badgeBg: '#fef3c7' },
-    { title: t('gematria'), desc: t('infoGematriaDesc'), badgeColor: '#b45309', badgeBg: '#fef3c7' },
-    { title: t('els'), desc: t('infoElsDesc'), badgeColor: '#1e3a8a', badgeBg: '#e0e7ff' }
+    { title: t('exact'), desc: t('infoExactDesc'), badgeColor: '#7dd3fc', badgeBg: 'rgba(56, 189, 248, 0.14)', border: 'rgba(56, 189, 248, 0.35)' },
+    { title: t('root'), desc: t('infoRootDesc'), badgeColor: '#7dd3fc', badgeBg: 'rgba(56, 189, 248, 0.14)', border: 'rgba(56, 189, 248, 0.35)' },
+    { title: t('letter'), desc: t('infoLetterDesc'), badgeColor: '#6ee7b7', badgeBg: 'rgba(52, 211, 153, 0.14)', border: 'rgba(52, 211, 153, 0.35)' },
+    { title: t('acronym'), desc: t('infoAcronymDesc'), badgeColor: '#fde68a', badgeBg: 'rgba(251, 191, 36, 0.14)', border: 'rgba(251, 191, 36, 0.35)' },
+    { title: t('gematria'), desc: t('infoGematriaDesc'), badgeColor: '#fde68a', badgeBg: 'rgba(251, 191, 36, 0.14)', border: 'rgba(251, 191, 36, 0.35)' },
+    { title: t('els'), desc: t('infoElsDesc'), badgeColor: '#c4b5fd', badgeBg: 'rgba(167, 139, 250, 0.14)', border: 'rgba(167, 139, 250, 0.35)' }
   ];
 
   return (
@@ -22,8 +22,8 @@ function InfoModal({ isOpen, onClose, t, lang }) {
         position: 'fixed',
         inset: 0,
         zIndex: 120,
-        backgroundColor: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(3px)',
+        backgroundColor: 'rgba(4, 7, 15, 0.72)',
+        backdropFilter: 'blur(5px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -37,10 +37,10 @@ function InfoModal({ isOpen, onClose, t, lang }) {
           maxWidth: '540px',
           maxHeight: '86vh',
           overflowY: 'auto',
-          backgroundColor: '#ffffff',
+          backgroundColor: '#0d1424',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 24px 48px rgba(15, 23, 42, 0.2)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75)',
           padding: '22px 24px'
         }}
       >
@@ -52,7 +52,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
             justifyContent: 'space-between',
             paddingBottom: '14px',
             marginBottom: '14px',
-            borderBottom: '1px solid #e2e8f0'
+            borderBottom: '1px solid rgba(30, 41, 59, 0.95)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -61,9 +61,9 @@ function InfoModal({ isOpen, onClose, t, lang }) {
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                color: '#1d4ed8',
+                backgroundColor: 'rgba(56, 189, 248, 0.14)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                color: '#38bdf8',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -76,7 +76,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
                 <line x1="12" y1="8" x2="12.01" y2="8" />
               </svg>
             </div>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1e3a8a' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#f1f5f9' }}>
               {t('infoTitle')}
             </h3>
           </div>
@@ -89,9 +89,9 @@ function InfoModal({ isOpen, onClose, t, lang }) {
               width: '32px',
               height: '32px',
               borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
-              color: '#475569',
+              border: '1px solid rgba(51, 65, 85, 0.85)',
+              backgroundColor: '#0f172a',
+              color: '#94a3b8',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -106,7 +106,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
         </div>
 
         {/* Intro */}
-        <p style={{ margin: '0 0 16px 0', fontSize: '14px', lineHeight: '1.6', color: '#334155' }}>
+        <p style={{ margin: '0 0 16px 0', fontSize: '14px', lineHeight: '1.65', color: '#cbd5e1' }}>
           {t('infoIntro')}
         </p>
 
@@ -117,7 +117,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
             fontWeight: '700',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
-            color: '#64748b',
+            color: '#94a3b8',
             marginBottom: '10px'
           }}
         >
@@ -134,8 +134,8 @@ function InfoModal({ isOpen, onClose, t, lang }) {
                 gap: '10px',
                 padding: '10px 12px',
                 borderRadius: '10px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0'
+                backgroundColor: '#090e1a',
+                border: '1px solid rgba(30, 41, 59, 0.95)'
               }}
             >
               <span
@@ -146,6 +146,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
                   borderRadius: '6px',
                   backgroundColor: m.badgeBg,
                   color: m.badgeColor,
+                  border: `1px solid ${m.border}`,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   marginTop: '1px'
@@ -153,7 +154,7 @@ function InfoModal({ isOpen, onClose, t, lang }) {
               >
                 {m.title}
               </span>
-              <span style={{ fontSize: '13px', lineHeight: '1.5', color: '#334155' }}>
+              <span style={{ fontSize: '13px', lineHeight: '1.55', color: '#cbd5e1' }}>
                 {m.desc}
               </span>
             </div>
@@ -165,11 +166,11 @@ function InfoModal({ isOpen, onClose, t, lang }) {
           style={{
             padding: '11px 14px',
             borderRadius: '10px',
-            backgroundColor: '#fef3c7',
-            border: '1px solid #fde68a',
-            color: '#92400e',
+            backgroundColor: 'rgba(251, 191, 36, 0.12)',
+            border: '1px solid rgba(251, 191, 36, 0.35)',
+            color: '#fde68a',
             fontSize: '13px',
-            lineHeight: '1.5',
+            lineHeight: '1.55',
             fontWeight: '500'
           }}
         >

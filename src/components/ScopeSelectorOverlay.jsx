@@ -114,8 +114,8 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
         position: 'absolute',
         inset: 0,
         zIndex: 40,
-        backgroundColor: visible ? 'rgba(15, 23, 42, 0.38)' : 'rgba(15, 23, 42, 0)',
-        backdropFilter: visible ? 'blur(2px)' : 'none',
+        backgroundColor: visible ? 'rgba(4, 7, 15, 0.72)' : 'rgba(4, 7, 15, 0)',
+        backdropFilter: visible ? 'blur(5px)' : 'none',
         display: 'flex',
         alignItems: 'stretch',
         justifyContent: 'center',
@@ -134,13 +134,13 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
           width: 260px;
           flex-shrink: 0;
           overflow-y: auto;
-          background: #f8fafc;
+          background: #090e1a;
         }
         .scope-chapters-pane {
           flex: 1;
           overflow-y: auto;
           padding: 18px 20px;
-          background: #ffffff;
+          background: #0d1424;
         }
         @media (max-width: 680px) {
           .scope-overlay-panes {
@@ -149,7 +149,7 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
           .scope-books-pane {
             width: 100%;
             max-height: 42%;
-            border-bottom: 1px solid #cbd5e1;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.8);
           }
         }
       `}</style>
@@ -159,10 +159,10 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
         style={{
           width: '100%',
           maxWidth: '920px',
-          backgroundColor: '#ffffff',
-          borderRadius: '14px',
-          boxShadow: '0 20px 45px rgba(15, 23, 42, 0.2)',
-          border: '1px solid #e2e8f0',
+          backgroundColor: '#0d1424',
+          borderRadius: '16px',
+          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -175,8 +175,8 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
         <div
           style={{
             padding: '14px 20px',
-            borderBottom: '1px solid #e2e8f0',
-            backgroundColor: '#ffffff',
+            borderBottom: '1px solid rgba(30, 41, 59, 0.95)',
+            backgroundColor: '#0c1220',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
@@ -185,8 +185,8 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#1e3a8a' }}>
-              {t('comparisonScopes') || "Comparison Scopes"}
+            <h3 style={{ margin: 0, fontSize: '16px', color: '#f1f5f9', fontWeight: '700' }}>
+              {t('comparisonScopes') || 'Comparison Scopes'}
             </h3>
             <span
               style={{
@@ -194,9 +194,9 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 fontWeight: '700',
                 padding: '3px 10px',
                 borderRadius: '999px',
-                backgroundColor: totalSelectedBooks > 0 ? '#eff6ff' : '#f1f5f9',
-                color: totalSelectedBooks > 0 ? '#1d4ed8' : '#64748b',
-                border: totalSelectedBooks > 0 ? '1px solid #bfdbfe' : '1px solid transparent'
+                backgroundColor: totalSelectedBooks > 0 ? 'rgba(56, 189, 248, 0.16)' : '#1e293b',
+                color: totalSelectedBooks > 0 ? '#7dd3fc' : '#94a3b8',
+                border: totalSelectedBooks > 0 ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid transparent'
               }}
             >
               {renderBadgeSummary()}
@@ -211,14 +211,14 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 padding: '6px 12px',
                 fontSize: '12px',
                 fontWeight: '600',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                backgroundColor: '#f8fafc',
-                color: '#1d4ed8',
+                borderRadius: '7px',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                backgroundColor: '#0f172a',
+                color: '#7dd3fc',
                 cursor: 'pointer'
               }}
             >
-              {t('selectAllBooks') || "Select All Books"}
+              {t('selectAllBooks') || 'Select All Books'}
             </button>
             <button
               type="button"
@@ -227,14 +227,14 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 padding: '6px 12px',
                 fontSize: '12px',
                 fontWeight: '600',
-                borderRadius: '6px',
-                border: '1px solid #cbd5e1',
-                backgroundColor: '#f8fafc',
-                color: '#dc2626',
+                borderRadius: '7px',
+                border: '1px solid rgba(251, 113, 133, 0.4)',
+                backgroundColor: '#0f172a',
+                color: '#fda4af',
                 cursor: 'pointer'
               }}
             >
-              {t('clearAll') || "Clear All"}
+              {t('clearAll') || 'Clear All'}
             </button>
             <button
               type="button"
@@ -243,14 +243,15 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 padding: '6px 16px',
                 fontSize: '12px',
                 fontWeight: '700',
-                borderRadius: '6px',
-                border: '1px solid #1e3a8a',
-                backgroundColor: '#1d4ed8',
+                borderRadius: '7px',
+                border: '1px solid rgba(56, 189, 248, 0.65)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
                 color: '#ffffff',
+                boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
                 cursor: 'pointer'
               }}
             >
-              {t('done') || "Done"}
+              {t('done') || 'Done'}
             </button>
           </div>
         </div>
@@ -261,7 +262,7 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
           <div
             className="scope-books-pane"
             style={{
-              borderInlineEnd: '1px solid #e2e8f0'
+              borderInlineEnd: '1px solid rgba(30, 41, 59, 0.95)'
             }}
           >
             {booksList.map((book) => {
@@ -281,8 +282,8 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                     justifyContent: 'space-between',
                     padding: '9px 14px',
                     cursor: 'pointer',
-                    backgroundColor: isFocused ? '#eff6ff' : 'transparent',
-                    borderBottom: '1px solid #e2e8f0',
+                    backgroundColor: isFocused ? 'rgba(56, 189, 248, 0.14)' : 'transparent',
+                    borderBottom: '1px solid rgba(30, 41, 59, 0.7)',
                     transition: 'background-color 0.12s'
                   }}
                 >
@@ -295,13 +296,13 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                       }}
                       onChange={() => toggleWholeBook(book)}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#1d4ed8', flexShrink: 0 }}
+                      style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#38bdf8', flexShrink: 0 }}
                     />
                     <span
                       style={{
                         fontSize: '13px',
                         fontWeight: isFocused || selCount > 0 ? '600' : '400',
-                        color: isFocused ? '#1e3a8a' : selCount > 0 ? '#1e293b' : '#64748b',
+                        color: isFocused ? '#7dd3fc' : selCount > 0 ? '#f1f5f9' : '#94a3b8',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
@@ -317,8 +318,8 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                       fontWeight: '700',
                       padding: '2px 7px',
                       borderRadius: '10px',
-                      backgroundColor: selCount > 0 ? '#dbeafe' : '#e2e8f0',
-                      color: selCount > 0 ? '#1d4ed8' : '#64748b',
+                      backgroundColor: selCount > 0 ? 'rgba(56, 189, 248, 0.18)' : '#1e293b',
+                      color: selCount > 0 ? '#7dd3fc' : '#64748b',
                       flexShrink: 0
                     }}
                   >
@@ -338,16 +339,16 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                 alignItems: 'center',
                 paddingBottom: '12px',
                 marginBottom: '14px',
-                borderBottom: '1px dashed #cbd5e1',
+                borderBottom: '1px dashed rgba(51, 65, 85, 0.85)',
                 flexWrap: 'wrap',
                 gap: '8px'
               }}
             >
               <div>
-                <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e3a8a' }}>
+                <span style={{ fontSize: '16px', fontWeight: '700', color: '#7dd3fc' }}>
                   {getBookTitle(focusedBook)}
                 </span>
-                <span style={{ fontSize: '13px', color: '#64748b', marginInlineStart: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#94a3b8', marginInlineStart: '8px' }}>
                   ({focusedSelectedChapters.length}/{focusedBook.maxCh} {t('chapters')})
                 </span>
               </div>
@@ -360,14 +361,14 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                     padding: '4px 10px',
                     fontSize: '12px',
                     fontWeight: '600',
-                    borderRadius: '5px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f8fafc',
-                    color: '#1d4ed8',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    backgroundColor: '#0f172a',
+                    color: '#7dd3fc',
                     cursor: 'pointer'
                   }}
                 >
-                  {t('all') || "All"}
+                  {t('all') || 'All'}
                 </button>
                 <button
                   type="button"
@@ -376,14 +377,14 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
                     padding: '4px 10px',
                     fontSize: '12px',
                     fontWeight: '600',
-                    borderRadius: '5px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f8fafc',
-                    color: '#64748b',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(51, 65, 85, 0.85)',
+                    backgroundColor: '#0f172a',
+                    color: '#94a3b8',
                     cursor: 'pointer'
                   }}
                 >
-                  {t('none') || "None"}
+                  {t('none') || 'None'}
                 </button>
               </div>
             </div>
