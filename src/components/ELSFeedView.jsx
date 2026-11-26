@@ -5,7 +5,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const occurrences =
-    (elsData && (elsData.occurrences || elsData.results || elsData.matches)) || [];
+    (elsData && (elsData.matches || elsData.occurrences || elsData.results)) || [];
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -20,6 +20,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   const currentOcc = occurrences[safeIndex] || null;
 
   const displayTerm =
+    (currentOcc && currentOcc.term) ||
     elsData.term ||
     (Array.isArray(elsData.terms) ? elsData.terms.join(', ') : elsData.query || '');
 
@@ -33,28 +34,54 @@ function ELSFeedView({ elsData, loading, t, lang }) {
   const bookLabel = lang === 'he' ? 'ספר:' : lang === 'fa' ? 'کتاب:' : 'Book:';
   const skipOfLabel =
     lang === 'he' ? 'דילוג של:' : lang === 'fa' ? 'پرش:' : 'Skip of:';
+  const noMatchesLabel =
+    t('noMatchesInScope') ||
+    (lang === 'he'
+      ? 'לא נמצאו דילוגים בטווח שנבחר.'
+      : lang === 'fa'
+      ? 'هیچ پرشی در محدوده انتخاب‌شده یافت نشد.'
+      : 'No skip matches found in the selected scope.');
 
-  const formatOptionLabel = (occ, idx) => {
-    const skipVal = occ.skip ?? occ.step ?? '';
-    const refVal =
+  const getOccurrenceStartRef = (occ) => {
+    if (!occ) return '';
+    if (Array.isArray(occ.feedNodes) && occ.feedNodes.length > 0 && occ.feedNodes[0].ref) {
+      return occ.feedNodes[0].ref;
+    }
+    return (
       occ.ref ||
       occ.startRef ||
       [occ.bookName || occ.book, occ.chapter && occ.verse ? `${occ.chapter}:${occ.verse}` : '']
         .filter(Boolean)
-        .join(' ');
+        .join(' ')
+    );
+  };
+
+  const formatOptionLabel = (occ, idx) => {
+    const skipVal = occ.skip ?? occ.step ?? '';
+    const refVal = getOccurrenceStartRef(occ);
     return `#${idx + 1} — ${skipOfLabel} ${skipVal}${refVal ? ` (${refVal})` : ''}`;
   };
 
   const handleExportELS = () => {
     if (!occurrences.length) return;
     const BOM = '\uFEFF';
-    const header = ['#', 'Term', 'Book', 'Reference', 'Skip', 'Snippet'].join(',');
+    const header = ['#', 'Term', 'Book', 'Start Reference', 'Skip', 'Verses'].join(',');
     const rows = occurrences.map((occ, idx) => {
-      const book = occ.bookName || occ.book || '';
-      const ref = occ.ref || occ.startRef || '';
+      const term = (occ.term || displayTerm || '').replace(/"/g, '""');
+      const book = (occ.bookName || occ.book || '').replace(/"/g, '""');
+      const ref = getOccurrenceStartRef(occ).replace(/"/g, '""');
       const skip = occ.skip ?? occ.step ?? '';
-      const snippet = (occ.snippet || occ.text || '').replace(/"/g, '""');
-      return [idx + 1, `"${displayTerm}"`, `"${book}"`, `"${ref}"`, skip, `"${snippet}"`].join(',');
+      const versesText = Array.isArray(occ.feedNodes)
+        ? occ.feedNodes.map((n) => `${n.ref}: ${n.text}`).join(' | ')
+        : occ.snippet || occ.text || '';
+      return [
+        idx + 1,
+        `"${term}"`,
+        `"${book}"`,
+        `"${ref}"`,
+        skip,
+        `"${versesText.replace(/"/g, '""')}"`
+      ].join(',');
     });
     const blob = new Blob([BOM + [header, ...rows].join('\n')], {
       type: 'text/csv;charset=utf-8;'
@@ -67,119 +94,69 @@ function ELSFeedView({ elsData, loading, t, lang }) {
     document.body.removeChild(link);
   };
 
-  // Render highlighted ELS letters / matrix / context snippet
+  const renderHighlightedVerseText = (text = '', highlights = []) => {
+    const highlightSet = new Set(highlights);
+    if (highlightSet.size === 0) return text;
+
+    // Split by UTF-16 code unit index so indices match worker.js charIndexInString 1:1
+    return text.split('').map((ch, idx) =>
+      highlightSet.has(idx) ? (
+        <mark
+          key={idx}
+          className="highlight-match"
+          style={{
+            padding: '1px 5px',
+            margin: '0 1px',
+            borderRadius: '5px',
+            fontWeight: '900',
+            boxShadow: '0 0 10px rgba(251, 191, 36, 0.35)'
+          }}
+        >
+          {ch}
+        </mark>
+      ) : (
+        <React.Fragment key={idx}>{ch}</React.Fragment>
+      )
+    );
+  };
+
   const renderOccurrenceContent = (occ) => {
     if (!occ) return null;
 
-    // Case A: Array of character cells ({ char, isMatch, isAnchor, ref })
-    if (Array.isArray(occ.letters) && occ.letters.length > 0) {
+    // Primary format returned by worker.js for Automatic, Anchored, and Manual ELS
+    if (Array.isArray(occ.feedNodes) && occ.feedNodes.length > 0) {
       return (
-        <div
-          dir="rtl"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '6px',
-            padding: '16px 12px',
-            backgroundColor: 'rgba(9, 14, 26, 0.9)',
-            borderRadius: '12px',
-            border: '1px solid rgba(51, 65, 85, 0.7)'
-          }}
-        >
-          {occ.letters.map((cell, idx) => {
-            const ch = typeof cell === 'string' ? cell : cell.char;
-            const isMatch = typeof cell === 'object' && Boolean(cell.isMatch);
-            const isAnchor = typeof cell === 'object' && Boolean(cell.isAnchor);
-
-            return (
-              <span
-                key={idx}
-                title={typeof cell === 'object' ? cell.ref || '' : ''}
-                style={{
-                  width: '32px',
-                  height: '34px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '7px',
-                  fontSize: '18px',
-                  fontWeight: isMatch ? '900' : '600',
-                  fontFamily: '"Times New Roman", serif',
-                  backgroundColor: isAnchor
-                    ? 'rgba(56, 189, 248, 0.25)'
-                    : isMatch
-                    ? 'rgba(251, 191, 36, 0.24)'
-                    : 'rgba(15, 23, 42, 0.85)',
-                  border: isAnchor
-                    ? '1.5px solid #38bdf8'
-                    : isMatch
-                    ? '1.5px solid #fbbf24'
-                    : '1px solid rgba(51, 65, 85, 0.5)',
-                  color: isAnchor ? '#7dd3fc' : isMatch ? '#fde68a' : '#cbd5e1',
-                  boxShadow: isMatch ? '0 0 10px rgba(251, 191, 36, 0.28)' : 'none'
-                }}
-              >
-                {ch}
-              </span>
-            );
-          })}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {occ.feedNodes.map((node, idx) => (
+            <div
+              key={`${node.ref}-${idx}`}
+              className="verse-item"
+              style={{ marginBottom: 0 }}
+            >
+              {node.ref && <div className="verse-ref">{node.ref}</div>}
+              <div className="verse-text">
+                {renderHighlightedVerseText(node.text, node.highlights)}
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
 
-    // Case B: Context text with matchIndices array
+    // Fallback for snippet/text payloads
     const rawText = occ.snippet || occ.context || occ.text || '';
-    const matchSet = new Set(occ.matchIndices || occ.indices || []);
-
-    if (rawText && matchSet.size > 0) {
+    const matchIndices = occ.matchIndices || occ.indices || [];
+    if (rawText) {
       return (
-        <div
-          dir="rtl"
-          style={{
-            padding: '16px',
-            backgroundColor: 'rgba(9, 14, 26, 0.9)',
-            borderRadius: '12px',
-            border: '1px solid rgba(51, 65, 85, 0.7)',
-            fontSize: '20px',
-            lineHeight: '2',
-            fontFamily: '"Times New Roman", serif',
-            color: '#e2e8f0',
-            wordBreak: 'break-word'
-          }}
-        >
-          {Array.from(rawText).map((ch, idx) =>
-            matchSet.has(idx) ? (
-              <span
-                key={idx}
-                className="highlight-match"
-                style={{ padding: '1px 4px', margin: '0 1px' }}
-              >
-                {ch}
-              </span>
-            ) : (
-              <React.Fragment key={idx}>{ch}</React.Fragment>
-            )
-          )}
+        <div className="verse-item">
+          <div className="verse-text">
+            {renderHighlightedVerseText(rawText, matchIndices)}
+          </div>
         </div>
       );
     }
 
-    // Case C: Verses array inside the occurrence
-    if (Array.isArray(occ.verses) && occ.verses.length > 0) {
-      return occ.verses.map((v, idx) => (
-        <div key={idx} className="verse-item">
-          {v.ref && <div className="verse-ref">{v.ref}</div>}
-          <div className="verse-text">{v.text}</div>
-        </div>
-      ));
-    }
-
-    return rawText ? (
-      <div className="verse-item">
-        <div className="verse-text">{rawText}</div>
-      </div>
-    ) : null;
+    return null;
   };
 
   return (
@@ -229,7 +206,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
             {displayTerm && <span style={{ color: '#7dd3fc' }}>"{displayTerm}"</span>}
           </h2>
 
-          {currentOcc && (
+          {currentOcc ? (
             <div
               style={{
                 fontSize: '13px',
@@ -247,6 +224,10 @@ function ELSFeedView({ elsData, loading, t, lang }) {
                 {currentOcc.skip ?? currentOcc.step ?? ''}
               </strong>{' '}
               ({safeIndex + 1} / {occurrences.length})
+            </div>
+          ) : (
+            <div style={{ fontSize: '13px', color: '#94a3b8', fontWeight: '600' }}>
+              {noMatchesLabel}
             </div>
           )}
         </div>
@@ -340,6 +321,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
             {/* Occurrence Dropdown — minWidth: 0 + textOverflow prevents horizontal overflow */}
             <div style={{ flex: '1 1 170px', minWidth: 0, maxWidth: '100%' }}>
               <select
+                dir={isRTL ? 'rtl' : 'ltr'}
                 value={safeIndex}
                 onChange={(e) => setSelectedIndex(Number(e.target.value))}
                 style={{
@@ -409,7 +391,7 @@ function ELSFeedView({ elsData, loading, t, lang }) {
         )}
       </div>
 
-      {/* Active Occurrence Matrix / Highlighted Context */}
+      {/* Matched Verses with Highlighted ELS Skip Letters */}
       {currentOcc && renderOccurrenceContent(currentOcc)}
     </div>
   );
