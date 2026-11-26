@@ -259,6 +259,90 @@ function App() {
     });
   };
 
+  // One-click runner for Curated Spotlight Carousel examples
+  const handleRunExample = (example) => {
+    if (!example) return;
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    setAppError(null);
+    setIsScopeOpen(false);
+    clearResults();
+
+    const nextMode = example.searchMode || 'exact';
+    const nextElsSubMode = example.elsSubMode || 'auto';
+    const nextAcronymPos = example.acronymPosition || 'first';
+    const nextTerm = example.searchTerm || '';
+
+    const targetIds =
+      Array.isArray(example.bookIds) && example.bookIds.length > 0
+        ? example.bookIds
+        : ['01'];
+
+    const nextRanges = targetIds.map((id, idx) => {
+      const bookObj = booksList.find((b) => b.id === id) || booksList[0];
+      return {
+        id: Date.now() + idx,
+        bookId: bookObj.id,
+        selectedChapters: Array.from({ length: bookObj.maxCh }, (_, i) => i + 1),
+        isExpanded: false
+      };
+    });
+
+    setSearchMode(nextMode);
+    setIsElsMode(nextMode === 'els');
+    setElsSubMode(nextElsSubMode);
+    setIncludeSpaces(false);
+    setAcronymPosition(nextAcronymPos);
+    setSearchTerm(nextTerm);
+    setRanges(nextRanges);
+    setLoading(true);
+    setMobileView('results');
+
+    if (nextMode === 'els') {
+      const terms = [nextTerm.trim()];
+      workerRef.current.postMessage({
+        ranges: nextRanges,
+        terms,
+        searchMode: 'els',
+        booksList,
+        lang,
+        chsStr: t('chsAbbr') || 'Chs',
+        elsSubMode: nextElsSubMode,
+        includeSpaces: false,
+        anchorConfig
+      });
+      return;
+    }
+
+    let rawTerms = nextTerm
+      .split(',')
+      .map((term) => term.trim())
+      .filter((term) => term.length > 0);
+    let terms = [...new Set(rawTerms)];
+
+    if (nextMode === 'gematria') {
+      terms = terms.map((term) =>
+        /^\d+$/.test(term) ? term : calculateGematria(term).toString()
+      );
+    }
+
+    setActiveTerms(terms);
+    workerRef.current.postMessage({
+      ranges: nextRanges,
+      terms,
+      searchMode: nextMode,
+      booksList,
+      lang,
+      chsStr: t('chsAbbr') || 'Chs',
+      elsSubMode: 'auto',
+      includeSpaces: false,
+      acronymPosition: nextAcronymPos
+    });
+  };
+
   const formatChapterRanges = (chapters, maxCh) => {
     if (!chapters || chapters.length === 0) return "None";
     if (maxCh && chapters.length === maxCh) return `1-${maxCh} (All)`;
@@ -606,7 +690,7 @@ function App() {
           {loading ? (
             <HebrewMatrixLoader message={t('analyzingDataset')} />
           ) : !hasActiveResults ? (
-            <EmptyStateDashboard t={t} lang={lang} />
+            <EmptyStateDashboard t={t} lang={lang} onRunExample={handleRunExample} />
           ) : isSkipView ? (
             <ELSFeedView elsData={elsData} loading={loading} t={t} lang={lang} />
           ) : (
