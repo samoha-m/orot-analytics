@@ -215,6 +215,7 @@ input::placeholder {
   flex: 1;
   padding: 24px 28px;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: #070b14;
   background-image: radial-gradient(rgba(56, 189, 248, 0.13) 1px, transparent 1px);
   background-size: 28px 28px;

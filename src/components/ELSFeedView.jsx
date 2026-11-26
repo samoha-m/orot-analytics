@@ -1,243 +1,416 @@
 import React, { useState, useEffect } from 'react';
-import HebrewMatrixLoader from './HebrewMatrixLoader';
 
 function ELSFeedView({ elsData, loading, t, lang }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
   const isRTL = lang === 'he' || lang === 'fa';
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const occurrences =
+    (elsData && (elsData.occurrences || elsData.results || elsData.matches)) || [];
 
   useEffect(() => {
-    setSelectedIdx(0);
+    setSelectedIndex(0);
   }, [elsData]);
 
-  if (loading) {
-    return <HebrewMatrixLoader message={t('autoDiscovering') || "Scanning letter skip sequences..."} />;
+  if (loading || !elsData) {
+    return null;
   }
 
-  if (!elsData || !elsData.matches) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '100px', color: '#94a3b8', padding: '0 16px' }}>
-        <div
-          dir="ltr"
-          style={{
-            fontSize: '20px',
-            fontWeight: '700',
-            letterSpacing: '0.3px',
-            color: '#94a3b8',
-            marginBottom: '8px'
-          }}
-        >
-          OROT - Hebrew Bible Analytics Engine
-        </div>
-        <p style={{ fontSize: '14px', margin: 0, color: '#94a3b8' }}>
-          {t('useControlPanel') || "Use the control panel to start your search."}
-        </p>
-      </div>
-    );
-  }
+  const safeIndex =
+    occurrences.length > 0 ? Math.min(selectedIndex, occurrences.length - 1) : 0;
+  const currentOcc = occurrences[safeIndex] || null;
 
-  const matches = elsData.matches;
+  const displayTerm =
+    elsData.term ||
+    (Array.isArray(elsData.terms) ? elsData.terms.join(', ') : elsData.query || '');
 
-  if (matches.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '80px', color: '#64748b', padding: '0 16px' }}>
-        <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a' }}>{t('noEls') || "No letter skip patterns discovered"}</h3>
-        <p style={{ margin: 0, fontSize: '14px' }}>{t('noLetterSkip') || "No letter skip occurrences found for this term in the selected scopes."}</p>
-      </div>
-    );
-  }
+  const showingLabel =
+    lang === 'he'
+      ? 'מציג דילוגים:'
+      : lang === 'fa'
+      ? 'نمایش پرش‌ها:'
+      : 'Showing skips:';
 
-  const activeMatch = matches[selectedIdx] || matches[0];
+  const bookLabel = lang === 'he' ? 'ספר:' : lang === 'fa' ? 'کتاب:' : 'Book:';
+  const skipOfLabel =
+    lang === 'he' ? 'דילוג של:' : lang === 'fa' ? 'پرش:' : 'Skip of:';
 
-  const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+  const formatOptionLabel = (occ, idx) => {
+    const skipVal = occ.skip ?? occ.step ?? '';
+    const refVal =
+      occ.ref ||
+      occ.startRef ||
+      [occ.bookName || occ.book, occ.chapter && occ.verse ? `${occ.chapter}:${occ.verse}` : '']
+        .filter(Boolean)
+        .join(' ');
+    return `#${idx + 1} — ${skipOfLabel} ${skipVal}${refVal ? ` (${refVal})` : ''}`;
+  };
 
-  const handleExportElsCSV = () => {
+  const handleExportELS = () => {
+    if (!occurrences.length) return;
     const BOM = '\uFEFF';
-    let csvLines = [];
-
-    if (activeMatch.isManual) {
-      csvLines.push(["Start Coordinate", "Start Letter", "Jump Size (Skip)", "Jump Count", "Discovered Sequence", "Verses Context"].join(","));
-      matches.forEach(m => {
-        const contextStr = (m.feedNodes || []).map(n => `[${n.ref}] ${n.text}`).join(" | ");
-        csvLines.push([
-          escapeCsv(m.bookName),
-          escapeCsv(m.startChar),
-          m.skip,
-          m.jumpCount,
-          escapeCsv(m.term),
-          escapeCsv(contextStr)
-        ].join(","));
-      });
-    } else {
-      csvLines.push(["Match #", "Search Term", "Book", "Skip", "Start Reference", "End Reference", "Verses Context"].join(","));
-      matches.forEach((m, idx) => {
-        const nodes = m.feedNodes || [];
-        const startRef = nodes[0]?.ref || "";
-        const endRef = nodes[nodes.length - 1]?.ref || "";
-        const contextStr = nodes.map(n => `[${n.ref}] ${n.text}`).join(" | ");
-        csvLines.push([
-          idx + 1,
-          escapeCsv(m.term),
-          escapeCsv(m.bookName),
-          m.skip,
-          escapeCsv(startRef),
-          escapeCsv(endRef),
-          escapeCsv(contextStr)
-        ].join(","));
-      });
-    }
-
-    const blob = new Blob([BOM + csvLines.join("\n")], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
+    const header = ['#', 'Term', 'Book', 'Reference', 'Skip', 'Snippet'].join(',');
+    const rows = occurrences.map((occ, idx) => {
+      const book = occ.bookName || occ.book || '';
+      const ref = occ.ref || occ.startRef || '';
+      const skip = occ.skip ?? occ.step ?? '';
+      const snippet = (occ.snippet || occ.text || '').replace(/"/g, '""');
+      return [idx + 1, `"${displayTerm}"`, `"${book}"`, `"${ref}"`, skip, `"${snippet}"`].join(',');
+    });
+    const blob = new Blob([BOM + [header, ...rows].join('\n')], {
+      type: 'text/csv;charset=utf-8;'
+    });
+    const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = activeMatch.isManual ? "orot_skip_manual.csv" : `orot_skip_${activeMatch.term}.csv`;
+    link.download = 'orot_els_skips.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const renderHighlightedVerse = (text, highlights = []) => {
-    const highlightSet = new Set(highlights);
-    return text.split('').map((char, idx) => {
-      if (highlightSet.has(idx)) {
-        return (
-          <span
-            key={idx}
-            style={{
-              backgroundColor: '#1d4ed8',
-              color: '#ffffff',
-              fontWeight: 'bold',
-              borderRadius: '4px',
-              padding: '0 5px',
-              margin: '0 1px',
-              display: 'inline-block',
-              borderBottom: '2px solid #f59e0b',
-              boxShadow: '0 2px 5px rgba(29, 78, 216, 0.28)'
-            }}
-          >
-            {char === ' ' ? '␣' : char}
-          </span>
-        );
-      }
-      return <span key={idx}>{char}</span>;
-    });
+  // Render highlighted ELS letters / matrix / context snippet
+  const renderOccurrenceContent = (occ) => {
+    if (!occ) return null;
+
+    // Case A: Array of character cells ({ char, isMatch, isAnchor, ref })
+    if (Array.isArray(occ.letters) && occ.letters.length > 0) {
+      return (
+        <div
+          dir="rtl"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '6px',
+            padding: '16px 12px',
+            backgroundColor: 'rgba(9, 14, 26, 0.9)',
+            borderRadius: '12px',
+            border: '1px solid rgba(51, 65, 85, 0.7)'
+          }}
+        >
+          {occ.letters.map((cell, idx) => {
+            const ch = typeof cell === 'string' ? cell : cell.char;
+            const isMatch = typeof cell === 'object' && Boolean(cell.isMatch);
+            const isAnchor = typeof cell === 'object' && Boolean(cell.isAnchor);
+
+            return (
+              <span
+                key={idx}
+                title={typeof cell === 'object' ? cell.ref || '' : ''}
+                style={{
+                  width: '32px',
+                  height: '34px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '7px',
+                  fontSize: '18px',
+                  fontWeight: isMatch ? '900' : '600',
+                  fontFamily: '"Times New Roman", serif',
+                  backgroundColor: isAnchor
+                    ? 'rgba(56, 189, 248, 0.25)'
+                    : isMatch
+                    ? 'rgba(251, 191, 36, 0.24)'
+                    : 'rgba(15, 23, 42, 0.85)',
+                  border: isAnchor
+                    ? '1.5px solid #38bdf8'
+                    : isMatch
+                    ? '1.5px solid #fbbf24'
+                    : '1px solid rgba(51, 65, 85, 0.5)',
+                  color: isAnchor ? '#7dd3fc' : isMatch ? '#fde68a' : '#cbd5e1',
+                  boxShadow: isMatch ? '0 0 10px rgba(251, 191, 36, 0.28)' : 'none'
+                }}
+              >
+                {ch}
+              </span>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Case B: Context text with matchIndices array
+    const rawText = occ.snippet || occ.context || occ.text || '';
+    const matchSet = new Set(occ.matchIndices || occ.indices || []);
+
+    if (rawText && matchSet.size > 0) {
+      return (
+        <div
+          dir="rtl"
+          style={{
+            padding: '16px',
+            backgroundColor: 'rgba(9, 14, 26, 0.9)',
+            borderRadius: '12px',
+            border: '1px solid rgba(51, 65, 85, 0.7)',
+            fontSize: '20px',
+            lineHeight: '2',
+            fontFamily: '"Times New Roman", serif',
+            color: '#e2e8f0',
+            wordBreak: 'break-word'
+          }}
+        >
+          {Array.from(rawText).map((ch, idx) =>
+            matchSet.has(idx) ? (
+              <span
+                key={idx}
+                className="highlight-match"
+                style={{ padding: '1px 4px', margin: '0 1px' }}
+              >
+                {ch}
+              </span>
+            ) : (
+              <React.Fragment key={idx}>{ch}</React.Fragment>
+            )
+          )}
+        </div>
+      );
+    }
+
+    // Case C: Verses array inside the occurrence
+    if (Array.isArray(occ.verses) && occ.verses.length > 0) {
+      return occ.verses.map((v, idx) => (
+        <div key={idx} className="verse-item">
+          {v.ref && <div className="verse-ref">{v.ref}</div>}
+          <div className="verse-text">{v.text}</div>
+        </div>
+      ));
+    }
+
+    return rawText ? (
+      <div className="verse-item">
+        <div className="verse-text">{rawText}</div>
+      </div>
+    ) : null;
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Header Card (Title Aligned to Language Reading Direction) */}
+    <div
+      style={{
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}
+    >
+      {/* Header & Navigation Card */}
       <div
-        dir={isRTL ? 'rtl' : 'ltr'}
         style={{
-          backgroundColor: '#ffffff',
-          padding: '16px 20px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
-          border: '1px solid #e2e8f0',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px'
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          padding: '16px',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
         }}
       >
-        {/* Title Block (Right-aligned in Hebrew/Farsi, Left-aligned in English) */}
-        <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-          <h2 style={{ margin: 0, fontSize: '19px', color: '#1e3a8a' }}>
-            {t('elsContextFeed')} "{activeMatch.term}"
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            textAlign: isRTL ? 'right' : 'left'
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 'clamp(17px, 2.5vw, 22px)',
+              fontWeight: '800',
+              color: '#f1f5f9',
+              wordBreak: 'break-word'
+            }}
+          >
+            {showingLabel}{' '}
+            {displayTerm && <span style={{ color: '#7dd3fc' }}>"{displayTerm}"</span>}
           </h2>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-            {activeMatch.isManual ? (
-              <>
-                {t('start')} <strong style={{ color: '#1e293b' }}>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong style={{ color: '#d97706' }}>{activeMatch.skip}</strong> | {t('jumps')} <strong style={{ color: '#1e293b' }}>{activeMatch.jumpCount}</strong>
-              </>
-            ) : (
-              <>
-                {t('book')} <strong style={{ color: '#1e293b' }}>{activeMatch.bookName}</strong> | {t('skipPattern')} <strong style={{ color: '#d97706' }}>{activeMatch.skip}</strong> ({selectedIdx + 1} / {matches.length})
-              </>
-            )}
-          </div>
+
+          {currentOcc && (
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#94a3b8',
+                fontWeight: '600',
+                lineHeight: '1.5'
+              }}
+            >
+              {bookLabel}{' '}
+              <strong style={{ color: '#e2e8f0' }}>
+                {currentOcc.bookName || currentOcc.book || ''}
+              </strong>{' '}
+              | {skipOfLabel}{' '}
+              <strong style={{ color: '#fbbf24' }}>
+                {currentOcc.skip ?? currentOcc.step ?? ''}
+              </strong>{' '}
+              ({safeIndex + 1} / {occurrences.length})
+            </div>
+          )}
         </div>
 
-        {/* Navigation & Icon-Only Download Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {!activeMatch.isManual && matches.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {/* Responsive Control Bar (Constrained to fit mobile screens cleanly) */}
+        {occurrences.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '8px',
+              width: '100%',
+              maxWidth: '100%',
+              marginTop: '14px'
+            }}
+          >
+            {/* Prev / Next Navigation Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <button
                 type="button"
-                aria-label="Previous match"
-                onClick={() => setSelectedIdx(prev => (prev > 0 ? prev - 1 : matches.length - 1))}
-                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
+                onClick={() =>
+                  setSelectedIndex((prev) =>
+                    prev > 0 ? prev - 1 : occurrences.length - 1
+                  )
+                }
+                aria-label="Previous occurrence"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '9px',
+                  border: '1px solid rgba(51, 65, 85, 0.9)',
+                  backgroundColor: '#090e1a',
+                  color: '#7dd3fc',
+                  cursor: 'pointer'
+                }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}>
-                  <polyline points="15 18 9 12 15 6" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points={isRTL ? '9 18 15 12 9 6' : '15 18 9 12 15 6'} />
                 </svg>
               </button>
+
               <button
                 type="button"
-                aria-label="Next match"
-                onClick={() => setSelectedIdx(prev => (prev < matches.length - 1 ? prev + 1 : 0))}
-                style={{ width: '32px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', cursor: 'pointer', color: '#1e3a8a' }}
+                onClick={() =>
+                  setSelectedIndex((prev) =>
+                    prev < occurrences.length - 1 ? prev + 1 : 0
+                  )
+                }
+                aria-label="Next occurrence"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '9px',
+                  border: '1px solid rgba(51, 65, 85, 0.9)',
+                  backgroundColor: '#090e1a',
+                  color: '#7dd3fc',
+                  cursor: 'pointer'
+                }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isRTL ? 'rotate(180deg)' : 'none' }}>
-                  <polyline points="9 18 15 12 9 6" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points={isRTL ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
                 </svg>
               </button>
+            </div>
+
+            {/* Occurrence Dropdown — minWidth: 0 + textOverflow prevents horizontal overflow */}
+            <div style={{ flex: '1 1 170px', minWidth: 0, maxWidth: '100%' }}>
               <select
-                value={selectedIdx}
-                onChange={(e) => setSelectedIdx(Number(e.target.value))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '600', color: '#1e293b', backgroundColor: '#ffffff' }}
+                value={safeIndex}
+                onChange={(e) => setSelectedIndex(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  minWidth: 0,
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '9px',
+                  border: '1px solid rgba(56, 189, 248, 0.45)',
+                  backgroundColor: '#090e1a',
+                  color: '#f1f5f9',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  boxSizing: 'border-box',
+                  cursor: 'pointer'
+                }}
               >
-                {matches.map((m, i) => (
-                  <option key={i} value={i}>
-                    #{i + 1} — {t('skipPattern')} {m.skip} ({m.feedNodes[0]?.ref || m.bookName})
+                {occurrences.map((occ, idx) => (
+                  <option key={idx} value={idx}>
+                    {formatOptionLabel(occ, idx)}
                   </option>
                 ))}
               </select>
             </div>
-          )}
 
-          <button
-            type="button"
-            onClick={handleExportElsCSV}
-            aria-label={t('csv') || "Download CSV"}
-            title={t('csv') || "Download CSV"}
-            style={{
-              width: '34px',
-              height: '34px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#1d4ed8',
-              color: '#ffffff',
-              border: '1px solid #1e3a8a',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(29, 78, 216, 0.25)',
-              flexShrink: 0
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Verse Nodes Card */}
-      <div style={{ backgroundColor: '#ffffff', padding: '22px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        {activeMatch.feedNodes.map((node, idx) => (
-          <div key={idx} style={{ paddingBottom: idx < activeMatch.feedNodes.length - 1 ? '16px' : '0', borderBottom: idx < activeMatch.feedNodes.length - 1 ? '1px dashed #cbd5e1' : 'none' }}>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '6px' }}>
-              {node.ref}
-            </div>
-            <div dir="rtl" style={{ fontSize: '20px', lineHeight: '2.1', color: '#0f172a', fontFamily: '"Times New Roman", serif' }}>
-              {renderHighlightedVerse(node.text, node.highlights)}
-            </div>
+            {/* CSV Export Button */}
+            <button
+              type="button"
+              onClick={handleExportELS}
+              title={t('exportCSV') || 'Export CSV'}
+              aria-label={t('exportCSV') || 'Export CSV'}
+              style={{
+                width: '38px',
+                height: '38px',
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '9px',
+                border: '1px solid rgba(56, 189, 248, 0.55)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
+                color: '#ffffff',
+                boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
+                cursor: 'pointer'
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
           </div>
-        ))}
+        )}
       </div>
+
+      {/* Active Occurrence Matrix / Highlighted Context */}
+      {currentOcc && renderOccurrenceContent(currentOcc)}
     </div>
   );
 }
