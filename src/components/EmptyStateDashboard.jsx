@@ -382,7 +382,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
             gridTemplateColumns: 'repeat(auto-fit, minmax(122px, 1fr))',
             gap: '10px',
             textAlign: isRTL ? 'right' : 'left',
-            marginBottom: '26px'
+            marginBottom: '28px'
           }}
         >
           {stats.map((st) => (
@@ -433,7 +433,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
           ))}
         </div>
 
-        {/* Airy Floating "Did You Know?" Flashcard */}
+        {/* Airy Floating "Did You Know?" Flashcard + 15 Illuminated Dots */}
         <div
           className="animate-fade-in-up delay-500"
           onMouseEnter={() => setIsPaused(true)}
@@ -444,7 +444,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px'
+            gap: '14px'
           }}
         >
           <div
@@ -460,14 +460,14 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
             className="airy-flashcard"
             style={{
               width: '100%',
-              padding: '18px 22px',
-              borderRadius: '18px',
+              padding: '20px 24px',
+              borderRadius: '20px',
               background:
-                'linear-gradient(145deg, rgba(15, 23, 42, 0.62) 0%, rgba(12, 74, 110, 0.24) 100%)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(56, 189, 248, 0.32)',
+                'linear-gradient(155deg, rgba(15, 23, 42, 0.44) 0%, rgba(12, 74, 110, 0.16) 100%)',
+              backdropFilter: 'blur(14px)',
+              border: '1px solid rgba(56, 189, 248, 0.24)',
               boxShadow:
-                '0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                '0 10px 30px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
               cursor: onRunExample ? 'pointer' : 'default',
               textAlign: isRTL ? 'right' : 'left'
             }}
@@ -478,7 +478,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px'
+                gap: '11px'
               }}
             >
               {/* Top Pill + Action Hint */}
@@ -495,10 +495,10 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '3px 10px',
+                    padding: '3px 11px',
                     borderRadius: '999px',
-                    backgroundColor: 'rgba(56, 189, 248, 0.14)',
-                    border: '1px solid rgba(56, 189, 248, 0.32)',
+                    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.28)',
                     color: '#7dd3fc',
                     fontSize: '11px',
                     fontWeight: '700'
@@ -536,14 +536,14 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
                 </span>
               </div>
 
-              {/* Clean, Airy Question Copy */}
+              {/* Airy Question Copy */}
               <p
                 style={{
                   margin: 0,
                   fontSize: '15px',
-                  fontWeight: '600',
+                  fontWeight: '500',
                   color: '#f1f5f9',
-                  lineHeight: '1.65'
+                  lineHeight: '1.7'
                 }}
               >
                 {currentCard.text}
@@ -551,82 +551,45 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
             </div>
           </div>
 
-          {/* Minimalist Subtle Pager Controls Below the Card */}
+          {/* 15 Interactive Dots with Luminous Active Enhancement */}
           <div
+            role="tablist"
+            aria-label="Flashcard examples"
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              color: '#64748b',
-              fontSize: '12px',
-              fontWeight: '600'
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              gap: '4px'
             }}
           >
-            <button
-              type="button"
-              onClick={() =>
-                setActiveIndex(
-                  (prev) => (prev - 1 + flashcards.length) % flashcards.length
-                )
-              }
-              aria-label="Previous tip"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#94a3b8',
-                cursor: 'pointer',
-                padding: '2px 6px',
-                display: 'inline-flex',
-                alignItems: 'center'
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points={isRTL ? '9 18 15 12 9 6' : '15 18 9 12 15 6'} />
-              </svg>
-            </button>
-
-            <span style={{ letterSpacing: '0.06em', color: '#94a3b8' }}>
-              {activeIndex + 1} / {flashcards.length}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setActiveIndex((prev) => (prev + 1) % flashcards.length)
-              }
-              aria-label="Next tip"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#94a3b8',
-                cursor: 'pointer',
-                padding: '2px 6px',
-                display: 'inline-flex',
-                alignItems: 'center'
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points={isRTL ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
-              </svg>
-            </button>
+            {flashcards.map((card, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`${idx + 1}: ${card.tag}`}
+                  onClick={() => setActiveIndex(idx)}
+                  className="flashcard-dot-btn"
+                  style={{
+                    padding: '6px 2px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <span
+                    className={`flashcard-dot ${isActive ? 'active' : ''}`}
+                  />
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

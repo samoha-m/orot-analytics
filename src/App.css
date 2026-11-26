@@ -152,10 +152,7 @@ input::placeholder {
 }
 
 /* =========================================
-   CURATED SPOTLIGHT CAROUSEL ANIMATIONS
-   ========================================= */
-/* =========================================
-   AIRY FLASHCARD SWAP ANIMATIONS
+   AIRY FLASHCARD & 15-DOT ILLUMINATION
    ========================================= */
 @keyframes airyFlashcardSwap {
   0% {
@@ -170,28 +167,66 @@ input::placeholder {
   }
 }
 
+@keyframes dotIlluminate {
+  0% {
+    transform: scale(0.85);
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.95), 0 0 24px rgba(125, 211, 252, 0.55);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 18px rgba(56, 189, 248, 0.35);
+  }
+}
+
 .airy-flashcard {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    background 0.25s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease;
 }
 
 .airy-flashcard:hover {
   transform: translateY(-2px);
-  border-color: rgba(56, 189, 248, 0.65) !important;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36),
-    0 0 22px -4px rgba(56, 189, 248, 0.28) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32),
+    0 0 24px -4px rgba(56, 189, 248, 0.24) !important;
 }
 
 .airy-flashcard:active {
-  transform: scale(0.99);
+  transform: scale(0.992);
 }
 
 .flashcard-airy-swap {
   animation: airyFlashcardSwap 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.flashcard-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: rgba(148, 163, 184, 0.28);
+  transition: width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.32s ease,
+    box-shadow 0.38s ease,
+    transform 0.25s ease;
+}
+
+.flashcard-dot-btn:hover .flashcard-dot:not(.active) {
+  background-color: rgba(125, 211, 252, 0.65);
+  transform: scale(1.25);
+}
+
+.flashcard-dot.active {
+  width: 22px;
+  background: linear-gradient(90deg, #38bdf8 0%, #7dd3fc 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 18px rgba(56, 189, 248, 0.35);
+  animation: dotIlluminate 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 /* =========================================
    STRUCTURAL LAYOUT
    ========================================= */
@@ -576,7 +611,8 @@ input::placeholder {
   .animate-fade-in-up,
   .ambient-glow-primary,
   .ambient-glow-secondary,
-  .flashcard-airy-swap {
+  .flashcard-airy-swap,
+  .flashcard-dot.active {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -584,6 +620,7 @@ input::placeholder {
   }
   .hover-lift,
   .airy-flashcard,
+  .flashcard-dot,
   .btn-run::after {
     transition: none !important;
   }
