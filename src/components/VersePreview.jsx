@@ -3,13 +3,75 @@ import { calculateGematria, COLORS as DEFAULT_COLORS } from '../data/constants';
 
 const stripNiqqud = (str = '') => str.replace(/[\u0591-\u05C7]/g, '');
 
-const normalizeFinalLetters = (str = '') =>
-  str
-    .replace(/ך/g, 'כ')
-    .replace(/ם/g, 'מ')
-    .replace(/ן/g, 'נ')
-    .replace(/ף/g, 'פ')
-    .replace(/ץ/g, 'צ');
+const emphasizeAcronymLetters = (phrase, acronymPosition) => {
+  return phrase
+    .split(' ')
+    .map((word) => {
+      if (!word) return word;
+      if (acronymPosition === 'last') {
+        const match = word.match(/([\u0590-\u05FF])([^\u0590-\u05FF]*)$/);
+        if (!match) return word;
+        const idx = match.index;
+        return `${word.slice(0, idx)}<span class="acronym-letter">${match[1]}</span>${match[2]}`;
+      }
+      const match = word.match(/^([^\u0590-\u05FF]*)([\u0590-\u05FF])/);
+      if (!match) return word;
+      const idx = match[1].length;
+      return `${match[1]}<span class="acronym-letter">${match[2]}</span>${word.slice(idx + 1)}`;
+    })
+    .join(' ');
+};
+
+const renderHighlightedText = (text, highlights, searchMode, acronymPosition) => {
+  if (!highlights || highlights.length === 0) return { __html: text };
+  const pattern = new RegExp(
+    `(${[...new Set(highlights)]
+      .sort((a, b) => b.length - a.length)
+      .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|')})`,
+    'g'
+  );
+  return {
+    __html: text.replace(pattern, (matched) => {
+      const inner =
+        searchMode === 'acronym'
+          ? emphasizeAcronymLetters(matched, acronymPosition)
+          : matched;
+      return `<mark class="highlight-match">${inner}</mark>`;
+    })
+  };
+};
+
+// Whole-word Gematria highlighter (never highlights partial substrings inside longer words)
+const renderGematriaVerse = (text, targetTerm, termColor) => {
+  const targetVal = Number(targetTerm);
+  if (!text || Number.isNaN(targetVal) || targetVal <= 0) return text;
+
+  const tokens = text.split(/(\s+|־)/);
+  return tokens.map((token, idx) => {
+    if (!token || /^\s+$/.test(token) || token === '־') {
+      return <React.Fragment key={idx}>{token}</React.Fragment>;
+    }
+
+    const lettersOnly = stripNiqqud(token).replace(/[^\u05D0-\u05EA]/g, '');
+    if (lettersOnly && calculateGematria(lettersOnly) === targetVal) {
+      return (
+        <mark
+          key={idx}
+          className="highlight-match"
+          style={{
+            borderBottomColor: termColor,
+            backgroundColor: `${termColor}26`
+          }}
+        >
+          {token}
+        </mark>
+      );
+    }
+
+    return <React.Fragment key={idx}>{token}</React.Fragment>;
+  });
+};
 
 function VersePreview({
   activePreview,
@@ -20,270 +82,132 @@ function VersePreview({
   acronymPosition = 'first',
   t
 }) {
-  if (!activePreview || !activePreview.verses || activePreview.verses.length === 0) {
-    return null;
-  }
+  if (!activePreview) return null;
 
   const palette = COLORS && COLORS.length > 0 ? COLORS : DEFAULT_COLORS;
+  const versesByTerm =
+    activePreview.verses && typeof activePreview.verses === 'object'
+      ? activePreview.verses
+      : {};
 
-  const getTermColor = (termIndex) => palette[termIndex % palette.length] || '#fbbf24';
-
-  // Render a single verse with mode-specific highlighting
-  const renderHighlightedVerse = (text) => {
-    if (!text || !activeTerms || activeTerms.length === 0) return text;
-
-    // 1. GEMATRIA MODE: Strictly evaluate WHOLE words (never substrings inside longer words)
-    if (searchMode === 'gematria') {
-      const targetMap = new Map();
-      activeTerms.forEach((term, idx) => {
-        const num = Number(term);
-        if (!Number.isNaN(num) && num > 0 && !targetMap.has(num)) {
-          targetMap.set(num, getTermColor(idx));
-        }
-      });
-
-      // Split into whitespace & word tokens, also splitting on Hebrew maqaf (־)
-      const tokens = text.split(/(\s+|־)/);
-
-      return tokens.map((token, idx) => {
-        if (!token || /^\s+$/.test(token) || token === '־') {
-          return <React.Fragment key={idx}>{token}</React.Fragment>;
-        }
-
-        const lettersOnly = stripNiqqud(token).replace(/[^\u05D0-\u05EA]/g, '');
-        if (!lettersOnly) {
-          return <React.Fragment key={idx}>{token}</React.Fragment>;
-        }
-
-        const wordVal = calculateGematria(lettersOnly);
-        const matchedColor = targetMap.get(wordVal);
-
-        if (matchedColor) {
-          return (
-            <span
-              key={idx}
-              className="highlight-match"
-              style={{
-                borderBottomColor: matchedColor,
-                backgroundColor: `${matchedColor}26`
-              }}
-            >
-              {token}
-            </span>
-          );
-        }
-
-        return <React.Fragment key={idx}>{token}</React.Fragment>;
-      });
-    }
-
-    // 2. LETTER MODE: Highlight matching Hebrew letters
-    if (searchMode === 'letter') {
-      const letterMap = new Map();
-      activeTerms.forEach((term, idx) => {
-        const cleanTerm = normalizeFinalLetters(stripNiqqud(term).replace(/[^\u05D0-\u05EA]/g, ''));
-        for (const ch of cleanTerm) {
-          if (!letterMap.has(ch)) {
-            letterMap.set(ch, getTermColor(idx));
-          }
-        }
-      });
-
-      return Array.from(text).map((ch, idx) => {
-        const normCh = normalizeFinalLetters(stripNiqqud(ch));
-        const color = letterMap.get(normCh);
-        if (color) {
-          return (
-            <span
-              key={idx}
-              className="highlight-match"
-              style={{
-                padding: '0 2px',
-                borderBottomColor: color,
-                backgroundColor: `${color}26`
-              }}
-            >
-              {ch}
-            </span>
-          );
-        }
-        return <React.Fragment key={idx}>{ch}</React.Fragment>;
-      });
-    }
-
-    // 3. ACRONYM MODE (ראשי תיבות / סופי תיבות)
-    if (searchMode === 'acronym') {
-      const parts = text.split(/(\s+)/);
-      const wordEntries = [];
-
-      parts.forEach((part, partIdx) => {
-        if (!/^\s+$/.test(part) && part.length > 0) {
-          const letters = normalizeFinalLetters(stripNiqqud(part).replace(/[^\u05D0-\u05EA]/g, ''));
-          if (letters.length > 0) {
-            const keyLetter =
-              acronymPosition === 'last' ? letters[letters.length - 1] : letters[0];
-            wordEntries.push({ partIdx, keyLetter });
-          }
-        }
-      });
-
-      const highlightedParts = new Map();
-
-      activeTerms.forEach((term, termIdx) => {
-        const cleanTerm = normalizeFinalLetters(stripNiqqud(term).replace(/[^\u05D0-\u05EA]/g, ''));
-        const len = cleanTerm.length;
-        if (len === 0) return;
-
-        for (let i = 0; i <= wordEntries.length - len; i++) {
-          let candidate = '';
-          for (let j = 0; j < len; j++) {
-            candidate += wordEntries[i + j].keyLetter;
-          }
-          if (candidate === cleanTerm) {
-            const color = getTermColor(termIdx);
-            for (let j = 0; j < len; j++) {
-              highlightedParts.set(wordEntries[i + j].partIdx, color);
-            }
-          }
-        }
-      });
-
-      return parts.map((part, partIdx) => {
-        const color = highlightedParts.get(partIdx);
-        if (!color) {
-          return <React.Fragment key={partIdx}>{part}</React.Fragment>;
-        }
-
-        const chars = Array.from(part);
-        let targetCharIdx = -1;
-        if (acronymPosition === 'last') {
-          for (let i = chars.length - 1; i >= 0; i--) {
-            if (/[\u05D0-\u05EA]/.test(chars[i])) {
-              targetCharIdx = i;
-              break;
-            }
-          }
-        } else {
-          for (let i = 0; i < chars.length; i++) {
-            if (/[\u05D0-\u05EA]/.test(chars[i])) {
-              targetCharIdx = i;
-              break;
-            }
-          }
-        }
-
-        return (
-          <span
-            key={partIdx}
-            className="highlight-match"
-            style={{
-              borderBottomColor: color,
-              backgroundColor: `${color}22`
-            }}
-          >
-            {chars.map((c, cIdx) =>
-              cIdx === targetCharIdx ? (
-                <span key={cIdx} className="acronym-letter">
-                  {c}
-                </span>
-              ) : (
-                <React.Fragment key={cIdx}>{c}</React.Fragment>
-              )
-            )}
-          </span>
-        );
-      });
-    }
-
-    // 4. EXACT TEXT SEARCH MODE
-    const cleanedTerms = activeTerms
-      .map((term, idx) => ({
-        raw: stripNiqqud(term.trim()),
-        color: getTermColor(idx)
-      }))
-      .filter((item) => item.raw.length > 0)
-      .sort((a, b) => b.raw.length - a.raw.length);
-
-    if (cleanedTerms.length === 0) return text;
-
-    const escaped = cleanedTerms.map((item) =>
-      item.raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    );
-    const regex = new RegExp(`(${escaped.join('|')})`, 'g');
-    const segments = stripNiqqud(text).split(regex);
-
-    return segments.map((seg, idx) => {
-      const matched = cleanedTerms.find((item) => item.raw === seg);
-      if (matched) {
-        return (
-          <span
-            key={idx}
-            className="highlight-match"
-            style={{
-              borderBottomColor: matched.color,
-              backgroundColor: `${matched.color}26`
-            }}
-          >
-            {seg}
-          </span>
-        );
-      }
-      return <React.Fragment key={idx}>{seg}</React.Fragment>;
-    });
-  };
+  const totalMatches = activeTerms.reduce((sum, term) => {
+    const list = versesByTerm[term];
+    return sum + (Array.isArray(list) ? list.length : 0);
+  }, 0);
 
   return (
     <div className="preview-container">
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '12px',
-          marginBottom: '14px',
+          alignItems: 'center',
+          marginBottom: '15px',
           padding: '10px 14px',
           borderRadius: '12px',
-          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          backgroundColor: 'rgba(15, 23, 42, 0.88)',
           border: '1px solid rgba(56, 189, 248, 0.3)'
         }}
       >
-        <div style={{ fontSize: '14px', fontWeight: '700', color: '#e2e8f0' }}>
-          {activePreview.title || activePreview.name || t('versePreview')}{' '}
-          <span style={{ color: '#38bdf8', marginInlineStart: '6px' }}>
-            ({activePreview.verses.length})
-          </span>
-        </div>
-
+        <h3 style={{ margin: 0, color: '#7dd3fc', fontSize: '16px', fontWeight: '700' }}>
+          {t('preview')} {activePreview.name}
+        </h3>
         <button
           type="button"
           onClick={() => setActivePreview(null)}
           aria-label="Close preview"
           style={{
-            background: 'rgba(30, 41, 59, 0.8)',
-            border: '1px solid rgba(71, 85, 105, 0.7)',
+            width: '30px',
+            height: '30px',
             borderRadius: '8px',
+            border: '1px solid rgba(51, 65, 85, 0.85)',
+            background: '#090e1a',
             color: '#94a3b8',
-            padding: '4px 10px',
-            fontSize: '12px',
-            fontWeight: '700',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer'
           }}
         >
-          ✕
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
       </div>
 
-      {activePreview.verses.map((v, idx) => {
-        const refLabel = typeof v === 'object' ? v.ref || v.reference || '' : '';
-        const verseText = typeof v === 'object' ? v.text || v.verse || '' : String(v);
+      {totalMatches === 0 ? (
+        <div
+          style={{
+            padding: '20px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            border: '1px solid rgba(51, 65, 85, 0.65)',
+            color: '#94a3b8',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}
+        >
+          {t('noMatchesInScope') || 'No matches found in this selection.'}
+        </div>
+      ) : (
+        activeTerms.map((term, idx) => {
+          const verses = Array.isArray(versesByTerm[term]) ? versesByTerm[term] : [];
+          if (verses.length === 0) return null;
+          const termColor = palette[idx % palette.length];
 
-        return (
-          <div key={idx} className="verse-item">
-            {refLabel && <div className="verse-ref">{refLabel}</div>}
-            <div className="verse-text">{renderHighlightedVerse(verseText)}</div>
-          </div>
-        );
-      })}
+          return (
+            <div key={term}>
+              <h4
+                style={{
+                  color: termColor,
+                  direction: 'rtl',
+                  margin: '14px 0 8px 0',
+                  fontSize: '15px',
+                  fontWeight: '700'
+                }}
+              >
+                {t('matchesFor')} {term} {verses.length === 100 && t('first100')}
+              </h4>
+              {verses.map((v, i) => (
+                <div
+                  key={i}
+                  className="verse-item"
+                  style={{ borderRightColor: termColor }}
+                >
+                  <div className="verse-ref" style={{ color: termColor }}>
+                    {v.ref}
+                  </div>
+                  {searchMode === 'gematria' ? (
+                    <div className="verse-text">
+                      {renderGematriaVerse(v.text, term, termColor)}
+                    </div>
+                  ) : (
+                    <div
+                      className="verse-text"
+                      dangerouslySetInnerHTML={renderHighlightedText(
+                        v.text,
+                        v.highlights,
+                        searchMode,
+                        acronymPosition
+                      )}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
