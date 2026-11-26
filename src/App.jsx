@@ -418,40 +418,40 @@ function App() {
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
         </div>
 
-        {/* Right Controls: Pour a L'Chaim + Info (i) Button + Single-Flag Language Switcher */}
+        {/* Right Controls: Pour a L'Chaim (Icon) + Info (i) Button + Single-Flag Language Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             type="button"
-            dir={isRTL ? 'rtl' : 'ltr'}
             onClick={() => setIsLChaimOpen(true)}
             aria-label={t('lchaimBtn') || "Pour a L'Chaim"}
             title={t('lchaimBtn') || "Pour a L'Chaim"}
-            className="hover-lift lchaim-nav-btn"
+            className="hover-lift"
             style={{
+              width: '34px',
               height: '34px',
-              padding: '0 12px',
+              padding: 0,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
               backgroundColor: isLChaimOpen
-                ? 'rgba(251, 191, 36, 0.2)'
+                ? 'rgba(251, 191, 36, 0.22)'
                 : 'rgba(251, 191, 36, 0.1)',
-              border: '1px solid rgba(251, 191, 36, 0.48)',
+              border: isLChaimOpen
+                ? '1px solid rgba(251, 191, 36, 0.8)'
+                : '1px solid rgba(251, 191, 36, 0.45)',
               borderRadius: '999px',
-              color: '#fde68a',
-              fontSize: '12px',
-              fontWeight: '700',
-              boxShadow: '0 0 14px -3px rgba(251, 191, 36, 0.28)',
+              color: '#fbbf24',
+              boxShadow: isLChaimOpen
+                ? '0 0 14px rgba(251, 191, 36, 0.35)'
+                : '0 0 12px -3px rgba(251, 191, 36, 0.24)',
               cursor: 'pointer'
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 22h8" />
               <path d="M12 15v7" />
               <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" />
             </svg>
-            <span className="lchaim-btn-label">{t('lchaimBtn') || "Pour a L'Chaim"}</span>
           </button>
 
           <button

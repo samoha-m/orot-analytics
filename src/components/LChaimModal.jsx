@@ -39,29 +39,10 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
           title: 'הזמן אותי ללחיים',
           subtitle:
             'OROT הוא פרויקט עצמאי שנבנה באהבה לחקר המקרא. אם הכלי עזר לך לגלות תובנה חדשה, אפשר להרים כוסית ולתמוך בהמשך הפיתוח והשרתים.',
-          popular: 'הכי פופולרי',
           tiers: [
-            {
-              id: 'arak',
-              icon: '🥃',
-              name: 'כוסית ערק',
-              desc: 'תודה קטנה על תובנה יפה',
-              amount: '$5'
-            },
-            {
-              id: 'kiddush',
-              icon: '🍷',
-              name: 'גביע קידוש',
-              desc: 'תמיכה בתחזוקת השרתים',
-              amount: '$10'
-            },
-            {
-              id: 'shabbat',
-              icon: '🍾',
-              name: 'בקבוק יין לשבת (ח״י)',
-              desc: 'תרומה כפולה להמשך הפיתוח',
-              amount: '$18'
-            }
+            { id: 'arak', icon: '🥃', name: 'כוסית ערק', amount: '$5' },
+            { id: 'kiddush', icon: '🍷', name: 'גביע קידוש', amount: '$10' },
+            { id: 'shabbat', icon: '🍾', name: 'בקבוק יין לשבת (ח״י)', amount: '$18' }
           ],
           cta: (amount) => `המשך לתרומת ${amount} · לחיים!`,
           footerNote: 'התשלום מתבצע בצורה מאובטחת בעמוד התמיכה החיצוני'
@@ -72,29 +53,10 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
           title: 'یک جام لحیم مهمانم کن',
           subtitle:
             'OROT یک پروژه مستقل برای پژوهش محاسباتی تنخ است. اگر این ابزار برایتان مفید بوده، با یک نوشیدنی گرم از توسعه و سرورهای آن حمایت کنید.',
-          popular: 'محبوب‌ترین',
           tiers: [
-            {
-              id: 'arak',
-              icon: '🥃',
-              name: 'یک پیک عرق',
-              desc: 'تشکر کوچک برای یک کشف جالب',
-              amount: '$5'
-            },
-            {
-              id: 'kiddush',
-              icon: '🍷',
-              name: 'جام کیدوش',
-              desc: 'کمک به هزینه سرورها',
-              amount: '$10'
-            },
-            {
-              id: 'shabbat',
-              icon: '🍾',
-              name: 'بطری شراب شبات (حای)',
-              desc: 'حمایت ویژه از توسعه امکانات جدید',
-              amount: '$18'
-            }
+            { id: 'arak', icon: '🥃', name: 'یک پیک عرق', amount: '$5' },
+            { id: 'kiddush', icon: '🍷', name: 'جام کیدوش', amount: '$10' },
+            { id: 'shabbat', icon: '🍾', name: 'بطری شراب شبات (حای)', amount: '$18' }
           ],
           cta: (amount) => `ادامه و پرداخت ${amount} · لحیم!`,
           footerNote: 'پرداخت به‌صورت امن در صفحه حمایت انجام می‌شود'
@@ -104,29 +66,10 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
           title: "Pour a L'Chaim",
           subtitle:
             'OROT is an independent project built for biblical exploration. If it helped you uncover a meaningful insight, raise a glass to help cover servers and new features.',
-          popular: 'Most Popular',
           tiers: [
-            {
-              id: 'arak',
-              icon: '🥃',
-              name: 'Shot of Arak',
-              desc: 'A quick toast for a neat discovery',
-              amount: '$5'
-            },
-            {
-              id: 'kiddush',
-              icon: '🍷',
-              name: 'Kiddush Cup',
-              desc: 'Helps keep the servers running',
-              amount: '$10'
-            },
-            {
-              id: 'shabbat',
-              icon: '🍾',
-              name: 'Shabbat Wine (Chai)',
-              desc: 'Double Chai boost for new tools',
-              amount: '$18'
-            }
+            { id: 'arak', icon: '🥃', name: 'Shot of Arak', amount: '$5' },
+            { id: 'kiddush', icon: '🍷', name: 'Kiddush Cup', amount: '$10' },
+            { id: 'shabbat', icon: '🍾', name: 'Shabbat Wine (Chai)', amount: '$18' }
           ],
           cta: (amount) => `Continue with ${amount} · L'Chaim!`,
           footerNote: 'Opens securely in your external support page'
@@ -160,7 +103,7 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '460px',
+          maxWidth: '430px',
           backgroundColor: '#0d1424',
           borderRadius: '18px',
           border: '1px solid rgba(251, 191, 36, 0.42)',
@@ -242,7 +185,7 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
           </button>
         </div>
 
-        {/* Body & Tiers */}
+        {/* Body & Clean Single-Line Tiers */}
         <div style={{ padding: '16px 20px 20px 20px' }}>
           <p
             style={{
@@ -255,7 +198,7 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
             {copy.subtitle}
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
             {copy.tiers.map((tier) => {
               const isSelected = tier.id === selectedTier;
               return (
@@ -285,53 +228,24 @@ function LChaimModal({ isOpen, onClose, lang = 'he' }) {
                     transition: 'all 0.16s ease'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0 }}>
-                    <span style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0 }}>
+                    <span style={{ fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>
                       {tier.icon}
                     </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '7px',
-                          flexWrap: 'wrap'
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: '700',
-                            color: isSelected ? '#fef3c7' : '#f1f5f9'
-                          }}
-                        >
-                          {tier.name}
-                        </span>
-                        {tier.id === 'kiddush' && (
-                          <span
-                            style={{
-                              fontSize: '10px',
-                              fontWeight: '700',
-                              padding: '1px 7px',
-                              borderRadius: '999px',
-                              backgroundColor: 'rgba(56, 189, 248, 0.16)',
-                              border: '1px solid rgba(56, 189, 248, 0.4)',
-                              color: '#7dd3fc'
-                            }}
-                          >
-                            {copy.popular}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                        {tier.desc}
-                      </div>
-                    </div>
-                  </div>
+                    <span
+                      style={{
+                        fontSize: '14.5px',
+                        fontWeight: '700',
+                        color: isSelected ? '#fef3c7' : '#f1f5f9'
+                      }}
+                    >
+                      {tier.name}
+                    </span>
+                  </span>
 
                   <span
                     style={{
-                      fontSize: '15px',
+                      fontSize: '14px',
                       fontWeight: '800',
                       padding: '4px 10px',
                       borderRadius: '8px',
