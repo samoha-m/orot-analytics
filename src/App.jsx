@@ -10,6 +10,7 @@ import ControlSidebar from './components/ControlSidebar';
 import ELSFeedView from './components/ELSFeedView';
 import ScopeSelectorOverlay from './components/ScopeSelectorOverlay';
 import InfoModal from './components/InfoModal';
+import LChaimModal from './components/LChaimModal';
 import EmptyStateDashboard from './components/EmptyStateDashboard';
 import HebrewMatrixLoader from './components/HebrewMatrixLoader';
 import { useAndroidBackExit } from './hooks/useAndroidBackExit';
@@ -24,6 +25,7 @@ function App() {
   const [lang, setLang] = useState('he');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isLChaimOpen, setIsLChaimOpen] = useState(false);
   const t = (key) => (translations[lang] && translations[lang][key]) || key;
   const isRTL = lang === 'he' || lang === 'fa';
 
@@ -101,6 +103,7 @@ function App() {
     setAppError(null);
     setIsScopeOpen(false);
     setIsInfoOpen(false);
+    setIsLChaimOpen(false);
     setIsLangMenuOpen(false);
     setIsElsMode(false);
     setSearchMode('exact');
@@ -415,8 +418,42 @@ function App() {
           <img src={logoIcon} alt="Orot Logo" className="top-navbar-logo" />
         </div>
 
-        {/* Right Controls: Info (i) Button + Single-Flag Language Switcher */}
+        {/* Right Controls: Pour a L'Chaim + Info (i) Button + Single-Flag Language Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            dir={isRTL ? 'rtl' : 'ltr'}
+            onClick={() => setIsLChaimOpen(true)}
+            aria-label={t('lchaimBtn') || "Pour a L'Chaim"}
+            title={t('lchaimBtn') || "Pour a L'Chaim"}
+            className="hover-lift lchaim-nav-btn"
+            style={{
+              height: '34px',
+              padding: '0 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              backgroundColor: isLChaimOpen
+                ? 'rgba(251, 191, 36, 0.2)'
+                : 'rgba(251, 191, 36, 0.1)',
+              border: '1px solid rgba(251, 191, 36, 0.48)',
+              borderRadius: '999px',
+              color: '#fde68a',
+              fontSize: '12px',
+              fontWeight: '700',
+              boxShadow: '0 0 14px -3px rgba(251, 191, 36, 0.28)',
+              cursor: 'pointer'
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 22h8" />
+              <path d="M12 15v7" />
+              <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" />
+            </svg>
+            <span className="lchaim-btn-label">{t('lchaimBtn') || "Pour a L'Chaim"}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsInfoOpen(true)}
@@ -632,6 +669,13 @@ function App() {
           isOpen={isInfoOpen}
           onClose={() => setIsInfoOpen(false)}
           t={t}
+          lang={lang}
+        />
+
+        {/* Pour a L'Chaim Support Modal */}
+        <LChaimModal
+          isOpen={isLChaimOpen}
+          onClose={() => setIsLChaimOpen(false)}
           lang={lang}
         />
 

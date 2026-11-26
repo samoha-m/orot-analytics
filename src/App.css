@@ -471,6 +471,15 @@ input::placeholder {
 }
 
 @media (max-width: 768px) {
+  .lchaim-nav-btn {
+    width: 34px !important;
+    padding: 0 !important;
+  }
+
+  .lchaim-btn-label {
+    display: none;
+  }
+  
   .top-navbar {
     padding: 0 16px;
   }
