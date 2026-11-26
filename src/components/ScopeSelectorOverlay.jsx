@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { booksList, numberToHebrew } from '../data/constants';
 
 function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
+  const isRTL = lang === 'he' || lang === 'fa';
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [visible, setVisible] = useState(false);
   const [focusedBookId, setFocusedBookId] = useState(() => ranges[0]?.bookId || booksList[0]?.id || '01');
@@ -109,13 +110,15 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
 
   return (
     <div
+      dir={isRTL ? 'rtl' : 'ltr'}
       onClick={onClose}
+      className="scope-overlay-backdrop"
       style={{
         position: 'absolute',
         inset: 0,
         zIndex: 40,
-        backgroundColor: visible ? 'rgba(4, 7, 15, 0.72)' : 'rgba(4, 7, 15, 0)',
-        backdropFilter: visible ? 'blur(5px)' : 'none',
+        backgroundColor: visible ? 'rgba(4, 7, 15, 0.76)' : 'rgba(4, 7, 15, 0)',
+        backdropFilter: visible ? 'blur(6px)' : 'none',
         display: 'flex',
         alignItems: 'stretch',
         justifyContent: 'center',
@@ -124,6 +127,29 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
       }}
     >
       <style>{`
+        .scope-overlay-header {
+          padding: 14px 20px;
+          border-bottom: 1px solid rgba(30, 41, 59, 0.95);
+          background-color: #0c1220;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+        .scope-header-title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        .scope-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
         .scope-overlay-panes {
           display: flex;
           flex: 1;
@@ -142,14 +168,48 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
           padding: 18px 20px;
           background: #0d1424;
         }
+        .scope-mobile-footer {
+          display: none;
+        }
         @media (max-width: 680px) {
+          .scope-overlay-backdrop {
+            padding: 8px !important;
+          }
+          .scope-overlay-header {
+            padding: 12px 14px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .scope-header-title-row {
+            width: 100%;
+          }
+          .scope-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+          }
+          .scope-header-actions .scope-top-done-btn {
+            display: none !important;
+          }
           .scope-overlay-panes {
             flex-direction: column;
           }
           .scope-books-pane {
             width: 100%;
-            max-height: 42%;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+            max-height: 38%;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.85);
+          }
+          .scope-chapters-pane {
+            padding: 14px 14px 20px 14px;
+          }
+          .scope-mobile-footer {
+            display: flex;
+            flex-shrink: 0;
+            padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)) 14px;
+            background: linear-gradient(180deg, rgba(12, 18, 32, 0.96) 0%, #080c16 100%);
+            border-top: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
+            z-index: 10;
           }
         }
       `}</style>
@@ -172,38 +232,29 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
         }}
       >
         {/* Top Action Bar */}
-        <div
-          style={{
-            padding: '14px 20px',
-            borderBottom: '1px solid rgba(30, 41, 59, 0.95)',
-            backgroundColor: '#0c1220',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#f1f5f9', fontWeight: '700' }}>
-              {t('comparisonScopes') || 'Comparison Scopes'}
-            </h3>
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: '700',
-                padding: '3px 10px',
-                borderRadius: '999px',
-                backgroundColor: totalSelectedBooks > 0 ? 'rgba(56, 189, 248, 0.16)' : '#1e293b',
-                color: totalSelectedBooks > 0 ? '#7dd3fc' : '#94a3b8',
-                border: totalSelectedBooks > 0 ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid transparent'
-              }}
-            >
-              {renderBadgeSummary()}
-            </span>
+        <div className="scope-overlay-header">
+          <div className="scope-header-title-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#f1f5f9', fontWeight: '700' }}>
+                {t('comparisonScopes') || 'Comparison Scopes'}
+              </h3>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  backgroundColor: totalSelectedBooks > 0 ? 'rgba(56, 189, 248, 0.16)' : '#1e293b',
+                  color: totalSelectedBooks > 0 ? '#7dd3fc' : '#94a3b8',
+                  border: totalSelectedBooks > 0 ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid transparent'
+                }}
+              >
+                {renderBadgeSummary()}
+              </span>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="scope-header-actions">
             <button
               type="button"
               onClick={handleSelectAllBooks}
@@ -239,19 +290,26 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
             <button
               type="button"
               onClick={onClose}
+              className="scope-top-done-btn"
               style={{
-                padding: '6px 16px',
-                fontSize: '12px',
-                fontWeight: '700',
-                borderRadius: '7px',
-                border: '1px solid rgba(56, 189, 248, 0.65)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 18px',
+                fontSize: '13px',
+                fontWeight: '800',
+                borderRadius: '8px',
+                border: '1px solid rgba(125, 211, 252, 0.8)',
                 background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
                 color: '#ffffff',
-                boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
+                boxShadow: '0 0 16px rgba(56, 189, 248, 0.4)',
                 cursor: 'pointer'
               }}
             >
-              {t('done') || 'Done'}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>{t('done') || 'Done'}</span>
             </button>
           </div>
         </div>
@@ -405,6 +463,49 @@ function ScopeSelectorOverlay({ isOpen, onClose, ranges, setRanges, t, lang }) {
               })}
             </div>
           </div>
+        </div>
+
+        {/* Sticky High-Visibility Mobile Bottom "Done" Footer */}
+        <div className="scope-mobile-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              width: '100%',
+              height: '46px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              borderRadius: '12px',
+              border: '1.5px solid rgba(125, 211, 252, 0.9)',
+              background: 'linear-gradient(90deg, #2563eb 0%, #0284c7 50%, #0ea5e9 100%)',
+              color: '#ffffff',
+              fontSize: '15px',
+              fontWeight: '800',
+              letterSpacing: '0.01em',
+              boxShadow: '0 0 24px rgba(56, 189, 248, 0.5), 0 6px 16px rgba(0, 0, 0, 0.45)',
+              cursor: 'pointer'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>{t('done') || 'Done'}</span>
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: '700',
+                padding: '2px 9px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(7, 11, 20, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#e0f2fe'
+              }}
+            >
+              {renderBadgeSummary()}
+            </span>
+          </button>
         </div>
       </div>
     </div>
