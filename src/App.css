@@ -227,6 +227,12 @@ input::placeholder {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 18px rgba(56, 189, 248, 0.35);
   animation: dotIlluminate 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Show compact flashcard deck inside ControlSidebar ONLY on mobile */
+.mobile-only-flashcard {
+  display: none;
+}
+
 /* =========================================
    STRUCTURAL LAYOUT
    ========================================= */
@@ -501,6 +507,23 @@ input::placeholder {
   /* Hide bottom footer on mobile whenever the inline search trigger is active */
   .sidebar-footer.hide-on-mobile {
     display: none;
+  }
+
+  /* Compact Flashcard Deck Inside Mobile ControlSidebar */
+  .mobile-only-flashcard {
+    display: block;
+    margin: 6px 18px 22px 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(51, 65, 85, 0.5);
+  }
+
+  .mobile-only-flashcard .flashcard-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .mobile-only-flashcard .flashcard-dot.active {
+    width: 18px;
   }
 
   /* Full-Screen Search View */

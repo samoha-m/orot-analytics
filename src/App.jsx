@@ -646,6 +646,7 @@ function App() {
           onOpenScope={handleOpenScope}
           onCloseScope={handleCloseScope}
           handleSearch={handleSearch}
+          onRunExample={handleRunExample}
           t={t} lang={lang}
           elsSubMode={elsSubMode} setElsSubMode={setElsSubMode}
           manualConfig={manualConfig} setManualConfig={setManualConfig}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { booksList } from '../data/constants';
+import DiscoveryFlashcardDeck from './DiscoveryFlashcardDeck';
 
 function ControlSidebar({
   mobileView,
@@ -9,6 +10,7 @@ function ControlSidebar({
   ranges, loading,
   isScopeOpen, onOpenScope, onCloseScope,
   handleSearch,
+  onRunExample,
   t, lang,
   elsSubMode, setElsSubMode, manualConfig, setManualConfig,
   includeSpaces, setIncludeSpaces,
@@ -754,6 +756,15 @@ function ControlSidebar({
             </button>
           </div>
         )}
+
+        {/* Mobile-Only Compact Discovery Flashcard Deck */}
+        <div className="mobile-only-flashcard">
+          <DiscoveryFlashcardDeck
+            lang={lang}
+            onRunExample={onRunExample}
+            compact
+          />
+        </div>
       </div>
 
       {/* Desktop Footer (Hidden on Mobile Whenever Inline Search Button Is Active) */}
