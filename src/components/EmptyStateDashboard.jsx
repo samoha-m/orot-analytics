@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { booksList } from '../data/constants';
 
-const SLIDE_DURATION_MS = 6500;
+const SWAP_INTERVAL_MS = 5800;
 
 function EmptyStateDashboard({ t, lang, onRunExample }) {
   const isRTL = lang === 'he' || lang === 'fa';
@@ -40,177 +40,253 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
       ? 'موتور تحلیل محاسباتی • متن ماسوره'
       : 'Masoretic Computational Engine';
 
-  // Resolve book IDs dynamically from booksList so scopes always match
-  const examples = useMemo(() => {
+  const flashcards = useMemo(() => {
     const torahIds = ['01', '02', '03', '04', '05'];
-    const songBook =
-      booksList.find(
-        (b) =>
-          b.he === 'שיר השירים' ||
-          b.name.toLowerCase().includes('song')
-      ) || booksList[0];
+    const findBookId = (heName, enSub) => {
+      const found = booksList.find(
+        (b) => b.he === heName || b.name.toLowerCase().includes(enSub)
+      );
+      return found ? found.id : '01';
+    };
+
+    const songId = findBookId('שיר השירים', 'song');
+    const estherId = findBookId('אסתר', 'esther');
+    const psalmsId = findBookId('תהילים', 'psalm');
+    const proverbsId = findBookId('משלי', 'proverb');
+
+    const modeTag = {
+      gematria: lang === 'he' ? 'גימטריה' : lang === 'fa' ? 'گماتریا' : 'Gematria',
+      els: lang === 'he' ? 'דילוגי אותיות' : lang === 'fa' ? 'پرش حروف' : 'Skip (ELS)',
+      acronymFirst:
+        lang === 'he' ? 'ראשי תיבות' : lang === 'fa' ? 'سرواژه' : 'Acronym • First',
+      acronymLast:
+        lang === 'he' ? 'סופי תיבות' : lang === 'fa' ? 'پایان‌واژه' : 'Acronym • Last',
+      exact: lang === 'he' ? 'חיפוש טקסט' : lang === 'fa' ? 'جستجوی متن' : 'Text Search',
+      letter: lang === 'he' ? 'ספירת אותיות' : lang === 'fa' ? 'شمارش حروف' : 'Letter Count'
+    };
 
     return [
       {
-        id: 'els-torah',
+        id: 'gem-13',
+        tag: modeTag.gematria,
+        searchMode: 'gematria',
+        searchTerm: '13',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת שלמילים "אהבה" ו-"אחד" יש בדיוק אותה גימטריה — 13?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید دو واژه «אהבה» (عشق) و «אחד» (یکتا) هر دو دارای ارزش گماتریایی ۱۳ هستند؟'
+            : 'Did you know that אהבה (Love) and אחד (One) share the exact same Gematria value of 13?'
+      },
+      {
+        id: 'els-torah-gen',
+        tag: modeTag.els,
         searchMode: 'els',
         elsSubMode: 'auto',
         searchTerm: 'תורה',
         bookIds: ['01'],
-        pillLabel: lang === 'he' ? 'דילוגי אותיות' : lang === 'fa' ? 'پرش حروف' : 'Skip (ELS)',
-        title:
+        text:
           lang === 'he'
-            ? 'המילה "תורה" בדילוג של 50 אותיות בבראשית'
+            ? 'הידעת שהחל מהאות ת׳ הראשונה בבראשית, דילוג של כל אות 50 יוצר את המילה "תורה"?'
             : lang === 'fa'
-            ? 'واژه «תורה» با پرش ۵۰ حرفی در پیدایش'
-            : '"Torah" encoded at a 50-letter skip in Genesis',
-        description:
-          lang === 'he'
-            ? 'החל מהאות ת׳ הראשונה במילה "בראשית", ספירה של כל אות 50 יוצרת את המילה ת-ו-ר-ה.'
-            : lang === 'fa'
-            ? 'با شروع از نخستین حرف ת در «בראשית»، شمارش هر ۵۰ حرف واژه ת-ו-ר-ה را می‌سازد.'
-            : 'Starting from the first ת in "Bereshit" (Genesis 1:1), counting every 50th letter spells ת-ו-ר-ה.',
-        previewRef:
-          lang === 'he'
-            ? 'בראשית א׳:א׳ • דילוג +50'
-            : lang === 'fa'
-            ? 'پیدایش ۱:۱ • پرش +۵۰'
-            : 'Genesis 1:1 • Skip +50',
-        previewSegments: [
-          { text: 'בְּרֵאשִׁי' },
-          { text: 'ת', highlight: true },
-          { text: ' בָּרָא אֱלֹהִים ... ' },
-          { text: 'ו', highlight: true },
-          { text: ' ... ' },
-          { text: 'ר', highlight: true },
-          { text: ' ... ' },
-          { text: 'ה', highlight: true }
-        ]
+            ? 'آیا می‌دانستید با شروع از نخستین حرف ת در پیدایش، شمارش هر ۵۰ حرف واژه «תורה» را می‌سازد؟'
+            : 'Did you know that starting from the first ת in Genesis 1:1, every 50th letter spells תורה?'
       },
       {
-        id: 'gematria-86',
-        searchMode: 'gematria',
-        searchTerm: '86',
-        bookIds: torahIds,
-        pillLabel: lang === 'he' ? 'גימטריה' : lang === 'fa' ? 'گماتریا' : 'Gematria',
-        title:
-          lang === 'he'
-            ? 'הערך 86: "אלהים" = "הטבע" בחמישה חומשי תורה'
-            : lang === 'fa'
-            ? 'ارزش عددی ۸۶: «אלהים» = «הטבע» در تورات'
-            : 'Value 86: "Elohim" (אלהים) across the Torah',
-        description:
-          lang === 'he'
-            ? 'איתור כל המילים השלמות שערכן הגימטרי שווה ל-86 והשוואת תפוצתן בין חומשי התורה.'
-            : lang === 'fa'
-            ? 'یافتن تمام واژگان کامل با ارزش گماتریایی ۸۶ و مقایسه فراوانی آن‌ها در پنج کتاب تورات.'
-            : 'Finds every complete word with a numerical value of 86 and compares its distribution across the Torah.',
-        previewRef:
-          lang === 'he'
-            ? 'בראשית א׳:א׳ • ערך 86'
-            : lang === 'fa'
-            ? 'پیدایش ۱:۱ • ارزش ۸۶'
-            : 'Genesis 1:1 • Value 86',
-        previewSegments: [
-          { text: 'בְּרֵאשִׁית בָּרָא ' },
-          { text: 'אֱלֹהִים', highlight: true },
-          { text: ' אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ' }
-        ]
-      },
-      {
-        id: 'acronym-elul',
+        id: 'acr-elul',
+        tag: modeTag.acronymFirst,
         searchMode: 'acronym',
         acronymPosition: 'first',
         searchTerm: 'אלול',
-        bookIds: [songBook.id],
-        pillLabel: lang === 'he' ? 'ראשי תיבות' : lang === 'fa' ? 'سرواژه‌ها' : 'Acronyms',
-        title:
+        bookIds: [songId],
+        text:
           lang === 'he'
-            ? 'ראשי תיבות "אלול" בשיר השירים'
+            ? 'הידעת שראשי התיבות של "אני לדודי ודודי לי" בשיר השירים מרכיבים את חודש "אלול"?'
             : lang === 'fa'
-            ? 'سرواژه «אלול» در غزل غزل‌های سلیمان'
-            : 'Acronym "Elul" (אלול) hidden in Song of Songs',
-        description:
-          lang === 'he'
-            ? 'האותיות הראשונות של ארבע המילים "אני לדודי ודודי לי" מרכיבות יחד את חודש אלול.'
-            : lang === 'fa'
-            ? 'حروف آغازین چهار واژه «אני לדודי ודודי לי» نام ماه عبری אלול را می‌سازند.'
-            : 'The initial letters of the four consecutive words "Ani LeDodi VeDodi Li" spell אלול.',
-        previewRef:
-          lang === 'he'
-            ? 'שיר השירים ו׳:ג׳ • ראשי תיבות'
-            : lang === 'fa'
-            ? 'غزل غزل‌ها ۶:۳ • سرواژه'
-            : 'Song of Songs 6:3 • First Letters',
-        previewSegments: [
-          { text: 'א', highlight: true },
-          { text: 'נִי ' },
-          { text: 'ל', highlight: true },
-          { text: 'דוֹדִי ' },
-          { text: 'ו', highlight: true },
-          { text: 'דוֹדִי ' },
-          { text: 'ל', highlight: true },
-          { text: 'י' }
-        ]
+            ? 'آیا می‌دانستید حروف آغازین «אני לדודי ודודי לי» در غزل غزل‌ها نام ماه «אלול» را می‌سازد؟'
+            : 'Did you know the initial letters of "אני לדודי ודודי לי" in Song of Songs spell אלול?'
       },
       {
-        id: 'text-compare',
+        id: 'txt-light-dark',
+        tag: modeTag.exact,
+        searchMode: 'exact',
+        searchTerm: 'אור, חושך',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת שאפשר להשוות בגרף אחד את תפוצת המילים "אור" מול "חושך" בחמישה חומשי תורה?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید می‌توانید فراوانی «אור» (نور) و «חושך» (تاریکی) را هم‌زمان در تورات مقایسه کنید؟'
+            : 'Did you know you can compare "אור" (Light) vs. "חושך" (Darkness) side-by-side across the Torah?'
+      },
+      {
+        id: 'gem-86',
+        tag: modeTag.gematria,
+        searchMode: 'gematria',
+        searchTerm: '86',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת שלשם "אלהים" ולמילה "הטבע" יש אותו ערך גימטרי — 86?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید واژه «אלהים» و «הטבע» (طبیعت) هر دو ارزش عددی ۸۶ دارند؟'
+            : 'Did you know that אלהים (God) and הטבע (Nature) both equal 86 in Gematria?'
+      },
+      {
+        id: 'acr-emet',
+        tag: modeTag.acronymLast,
+        searchMode: 'acronym',
+        acronymPosition: 'last',
+        searchTerm: 'אמת',
+        bookIds: ['01'],
+        text:
+          lang === 'he'
+            ? 'הידעת שסופי התיבות של "ברא אלהים לעשות" בסיום בריאת העולם יוצרים את המילה "אמת"?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید حروف پایانی «ברא אלהים לעשות» در پیدایش ۲:۳ واژه «אמת» (حقیقت) را می‌سازد؟'
+            : 'Did you know the final letters of "ברא אלהים לעשות" (Genesis 2:3) spell אמת (Truth)?'
+      },
+      {
+        id: 'els-torah-ex',
+        tag: modeTag.els,
+        searchMode: 'els',
+        elsSubMode: 'auto',
+        searchTerm: 'תורה',
+        bookIds: ['02'],
+        text:
+          lang === 'he'
+            ? 'הידעת שגם בתחילת ספר שמות מופיעה המילה "תורה" בדילוג מדויק של 50 אותיות?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید در آغاز کتاب خروج نیز واژه «תורה» با پرش دقیق ۵۰ حرفی پنهان شده است؟'
+            : 'Did you know that תורה also appears at an exact 50-letter skip at the opening of Exodus?'
+      },
+      {
+        id: 'gem-358',
+        tag: modeTag.gematria,
+        searchMode: 'gematria',
+        searchTerm: '358',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת שלמילים "משיח" ו-"נחש" יש אותה גימטריה בדיוק — 358?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید «משיח» (مسیح) و «נחש» (مار) هر دو دارای ارزش گماتریایی ۳۵۸ هستند؟'
+            : 'Did you know that משיח (Messiah) and נחש (Serpent) both share the Gematria value of 358?'
+      },
+      {
+        id: 'ltr-aleph-tav',
+        tag: modeTag.letter,
+        searchMode: 'letter',
+        searchTerm: 'א, ת',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת שאפשר למדוד את שכיחות האותיות "א" מול "ת" בכל אחד מחומשי התורה?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید می‌توانید بسامد حرف «א» را در برابر «ת» در تمام کتاب‌های تورات بسنجید؟'
+            : 'Did you know you can measure how often א (Aleph) appears vs. ת (Tav) across the Torah?'
+      },
+      {
+        id: 'acr-esther',
+        tag: modeTag.acronymFirst,
+        searchMode: 'acronym',
+        acronymPosition: 'first',
+        searchTerm: 'יהוה',
+        bookIds: [estherId],
+        text:
+          lang === 'he'
+            ? 'הידעת שבמגילת אסתר, ראשי התיבות של "יבוא המלך והמן היום" מצפינים את שם ההוויה?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید در کتاب استر، سرواژه «יבוא המלך והמן היום» نام مقدس چهارحرفی را می‌سازد؟'
+            : 'Did you know the initial letters of "יבוא המלך והמן היום" in Esther encode the Divine Name?'
+      },
+      {
+        id: 'txt-water-earth',
+        tag: modeTag.exact,
         searchMode: 'exact',
         searchTerm: 'מים, ארץ',
         bookIds: torahIds,
-        pillLabel: lang === 'he' ? 'חיפוש טקסט' : lang === 'fa' ? 'جستجوی متن' : 'Text Search',
-        title:
+        text:
           lang === 'he'
-            ? 'השוואת מופעים: "מים" מול "ארץ" בתורה'
+            ? 'הידעת כמה פעמים מופיעה המילה "מים" לעומת "ארץ" לאורך התורה?'
             : lang === 'fa'
-            ? 'مقایسه فراوانی: «מים» در برابر «ארץ» در تورات'
-            : 'Term Comparison: "Water" (מים) vs. "Earth" (ארץ)',
-        description:
+            ? 'آیا می‌دانستید واژه «מים» (آب) چند بار در مقایسه با «ארץ» (زمین) در تورات آمده است؟'
+            : 'Did you know how often "מים" (Water) appears compared to "ארץ" (Earth) across the Torah?'
+      },
+      {
+        id: 'gem-70',
+        tag: modeTag.gematria,
+        searchMode: 'gematria',
+        searchTerm: '70',
+        bookIds: ['01', psalmsId, proverbsId],
+        text:
           lang === 'he'
-            ? 'הפרדה בפסיק מאפשרת להשוות מספר מילים במקביל בגרף עמודות ולצפות בפסוקים.'
+            ? 'הידעת שלמילים "יין" ו-"סוד" יש את אותו ערך גימטרי — 70?'
             : lang === 'fa'
-            ? 'جدا کردن واژه‌ها با کاما امکان مقایسه هم‌زمان چند واژه را در نمودار فراهم می‌کند.'
-            : 'Separate terms with commas to compare multiple words side-by-side in an interactive chart.',
-        previewRef:
+            ? 'آیا می‌دانستید دو واژه «יין» (شراب) و «סוד» (راز) هر دو برابر با ۷۰ در گماتریا هستند؟'
+            : 'Did you know that יין (Wine) and סוד (Secret) both equal 70 in Gematria?'
+      },
+      {
+        id: 'acr-exodus-last',
+        tag: modeTag.acronymLast,
+        searchMode: 'acronym',
+        acronymPosition: 'last',
+        searchTerm: 'יהוה',
+        bookIds: ['02'],
+        text:
           lang === 'he'
-            ? 'בראשית א׳:י׳ • השוואה מרובה'
+            ? 'הידעת שסופי התיבות של "לי מה שמו מה" בשמות ג׳:י״ג יוצרים את שם ההוויה?'
             : lang === 'fa'
-            ? 'پیدایش ۱:۱۰ • مقایسه چندگانه'
-            : 'Genesis 1:10 • Multi-Term',
-        previewSegments: [
-          { text: 'וַיִּקְרָא אֱלֹהִים לַיַּבָּשָׁה ' },
-          { text: 'אֶרֶץ', highlight: true },
-          { text: ' וּלְמִקְוֵה הַ' },
-          { text: 'מַּיִם', highlight: true },
-          { text: ' קָרָא יַמִּים' }
-        ]
+            ? 'آیا می‌دانستید حروف پایانی «לי מה שמו מה» در خروج ۳:۱۳ نام چهارحرفی را پدید می‌آورد؟'
+            : 'Did you know the final letters of "לי מה שמו מה" (Exodus 3:13) spell out the Divine Name?'
+      },
+      {
+        id: 'els-moshe',
+        tag: modeTag.els,
+        searchMode: 'els',
+        elsSubMode: 'auto',
+        searchTerm: 'משה',
+        bookIds: ['01'],
+        text:
+          lang === 'he'
+            ? 'הידעת שאפשר לאתר דילוגי אותיות של השם "משה" השזורים בתוך ספר בראשית?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید می‌توانید پرش‌های حروف نام «משה» (موسی) را در کتاب پیدایش کشف کنید؟'
+            : 'Did you know you can uncover skip sequences of the name משה (Moses) woven inside Genesis?'
+      },
+      {
+        id: 'txt-shalom',
+        tag: modeTag.exact,
+        searchMode: 'exact',
+        searchTerm: 'שלום',
+        bookIds: torahIds,
+        text:
+          lang === 'he'
+            ? 'הידעת היכן בתורה מרוכזת המילה "שלום" ובאילו פסוקים היא מופיעה?'
+            : lang === 'fa'
+            ? 'آیا می‌دانستید واژه «שלום» (صلح) در کدام بخش‌های تورات بیشترین تمرکز را دارد؟'
+            : 'Did you know where the word שלום (Peace) is concentrated across the Five Books of Moses?'
       }
     ];
   }, [lang]);
 
   useEffect(() => {
-    if (isPaused || examples.length <= 1) return;
+    if (isPaused || flashcards.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % examples.length);
-    }, SLIDE_DURATION_MS);
+      setActiveIndex((prev) => (prev + 1) % flashcards.length);
+    }, SWAP_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [isPaused, examples.length]);
+  }, [isPaused, flashcards.length]);
 
-  const currentExample = examples[activeIndex] || examples[0];
+  const currentCard = flashcards[activeIndex] || flashcards[0];
 
-  const sectionHeader =
+  const tryCtaLabel =
     lang === 'he'
-      ? 'דוגמאות חיות מתוך התנ״ך'
+      ? 'לחץ לבדיקה'
       : lang === 'fa'
-      ? 'نمونه‌های زنده از تنخ'
-      : 'Curated Bible Discoveries';
-
-  const tryButtonLabel =
-    lang === 'he'
-      ? 'הרץ דוגמה זו'
-      : lang === 'fa'
-      ? 'اجرای این نمونه'
-      : 'Try this example';
+      ? 'برای جستجو کلیک کنید'
+      : 'Click to run';
 
   return (
     <div
@@ -221,7 +297,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '22px 14px 32px 14px',
+        padding: '24px 16px',
         textAlign: 'center',
         overflowX: 'hidden'
       }}
@@ -241,7 +317,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
         }}
       />
 
-      <div style={{ position: 'relative', zIndex: 2, maxWidth: '640px', width: '100%' }}>
+      <div style={{ position: 'relative', zIndex: 2, maxWidth: '610px', width: '100%' }}>
         <div
           className="animate-fade-in-up delay-100"
           style={{
@@ -289,7 +365,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
         <p
           className="animate-fade-in-up delay-300"
           style={{
-            margin: '0 0 20px 0',
+            margin: '0 0 22px 0',
             fontSize: '14px',
             color: '#94a3b8',
             lineHeight: '1.6'
@@ -306,7 +382,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
             gridTemplateColumns: 'repeat(auto-fit, minmax(122px, 1fr))',
             gap: '10px',
             textAlign: isRTL ? 'right' : 'left',
-            marginBottom: '20px'
+            marginBottom: '26px'
           }}
         >
           {stats.map((st) => (
@@ -357,7 +433,7 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
           ))}
         </div>
 
-        {/* Curated Spotlight Carousel */}
+        {/* Airy Floating "Did You Know?" Flashcard */}
         <div
           className="animate-fade-in-up delay-500"
           onMouseEnter={() => setIsPaused(true)}
@@ -365,217 +441,87 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
           onTouchStart={() => setIsPaused(true)}
           onTouchEnd={() => setIsPaused(false)}
           style={{
-            position: 'relative',
-            overflow: 'hidden',
-            backgroundColor: 'rgba(13, 20, 36, 0.92)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: '16px',
-            padding: '16px 18px 18px 18px',
-            border: '1px solid rgba(56, 189, 248, 0.42)',
-            boxShadow:
-              '0 12px 32px rgba(0, 0, 0, 0.48), 0 0 22px -6px rgba(56, 189, 248, 0.24)',
-            textAlign: isRTL ? 'right' : 'left'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
           }}
         >
-          {/* Top Bar: Section Title & Interactive Mode Pills */}
           <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onRunExample && onRunExample(currentCard)}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && onRunExample) {
+                e.preventDefault();
+                onRunExample(currentCard);
+              }
+            }}
+            className="airy-flashcard"
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
-              marginBottom: '14px',
-              paddingBottom: '10px',
-              borderBottom: '1px solid rgba(51, 65, 85, 0.65)'
+              width: '100%',
+              padding: '18px 22px',
+              borderRadius: '18px',
+              background:
+                'linear-gradient(145deg, rgba(15, 23, 42, 0.62) 0%, rgba(12, 74, 110, 0.24) 100%)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(56, 189, 248, 0.32)',
+              boxShadow:
+                '0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              cursor: onRunExample ? 'pointer' : 'default',
+              textAlign: isRTL ? 'right' : 'left'
             }}
           >
             <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '12px',
-                fontWeight: '700',
-                color: '#7dd3fc'
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#fbbf24"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span>{sectionHeader}</span>
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-              {examples.map((ex, idx) => {
-                const isSelected = idx === activeIndex;
-                return (
-                  <button
-                    key={ex.id}
-                    type="button"
-                    onClick={() => setActiveIndex(idx)}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      border: isSelected
-                        ? '1px solid rgba(56, 189, 248, 0.85)'
-                        : '1px solid rgba(51, 65, 85, 0.85)',
-                      backgroundColor: isSelected
-                        ? 'rgba(56, 189, 248, 0.2)'
-                        : 'rgba(9, 14, 26, 0.85)',
-                      color: isSelected ? '#e0f2fe' : '#94a3b8',
-                      transition: 'all 0.16s ease'
-                    }}
-                  >
-                    {ex.pillLabel}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Smooth Crossfading Slide Body */}
-          <div key={currentExample.id} className="spotlight-slide-enter">
-            <h3
-              style={{
-                margin: '0 0 6px 0',
-                fontSize: '16px',
-                fontWeight: '800',
-                color: '#f8fafc',
-                lineHeight: '1.4'
-              }}
-            >
-              {currentExample.title}
-            </h3>
-
-            <p
-              style={{
-                margin: '0 0 12px 0',
-                fontSize: '13px',
-                color: '#cbd5e1',
-                lineHeight: '1.55'
-              }}
-            >
-              {currentExample.description}
-            </p>
-
-            {/* Sample Hebrew Snippet Box */}
-            <div
-              style={{
-                backgroundColor: 'rgba(8, 12, 22, 0.9)',
-                border: '1px solid rgba(51, 65, 85, 0.75)',
-                borderRight: '3px solid #fbbf24',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                marginBottom: '14px'
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  color: '#7dd3fc',
-                  marginBottom: '4px'
-                }}
-              >
-                {currentExample.previewRef}
-              </div>
-              <div
-                dir="rtl"
-                style={{
-                  fontSize: '18px',
-                  lineHeight: '1.7',
-                  fontFamily: '"Times New Roman", serif',
-                  color: '#f1f5f9',
-                  textAlign: 'right'
-                }}
-              >
-                {currentExample.previewSegments.map((seg, sIdx) =>
-                  seg.highlight ? (
-                    <span
-                      key={sIdx}
-                      className="highlight-match"
-                      style={{ padding: '0 4px', margin: '0 1px' }}
-                    >
-                      {seg.text}
-                    </span>
-                  ) : (
-                    <React.Fragment key={sIdx}>{seg.text}</React.Fragment>
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* Footer Row: Query Chip + One-Click "Try This Example" Action */}
-            <div
+              key={currentCard.id}
+              className="flashcard-airy-swap"
               style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
                 gap: '10px'
               }}
             >
+              {/* Top Pill + Action Hint */}
               <div
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '12px',
-                  color: '#94a3b8'
+                  justifyContent: 'space-between',
+                  gap: '8px'
                 }}
               >
-                <span>{lang === 'he' ? 'מילת חיפוש:' : lang === 'fa' ? 'عبارت:' : 'Query:'}</span>
-                <code
-                  dir="rtl"
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    color: '#fde68a',
-                    fontWeight: '800',
-                    fontFamily: 'inherit'
-                  }}
-                >
-                  {currentExample.searchTerm}
-                </code>
-              </div>
-
-              {onRunExample && (
-                <button
-                  type="button"
-                  onClick={() => onRunExample(currentExample)}
-                  className="btn hover-lift"
+                <span
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '7px',
-                    padding: '8px 15px',
-                    fontSize: '13px',
-                    borderRadius: '9px',
-                    background: 'linear-gradient(90deg, #2563eb 0%, #0284c7 100%)',
-                    border: '1px solid rgba(56, 189, 248, 0.65)',
-                    color: '#ffffff',
-                    boxShadow: '0 0 16px rgba(56, 189, 248, 0.32)'
+                    gap: '6px',
+                    padding: '3px 10px',
+                    borderRadius: '999px',
+                    backgroundColor: 'rgba(56, 189, 248, 0.14)',
+                    border: '1px solid rgba(56, 189, 248, 0.32)',
+                    color: '#7dd3fc',
+                    fontSize: '11px',
+                    fontWeight: '700'
                   }}
                 >
-                  <span>{tryButtonLabel}</span>
+                  <span style={{ color: '#fbbf24' }}>✦</span>
+                  <span>{currentCard.tag}</span>
+                </span>
+
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#38bdf8'
+                  }}
+                >
+                  <span>{tryCtaLabel}</span>
                   <svg
-                    width="14"
-                    height="14"
+                    width="13"
+                    height="13"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -587,34 +533,100 @@ function EmptyStateDashboard({ t, lang, onRunExample }) {
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
                   </svg>
-                </button>
-              )}
+                </span>
+              </div>
+
+              {/* Clean, Airy Question Copy */}
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#f1f5f9',
+                  lineHeight: '1.65'
+                }}
+              >
+                {currentCard.text}
+              </p>
             </div>
           </div>
 
-          {/* Bottom Auto-Advance Progress Track */}
+          {/* Minimalist Subtle Pager Controls Below the Card */}
           <div
             style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: '3px',
-              backgroundColor: 'rgba(30, 41, 59, 0.8)'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: '#64748b',
+              fontSize: '12px',
+              fontWeight: '600'
             }}
           >
-            <div
-              key={`${currentExample.id}-progress`}
-              className="spotlight-progress-bar"
+            <button
+              type="button"
+              onClick={() =>
+                setActiveIndex(
+                  (prev) => (prev - 1 + flashcards.length) % flashcards.length
+                )
+              }
+              aria-label="Previous tip"
               style={{
-                height: '100%',
-                width: '100%',
-                background: 'linear-gradient(90deg, #38bdf8, #fbbf24)',
-                transformOrigin: isRTL ? 'right center' : 'left center',
-                animationDuration: `${SLIDE_DURATION_MS}ms`,
-                animationPlayState: isPaused ? 'paused' : 'running'
+                background: 'none',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '2px 6px',
+                display: 'inline-flex',
+                alignItems: 'center'
               }}
-            />
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points={isRTL ? '9 18 15 12 9 6' : '15 18 9 12 15 6'} />
+              </svg>
+            </button>
+
+            <span style={{ letterSpacing: '0.06em', color: '#94a3b8' }}>
+              {activeIndex + 1} / {flashcards.length}
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setActiveIndex((prev) => (prev + 1) % flashcards.length)
+              }
+              aria-label="Next tip"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '2px 6px',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points={isRTL ? '15 18 9 12 15 6' : '9 18 15 12 9 6'} />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

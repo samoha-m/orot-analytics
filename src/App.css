@@ -154,34 +154,42 @@ input::placeholder {
 /* =========================================
    CURATED SPOTLIGHT CAROUSEL ANIMATIONS
    ========================================= */
-@keyframes spotlightFadeIn {
-  from {
+/* =========================================
+   AIRY FLASHCARD SWAP ANIMATIONS
+   ========================================= */
+@keyframes airyFlashcardSwap {
+  0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px) scale(0.99);
+    filter: blur(2px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 
-@keyframes spotlightProgress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+.airy-flashcard {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
 }
 
-.spotlight-slide-enter {
-  animation: spotlightFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.airy-flashcard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.65) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36),
+    0 0 22px -4px rgba(56, 189, 248, 0.28) !important;
 }
 
-.spotlight-progress-bar {
-  animation-name: spotlightProgress;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
+.airy-flashcard:active {
+  transform: scale(0.99);
+}
+
+.flashcard-airy-swap {
+  animation: airyFlashcardSwap 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* =========================================
@@ -568,13 +576,14 @@ input::placeholder {
   .animate-fade-in-up,
   .ambient-glow-primary,
   .ambient-glow-secondary,
-  .spotlight-slide-enter,
-  .spotlight-progress-bar {
+  .flashcard-airy-swap {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+    filter: none !important;
   }
   .hover-lift,
+  .airy-flashcard,
   .btn-run::after {
     transition: none !important;
   }
